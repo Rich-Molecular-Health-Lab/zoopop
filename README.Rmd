@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# zoolabs <img src="man/figures/logo_richlab.png" align="right" height="138"/>
+# zoopop <img src="man/figures/logo_richlab.png" align="right" height="138"/>
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/Rich-Molecular-Health-Lab/zoopop/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Rich-Molecular-Health-Lab/zoopop/actions/workflows/R-CMD-check.yaml)
@@ -59,9 +59,9 @@ library(zoopop)
 
 Once installed, you’ll be able to:
 
-- Use all core functions like `plot_census()`, `lifeTab()`, and `ped_network()`
+- Use all core functions like `read_studbook`()`, `read_btp()`, and `find_parents()`
 - Load demo data like `studbook.csv` via `system.file()`
-- Launch `learnr` tutorials using:
+- Launch `learnr` tutorials.
 
 
 ## Resources

@@ -1,6 +1,10 @@
 ---
-title: "process_studbook"
-output: html_document
+title: "Load and Clean Studbook Data for Pygmy Slow Loris Provisional SSP"
+author: "Alicia Rich"
+output: learnr::tutorial
+    code_folding: "show"
+runtime: shiny_prerendered
+
 ---
 
 ```{r}
@@ -44,8 +48,8 @@ conflicts_prefer(lubridate::interval)
 ```
 
 ```{r message=FALSE, warning=FALSE}
-loc_key  <- read_locations("../extdata/locations.csv", "../extdata/locations_clean.csv", "stratigraphy")
-btp  <- read_btp("../extdata/btp.csv", "../extdata/btp_clean.csv", loc_key)
+loc_key   <- read_locations("../extdata/locations.csv", "../extdata/locations_clean.csv", "stratigraphy")
+btp       <- read_btp("../extdata/btp.csv", "../extdata/btp_clean.csv", loc_key)
 studbook  <- read_studbook("../extdata/studbook.csv", loc_key, btp)
 ```
 

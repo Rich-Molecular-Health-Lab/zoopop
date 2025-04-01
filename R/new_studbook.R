@@ -1,11 +1,44 @@
+#' Estimate the Midpoint Date Between Two Dates
+#'
+#' Computes an estimated date that is roughly halfway between \code{date1} and \code{date2}.
+#'
+#' @param date1 A date object representing the start date.
+#' @param date2 A date object representing the end date.
+#' @return A date object corresponding to the midpoint between \code{date1} and \code{date2}.
+#' @importFrom lubridate days interval as.period
+#' @export
 est_date_btn   <- function(date1, date2) {
   date1 + days(floor(as.numeric(as.period((lubridate::interval(date1, date2)), unit = "days"), "days")/2))
 }
 
+#' Calculate Age
+#'
+#' Computes the age (in whole years) given a birth date and a reference date.
+#'
+#' @param birth A date object representing the birth date.
+#' @param date A date object representing the reference date.
+#' @return An integer representing the calculated age.
+#' @importFrom lubridate floor_date interval as.period years
+#' @export
 calculate_age <- function(birth, date) {
   floor(as.numeric(as.period(lubridate::interval(floor_date(birth, "month"), date), unit = "years"), "years"))
 }
 
+#' Read and Process BTP Data
+#'
+#' Reads a CSV file containing BTP data, processes it, writes the output to a CSV file, and returns the data frame.
+#'
+#' @param file_in A file path to the input CSV file.
+#' @param file_out A file path to the output CSV file.
+#' @param loc_key A data frame containing location key mappings.
+#' @return A data frame with processed BTP data.
+#' @importFrom readr read_csv write_csv
+#' @importFrom dplyr rename mutate case_when if_else group_by arrange select distinct left_join join_by case_match
+#' @importFrom stringr str_extract_all str_remove_all
+#' @importFrom tidyr fill pivot_wider
+#' @importFrom glue str_glue
+#' @importFrom lubridate make_date
+#' @export
 read_btp <- function(file_in, file_out, loc_key) {
   df <- read_csv(file_in) %>%
     rename(ID = "SB ID") %>%
@@ -77,6 +110,22 @@ read_btp <- function(file_in, file_out, loc_key) {
   return(df)
 }
 
+#' Read and Process Location Data
+#'
+#' Reads a CSV file containing location data, processes it using a specified palette, writes the output to a CSV file, and returns the data frame.
+#'
+#' @param file_in A file path to the input CSV file.
+#' @param file_out A file path to the output CSV file.
+#' @param khroma_pal A key specifying which khroma palette to use.
+#' @return A data frame with processed location data.
+#' @importFrom readr read_csv write_csv
+#' @importFrom dplyr mutate distinct arrange if_else left_join pull right_join lead
+#' @importFrom stringr str_squish str_remove_all str_sub str_replace str_to_upper
+#' @importFrom tidyr replace_na
+#' @importFrom countrycode countrycode
+#' @importFrom purrr set_names map
+#' @importFrom tibble enframe
+#' @export
 read_locations <- function(file_in, file_out, khroma_pal) {
   locs  <- read_csv(file_in) %>%
     mutate(across(where(is.character), ~str_squish(.))) %>%
@@ -118,6 +167,22 @@ read_locations <- function(file_in, file_out, khroma_pal) {
   return(df)
 }
 
+#' Read and Process Studbook Data
+#'
+#' Reads a CSV file containing studbook data, processes it along with BTP data and location keys, and returns a processed studbook data frame.
+#'
+#' @param file_in A file path to the input CSV file.
+#' @param loc_key A data frame containing location key mappings.
+#' @param btp A data frame containing BTP data.
+#' @return A data frame with processed studbook data.
+#' @importFrom readr read_csv
+#' @importFrom dplyr filter left_join rename mutate select distinct arrange group_by if_else bind_rows row_number lead join_by last case_when
+#' @importFrom tidyr fill pivot_wider pivot_longer
+#' @importFrom stringr str_squish str_extract str_remove_all str_to_lower
+#' @importFrom lubridate dmy floor_date today years interval as.period
+#' @importFrom forcats fct_recode
+#' @importFrom glue str_glue
+#' @export
 read_studbook <- function(file_in, loc_key, btp) {
   events <- c(
     birth    = "birth/hatch",
@@ -129,7 +194,7 @@ read_studbook <- function(file_in, loc_key, btp) {
   std <- read_csv(file_in) %>%
     mutate(across(where(is.character), ~str_squish(.))) %>%
     filter(Location != "Location") %>%
-    fill(ID, Location_Current, Sex, Sire, Dam, Birth_Type) %>%
+    fill(ID, Sex, Sire, Dam, Birth_Type) %>%
     mutate(Sex        = str_sub(Sex, 1L, 1L),
            Date       = dmy(str_extract(Date, "\\d{1,2}[-/]\\w{3}[-/]\\d{2,4}")),
            Location   = str_remove_all(Location, "[^\\w+]"),
@@ -349,6 +414,14 @@ read_studbook <- function(file_in, loc_key, btp) {
   return(studbook)
 }
 
+#' Create a Short Version of the Studbook
+#'
+#' Produces a condensed version of the studbook with selected columns.
+#'
+#' @param studbook A data frame containing full studbook data.
+#' @return A data frame with a short version of the studbook.
+#' @importFrom dplyr arrange select distinct
+#' @export
 studbook_short <- function(studbook) {
   studbook %>%
     arrange(Date) %>%
@@ -366,6 +439,19 @@ studbook_short <- function(studbook) {
     distinct()
 }
 
+#' Generate Location Census Data
+#'
+#' Creates a census of locations based on studbook data and location key mappings.
+#'
+#' @param studbook A data frame of studbook data.
+#' @param loc_key A data frame containing location key mappings.
+#' @return A nested list of location census data.
+#' @importFrom dplyr filter select distinct arrange group_by mutate left_join summarize
+#' @importFrom lubridate floor_date ceiling_date
+#' @importFrom purrr pmap map
+#' @importFrom tidyr unnest
+#' @importFrom tibble tibble
+#' @export
 location_census <- function(studbook, loc_key) {
   locations <- studbook %>%
     filter(Event == "transfer") %>%
@@ -413,16 +499,35 @@ location_census <- function(studbook, loc_key) {
   return(locations)
 }
 
+#' Match Birth Records by Parent Sex
+#'
+#' Filters and orders birth records to match a given parent's sex.
+#'
+#' @param x A data frame or tibble of candidate birth records.
+#' @param sex_parent A character indicating the parent's sex ("M" or "F").
+#' @return A tibble with matching birth records.
+#' @importFrom dplyr filter arrange distinct
+#' @importFrom tibble tibble
+#' @export
 match_births <- function(x, sex_parent) {
   if (is.null(x)) {
     return(tibble(ID = NA, Sex = "None", Age = 0))
   } else {
-   filter(x, Sex == sex_parent & !(ID %in% c(names))) %>%
+    filter(x, Sex == sex_parent & !(ID %in% c(names))) %>%
       arrange(desc(Age)) %>%
       distinct()
   }
 }
 
+#' Retrieve Detailed Parent Information
+#'
+#' Joins candidate parent records with a short version of the studbook to return detailed information.
+#'
+#' @param x A data frame containing candidate parent records.
+#' @param studbook A data frame of full studbook data.
+#' @return A tibble with detailed parent information.
+#' @importFrom dplyr left_join distinct
+#' @export
 parent_details <- function(x, studbook) {
   studbook_short <- studbook_short(studbook)
   if (is.null(x) | nrow(x) < 1) {
@@ -433,6 +538,18 @@ parent_details <- function(x, studbook) {
   }
 }
 
+#' Find Parent Information from the Studbook
+#'
+#' Searches for parent candidates (sire or dam) in the studbook and returns matching details.
+#'
+#' @param studbook A data frame of studbook data.
+#' @param loc_key A data frame containing location key mappings.
+#' @param parent A character string indicating the parent type (e.g., "Sire", "sire", "dad", "father").
+#' @return A list of matched parent details.
+#' @importFrom dplyr filter mutate relocate distinct pull
+#' @importFrom tibble deframe
+#' @importFrom purrr imap pluck set_names map_depth
+#' @export
 find_parent <- function(studbook, loc_key, parent) {
   if (parent %in% c("Sire", "sire", "dad", "father")) {
     sex_parent <- "M"
@@ -458,7 +575,19 @@ find_parent <- function(studbook, loc_key, parent) {
     map_depth(., 1, \(x) parent_details(x, studbook))
 }
 
-
+#' Add Hypothetical Parent Entries to the Studbook
+#'
+#' Adds a hypothetical parent (sire or dam) to the studbook based on given IDs.
+#'
+#' @param studbook A data frame of studbook data.
+#' @param parent A character string indicating the parent type ("sire" or "dam").
+#' @param ids A vector of IDs.
+#' @param loc_key A data frame containing location key mappings.
+#' @return A data frame with hypothetical parent entries appended.
+#' @importFrom dplyr filter arrange select bind_cols mutate left_join bind_rows distinct
+#' @importFrom tibble tibble
+#' @importFrom lubridate years
+#' @export
 add_hypotheticals <- function(studbook, parent, ids, loc_key) {
   if (parent %in% c("Sire", "sire", "dad", "father")) {
     sex_parent <- "M"
@@ -493,13 +622,13 @@ add_hypotheticals <- function(studbook, parent, ids, loc_key) {
            Country_last        = Country_birth,
            iconLoc_last        = iconLoc_birth,
            colorLoc_last       = colorLoc_birth
-           ) %>%
+    ) %>%
     bind_cols(hyp_cols) %>%
     mutate(ID                  = min(ids) + add,
            Date_birth          = first(Date) - years(2),
            Loc_last            = Loc_event,
            Date_last           = last(Date) + years(2)
-           ) %>%
+    ) %>%
     mutate(age_last            = calculate_age(Date_birth, Date_last),
            Year_birth          = year(Date_birth)) %>%
     left_join(select(
@@ -517,6 +646,17 @@ add_hypotheticals <- function(studbook, parent, ids, loc_key) {
   return(hypotheticals)
 }
 
+#' Add All Hypothetical Parent Entries to the Studbook
+#'
+#' Combines hypothetical sire and dam entries and appends them to the studbook.
+#'
+#' @param studbook A data frame of studbook data.
+#' @param hyp_defs A list containing definitions for hypothetical sires and dams.
+#' @param loc_key A data frame containing location key mappings.
+#' @return A data frame with all hypothetical parent entries added to the studbook.
+#' @importFrom purrr map_depth
+#' @importFrom dplyr bind_rows distinct arrange
+#' @export
 add_all_hypotheticals <- function(studbook, hyp_defs, loc_key) {
   hypothetical_sires <- map_depth(hyp_defs$sires, 1, \(x) add_hypotheticals(studbook, "sire", x, loc_key)) %>%
     list_rbind(.)
@@ -532,5 +672,3 @@ add_all_hypotheticals <- function(studbook, hyp_defs, loc_key) {
 
   return(studbook)
 }
-
-

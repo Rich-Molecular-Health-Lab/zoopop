@@ -8,47 +8,18 @@ Description: This package contains custom functions designed for the Rich Lab's 
 Depends: R (>= 4.2)
 Imports: 
     dplyr,
-    ggplot2,
-    glue,
-    heatmaply,
-    htmltools,
-    htmlwidgets,
-    kinship2,
+    learnr,
     lubridate,
-    magrittr,
-    paletteer,
-    pedtools,
-    plotly,
     purrr,
-    reactable,
-    reactablefmtr,
     readr,
-    ribd,
-    rlang,
-    scales,
-    stats,
-    stringr,
-    tibble,
     tidyr,
-    tidyselect,
-    tippy,
-    verbalisr,
-    visNetwork
+    tibble,
+    tidyselect
 Suggests: 
-    bslib,
-    conflicted,
-    downloadthis,
-    kableExtra,
-    fontawesome,
-    here,
-    roxygen2, 
-    knitr, 
-    showtext,
-    thematic,
+    knitr,
     rmarkdown,
-    shiny,
-    testthat,
-    usethis
+    usethis,
+    here
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
