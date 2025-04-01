@@ -1,13 +1,56 @@
 Package: zoopop
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: Helper Functions for Working with Published AZA Population Data
+Version: 0.1.0
+Date: 2025-04-01
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+    person("Alicia", "Rich", email = "aliciarich@unomaha.edu", role = c("aut", "cre"))
+Description: This package contains custom functions designed for the Rich Lab's analysis of AZA Population Management Data like studbooks.
+Depends: R (>= 4.2)
+Imports: 
+    dplyr,
+    ggplot2,
+    glue,
+    heatmaply,
+    htmltools,
+    htmlwidgets,
+    kinship2,
+    lubridate,
+    magrittr,
+    paletteer,
+    pedtools,
+    plotly,
+    purrr,
+    reactable,
+    reactablefmtr,
+    readr,
+    ribd,
+    rlang,
+    scales,
+    stats,
+    stringr,
+    tibble,
+    tidyr,
+    tidyselect,
+    tippy,
+    verbalisr,
+    visNetwork
+Suggests: 
+    bslib,
+    conflicted,
+    downloadthis,
+    kableExtra,
+    fontawesome,
+    here,
+    roxygen2, 
+    knitr, 
+    showtext,
+    thematic,
+    rmarkdown,
+    shiny,
+    testthat,
+    usethis
+License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-URL: https://github.com/aliciamrich/zoopop
-BugReports: https://github.com/aliciamrich/zoopop/issues
+URL: https://github.com/Rich-Molecular-Health-Lab
