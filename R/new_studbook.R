@@ -1,120 +1,35 @@
 #' Estimate the Midpoint Date Between Two Dates
 #'
-#' Computes an estimated date that is roughly halfway between \code{date1} and \code{date2}.
+#' Computes an estimated date that is approximately halfway between \code{date1} and \code{date2}.
 #'
 #' @param date1 A date object representing the start date.
 #' @param date2 A date object representing the end date.
 #' @return A date object corresponding to the midpoint between \code{date1} and \code{date2}.
 #' @importFrom lubridate days interval as.period
 #' @export
-est_date_btn   <- function(date1, date2) {
-  date1 + days(floor(as.numeric(as.period((lubridate::interval(date1, date2)), unit = "days"), "days")/2))
+#'
+est_date_btn <- function(date1, date2) {
+  date1 + days(floor(as.numeric(as.period(lubridate::interval(date1, date2), unit = "days"), "days")/2))
 }
 
 #' Calculate Age
 #'
-#' Computes the age (in whole years) given a birth date and a reference date.
+#' Computes the age in whole years based on a given birth date and a reference date.
 #'
 #' @param birth A date object representing the birth date.
 #' @param date A date object representing the reference date.
-#' @return An integer representing the calculated age.
-#' @importFrom lubridate floor_date interval as.period years
+#' @return An integer representing the age in whole years.
+#' @importFrom lubridate floor_date interval as.period
 #' @export
 calculate_age <- function(birth, date) {
   floor(as.numeric(as.period(lubridate::interval(floor_date(birth, "month"), date), unit = "years"), "years"))
 }
 
-#' Read and Process BTP Data
-#'
-#' Reads a CSV file containing BTP data, processes it, writes the output to a CSV file, and returns the data frame.
-#'
-#' @param file_in A file path to the input CSV file.
-#' @param file_out A file path to the output CSV file.
-#' @param loc_key A data frame containing location key mappings.
-#' @return A data frame with processed BTP data.
-#' @importFrom readr read_csv write_csv
-#' @importFrom dplyr rename mutate case_when if_else group_by arrange select distinct left_join join_by case_match
-#' @importFrom stringr str_extract_all str_remove_all
-#' @importFrom tidyr fill pivot_wider
-#' @importFrom glue str_glue
-#' @importFrom lubridate make_date
-#' @export
-read_btp <- function(file_in, file_out, loc_key) {
-  df <- read_csv(file_in) %>%
-    rename(ID = "SB ID") %>%
-    mutate(facility      = str_extract_all(Institution, "^.+(?=\\s[:upper:][:lower:])"),
-           note          = str_remove_all(Facility_Note, "Facility Note: "),
-           age           = as.numeric(Age),
-           .keep = "unused") %>%
-    mutate(Year_birth    = BTP - age,
-           exclude       = case_when(
-             str_detect(Notes, "Excluded") & str_detect(Notes, "Age")      ~ "age",
-             str_detect(Notes, "Excluded") & str_detect(Notes, "Behavior") ~ "behavior",
-             str_detect(Notes, "Died")     ~ "deceased",
-             .default = "n"),
-           disposition = case_match(
-             Disposition,
-             "HOLD"         ~ "current",
-             "RECEIVE FROM" ~ "current",
-             "SEND TO"      ~ "transfer",
-             .default = Disposition
-           )
-    ) %>%
-    mutate(include = if_else(exclude == "n", "y", "n"),
-           mate    = if_else(is.na(With) & str_detect(Notes, "Breed"),
-                             str_extract(Notes, "\\d+"), as.character(With))
-    ) %>%
-    mutate(mate = as.integer(mate)) %>%
-    group_by(ID, BTP) %>%
-    fill(note, .direction = "downup") %>%
-    ungroup() %>%
-    arrange(ID, BTP, facility) %>%
-    pivot_wider(names_from  = "disposition", values_from = c("Location", "note")) %>%
-    select(-facility) %>%
-    group_by(ID, BTP) %>%
-    fill(starts_with("Location_"), starts_with("note_"), .direction = "downup") %>%
-    ungroup() %>%
-    distinct() %>%
-    mutate(note = case_when(
-      note_current == note_transfer ~ note_current,
-      is.na(note_current)  ~ note_transfer,
-      is.na(note_transfer)       ~ note_current,
-      !is.na(note_transfer) & !is.na(note_current) & note_current != note_transfer ~ str_glue("{note_current}", "{note_transfer}", sep = "; ")), .keep = "unused") %>%
-    mutate(note      = as.character(note),
-           Location = str_remove_all(Location_current, "[^\\w+]"),
-           transfer = str_remove_all(Location_transfer, "[^\\w+]"),
-           Event    = "btp",
-           Date     = make_date(year = BTP, month = 2, day = 1)) %>%
-    select(ID ,
-           include,
-           exclude,
-           Sex,
-           year          = BTP,
-           Date,
-           Event,
-           age,
-           Year_birth,
-           Location,
-           transfer,
-           breeding      = Breeding,
-           mate,
-           note
-    ) %>%
-    distinct() %>%
-    left_join(loc_key, by = join_by(Location)) %>%
-    left_join(select(loc_key,
-                     transfer      = Location,
-                     transfer_code = code),
-              by = join_by(transfer))
-  write_csv(df, file_out)
-  return(df)
-}
-
 #' Read and Process Location Data
 #'
-#' Reads a CSV file containing location data, processes it using a specified palette, writes the output to a CSV file, and returns the data frame.
+#' Reads a CSV file containing location data, processes the data using a specified color palette, writes the processed data to an output CSV file, and returns the resulting data frame.
 #'
-#' @param file_in A file path to the input CSV file.
+#' @param file_in A file path to the input CSV file. This file must include the columns: \code{Institution Name}, \code{Mnemonic}, \code{Country}, and \code{State_Province}. Use a tool such as Adobe Acrobat to extract institution lists from the published studbook report, then edit the file so that every location in your studbook has a matching \code{Mnemonic}.
 #' @param file_out A file path to the output CSV file.
 #' @param khroma_pal A key specifying which khroma palette to use.
 #' @return A data frame with processed location data.
@@ -123,35 +38,37 @@ read_btp <- function(file_in, file_out, loc_key) {
 #' @importFrom stringr str_squish str_remove_all str_sub str_replace str_to_upper
 #' @importFrom tidyr replace_na
 #' @importFrom countrycode countrycode
+#' @importFrom paletteer palettes_d
 #' @importFrom purrr set_names map
 #' @importFrom tibble enframe
+#' @importFrom magrittr %>%
 #' @export
+#'
 read_locations <- function(file_in, file_out, khroma_pal) {
-  locs  <- read_csv(file_in) %>%
+  locs <- read_csv(file_in) %>%
     mutate(across(where(is.character), ~str_squish(.))) %>%
     mutate(Location = str_remove_all(Mnemonic, "[^\\w+]"), .keep = "unused") %>%
     distinct() %>%
     arrange(Location) %>%
-    mutate(code1   = as.character(str_sub(Location,  1L,  3L)),
-           code2   = as.character(str_sub(Location, -2L, -1L))) %>%
+    mutate(code1 = as.character(str_sub(Location, 1L, 3L)),
+           code2 = as.character(str_sub(Location, -2L, -1L))) %>%
     mutate(code = if_else(!is.na(lead(code1)) & code1 == lead(code1),
-                          str_replace(code1, "(?<=^\\w)\\w{2}$",
-                                      code2), code1), .keep = "unused")  %>%
-    mutate(code_country = countrycode(Country     , origin = "country.name", destination = "iso3c"),
-           iconLoc      = countrycode(code_country, origin = "iso3c"       , destination = "unicode.symbol")) %>%
-    mutate(iconLoc      = replace_na(iconLoc, "\u3f"),
+                          str_replace(code1, "(?<=^\\w)\\w{2}$", code2), code1), .keep = "unused") %>%
+    mutate(code_country = countrycode(Country, origin = "country.name", destination = "iso3c"),
+           iconLoc = countrycode(code_country, origin = "iso3c", destination = "unicode.symbol")) %>%
+    mutate(iconLoc = replace_na(iconLoc, "\u3f"),
            code_country = replace_na(code_country, "UND"),
-           code         = str_to_upper(code))
+           code = str_to_upper(code))
 
   loc_vals <- pull(locs, code) %>% unique() %>% as.list()
 
-  df <-   as.list(sample(palettes_d$khroma[[paste0(khroma_pal)]],
-                         size = length(loc_vals),
-                         replace = FALSE)) %>%
+  df <- as.list(sample(palettes_d$khroma[[paste0(khroma_pal)]],
+                       size = length(loc_vals),
+                       replace = FALSE)) %>%
     set_names(., map(loc_vals, \(x) paste0(x))) %>%
-    enframe(name = "code", value = "colorLoc")  %>%
+    enframe(name = "code", value = "colorLoc") %>%
     mutate(colorLoc = as.character(colorLoc),
-           code     = as.character(code)) %>%
+           code = as.character(code)) %>%
     right_join(locs, by = join_by(code)) %>%
     select(
       code,
@@ -167,45 +84,131 @@ read_locations <- function(file_in, file_out, khroma_pal) {
   return(df)
 }
 
+#' Read and Process BTP Data
+#'
+#' Reads a CSV file containing Breeding and Transfer Plan (BTP) data, processes the data, writes an updated BTP summary to an output CSV file, and returns the resulting data frame.
+#'
+#' @param file_in A file path to the input CSV file created by converting a published BTP to a CSV table. The file must include the columns: \code{BTP}, \code{Institution}, \code{SB ID}, \code{Sex}, \code{Age}, \code{Disposition}, \code{Location}, \code{Breeding}, \code{With}, \code{Notes}, and \code{Facility_Note}. (You should add the \code{BTP} column manually to indicate the 4-digit publication year.)
+#' @param file_out A file path to the output CSV file that will contain the processed BTP summary.
+#' @param loc_key A data frame containing location key mappings produced by \code{read_locations}.
+#' @return A data frame with processed BTP data.
+#' @importFrom readr read_csv write_csv
+#' @importFrom dplyr rename mutate case_when if_else group_by arrange select distinct left_join join_by case_match
+#' @importFrom stringr str_extract_all str_remove_all str_glue str_detect
+#' @importFrom tidyr fill pivot_wider
+#' @importFrom tidyselect starts_with
+#' @importFrom lubridate make_date
+#' @export
+#'
+read_btp <- function(file_in, file_out, loc_key) {
+  df <- read_csv(file_in) %>%
+    rename(ID = "SB ID") %>%
+    mutate(facility = str_extract_all(Institution, "^.+(?=\\s[:upper:][:lower:])"),
+           note = str_remove_all(Facility_Note, "Facility Note: "),
+           age = as.numeric(Age),
+           .keep = "unused") %>%
+    mutate(Year_birth = BTP - age,
+           exclude = case_when(
+             str_detect(Notes, "Excluded") & str_detect(Notes, "Age") ~ "age",
+             str_detect(Notes, "Excluded") & str_detect(Notes, "Behavior") ~ "behavior",
+             str_detect(Notes, "Died") ~ "deceased",
+             .default = "n"),
+           disposition = case_match(
+             Disposition,
+             "HOLD" ~ "current",
+             "RECEIVE FROM" ~ "current",
+             "SEND TO" ~ "transfer",
+             .default = Disposition
+           )
+    ) %>%
+    mutate(include = if_else(exclude == "n", "y", "n"),
+           mate = if_else(is.na(With) & str_detect(Notes, "Breed"),
+                          str_extract(Notes, "\\d+"), as.character(With))
+    ) %>%
+    mutate(mate = as.integer(mate)) %>%
+    group_by(ID, BTP) %>%
+    fill(note, .direction = "downup") %>%
+    ungroup() %>%
+    arrange(ID, BTP, facility) %>%
+    pivot_wider(names_from = "disposition", values_from = c("Location", "note")) %>%
+    select(-facility) %>%
+    group_by(ID, BTP) %>%
+    fill(starts_with("Location_"), starts_with("note_"), .direction = "downup") %>%
+    ungroup() %>%
+    distinct() %>%
+    mutate(note = case_when(
+      note_current == note_transfer ~ note_current,
+      is.na(note_current) ~ note_transfer,
+      is.na(note_transfer) ~ note_current,
+      !is.na(note_transfer) & !is.na(note_current) & note_current != note_transfer ~ str_glue("{note_current}", "{note_transfer}", sep = "; ")), .keep = "unused") %>%
+    mutate(note = as.character(note),
+           Location = str_remove_all(Location_current, "[^\\w+]"),
+           transfer = str_remove_all(Location_transfer, "[^\\w+]"),
+           Event = "btp",
+           Date = make_date(year = BTP, month = 2, day = 1)) %>%
+    select(ID,
+           include,
+           exclude,
+           Sex,
+           year = BTP,
+           Date,
+           Event,
+           age,
+           Year_birth,
+           Location,
+           transfer,
+           breeding = Breeding,
+           mate,
+           note
+    ) %>%
+    distinct() %>%
+    left_join(loc_key, by = join_by(Location)) %>%
+    left_join(select(loc_key, transfer = Location, transfer_code = code),
+              by = join_by(transfer))
+  write_csv(df, file_out)
+  return(df)
+}
+
 #' Read and Process Studbook Data
 #'
-#' Reads a CSV file containing studbook data, processes it along with BTP data and location keys, and returns a processed studbook data frame.
+#' Reads a CSV file containing studbook data, processes it together with BTP data and location key mappings, and returns a cleaned studbook data frame. This function merges multiple exported files, removes redundant entries, and performs necessary corrections for downstream analyses.
 #'
-#' @param file_in A file path to the input CSV file.
-#' @param loc_key A data frame containing location key mappings.
-#' @param btp A data frame containing BTP data.
-#' @return A data frame with processed studbook data.
+#' @param file_in A file path to the input CSV file. Export the studbook tables from the published PDF using Adobe Acrobat (or a similar tool), and ensure that the file contains the columns: \code{ID}, \code{Sex}, \code{Sire}, \code{Dam}, \code{Birth_Type}, \code{Event}, \code{Date}, and \code{Location}. Combine rows from multiple files as needed.
+#' @param loc_key A data frame containing location key mappings produced by \code{read_locations}.
+#' @param btp A data frame containing formatted BTP data produced by \code{read_btp}.
+#' @return A data frame with processed studbook data that can be used to resolve missing parental assignments.
 #' @importFrom readr read_csv
-#' @importFrom dplyr filter left_join rename mutate select distinct arrange group_by if_else bind_rows row_number lead join_by last case_when
+#' @importFrom dplyr filter left_join rename mutate select distinct arrange group_by if_else bind_rows row_number lead join_by last case_when setdiff across consecutive_id pull first desc
 #' @importFrom tidyr fill pivot_wider pivot_longer
-#' @importFrom stringr str_squish str_extract str_remove_all str_to_lower
+#' @importFrom stringr str_squish str_extract str_remove_all str_to_lower str_replace_all str_glue str_sub
 #' @importFrom lubridate dmy floor_date today years interval as.period
 #' @importFrom forcats fct_recode
-#' @importFrom glue str_glue
+#' @importFrom tidyselect where
 #' @export
+#'
 read_studbook <- function(file_in, loc_key, btp) {
   events <- c(
-    birth    = "birth/hatch",
-    capture  = "wild capture",
+    birth = "birth/hatch",
+    capture = "wild capture",
     transfer = "transfer",
-    ltf      = "go ltf",
-    death    = "death"
+    ltf = "go ltf",
+    death = "death"
   )
   std <- read_csv(file_in) %>%
     mutate(across(where(is.character), ~str_squish(.))) %>%
     filter(Location != "Location") %>%
     fill(ID, Sex, Sire, Dam, Birth_Type) %>%
-    mutate(Sex        = str_sub(Sex, 1L, 1L),
-           Date       = dmy(str_extract(Date, "\\d{1,2}[-/]\\w{3}[-/]\\d{2,4}")),
-           Location   = str_remove_all(Location, "[^\\w+]"),
+    mutate(Sex = str_sub(Sex, 1L, 1L),
+           Date = dmy(str_extract(Date, "\\d{1,2}[-/]\\w{3}[-/]\\d{2,4}")),
+           Location = str_remove_all(Location, "[^\\w+]"),
            across(c(Sire, Dam), ~as.integer(str_replace_all(., "WILD", "0"))),
            Type_birth = str_extract(Birth_Type, "^\\w+(?=\\s)"),
-           Event      = str_to_lower(Event)
+           Event = str_to_lower(Event)
     ) %>%
-    mutate(Event    = fct_recode(Event, !!!events),
+    mutate(Event = fct_recode(Event, !!!events),
            Location = if_else(Location == "Undetermined", "UNDETERMI", Location),
-           Date     = if_else(Date > today(), Date - years(100), Date),
-           ID       = as.integer(ID)) %>%
+           Date = if_else(Date > today(), Date - years(100), Date),
+           ID = as.integer(ID)) %>%
     select(
       ID,
       Sex,
@@ -218,10 +221,10 @@ read_studbook <- function(file_in, loc_key, btp) {
     ) %>%
     left_join(loc_key, by = join_by(Location)) %>%
     mutate(loc_order = consecutive_id(code),
-           Sex       = last(Sex), .by = ID)
+           Sex = last(Sex), .by = ID)
 
   new_births <- setdiff(pull(btp, ID), pull(std, ID))
-  living     <- filter(btp, year == max(year) & exclude != "deceased") %>%
+  living <- filter(btp, year == max(year) & exclude != "deceased") %>%
     pull(ID) %>% unique()
   loc_orders <- std %>%
     select(ID, code, loc_order) %>%
@@ -229,185 +232,120 @@ read_studbook <- function(file_in, loc_key, btp) {
 
   btp_births <- btp %>%
     filter(ID %in% new_births) %>%
-    select(ID ,
-           Sex,
-           Date,
-           Event,
-           code) %>%
+    select(ID, Sex, Date, Event, code) %>%
     arrange(ID, Date) %>%
     distinct() %>%
-    mutate(Date  = floor_date(Date, "years"),
+    mutate(Date = floor_date(Date, "years"),
            Event = "birth")
 
   btp_deaths <- btp %>%
     filter(exclude == "deceased") %>%
-    select(ID ,
-           Sex,
-           Date,
-           Event,
-           code) %>%
+    select(ID, Sex, Date, Event, code) %>%
     arrange(ID, Date) %>%
     distinct() %>%
     mutate(Date = floor_date(Date, "years"))
 
-  deaths      <- std %>%
+  deaths <- std %>%
     filter(Event %in% c("ltf", "death")) %>%
-    select(ID ,
-           Sex,
-           Date,
-           Event,
-           code) %>%
+    select(ID, Sex, Date, Event, code) %>%
     bind_rows(btp_deaths) %>%
     distinct() %>%
-    pivot_wider(names_from  = "Event",
-                values_from = "Date") %>%
-    mutate(Date  = case_when(is.na(death) & is.na(btp) ~ltf,
-                             is.na(death) & is.na(ltf) ~btp,
-                             .default = death),
+    pivot_wider(names_from = "Event", values_from = "Date") %>%
+    mutate(Date = case_when(is.na(death) & is.na(btp) ~ ltf,
+                            is.na(death) & is.na(ltf) ~ btp,
+                            .default = death),
            Event = "death", .keep = "unused") %>%
     filter(!is.na(Date)) %>%
     arrange(ID, Date)
 
   birth_dates <- std %>%
     filter(Event %in% c("birth", "capture")) %>%
-    select(ID ,
-           Sire,
-           Dam,
-           Sex,
-           Date,
-           Event,
-           code) %>%
+    select(ID, Sire, Dam, Sex, Date, Event, code) %>%
     distinct() %>%
-    pivot_wider(names_from  = "Event",
-                values_from = "Date") %>%
-    mutate(Date  = if_else(is.na(birth), capture, birth),
+    pivot_wider(names_from = "Event", values_from = "Date") %>%
+    mutate(Date = if_else(is.na(birth), capture, birth),
            Event = "birth", .keep = "unused") %>%
     bind_rows(btp_births) %>%
     arrange(ID, Date)
 
   births <- birth_dates %>%
-    select(Sire,
-           Dam,
-           Date,
-           Event,
-           code,
-           offspring = ID) %>%
-    pivot_longer(cols      = c("Sire", "Dam"),
-                 names_to  = "Sex",
-                 values_to = "ID") %>%
-    mutate(Sex   = case_match(Sex, "Sire" ~"M", "Dam" ~"F"),
+    select(Sire, Dam, Date, Event, code, offspring = ID) %>%
+    pivot_longer(cols = c("Sire", "Dam"), names_to = "Sex", values_to = "ID") %>%
+    mutate(Sex = case_match(Sex, "Sire" ~ "M", "Dam" ~ "F"),
            Event = "breed") %>%
     filter(ID != 0 & !is.na(ID)) %>%
-    select(ID,
-           Sex,
-           Date,
-           Event,
-           code) %>%
+    select(ID, Sex, Date, Event, code) %>%
     arrange(ID, Date) %>%
     distinct()
 
   transfers <- std %>%
     filter(Event == "transfer") %>%
-    select(ID ,
-           Sex,
-           Date,
-           Event,
-           code) %>%
+    select(ID, Sex, Date, Event, code) %>%
     arrange(ID, Date) %>%
     distinct()
 
   btps <- btp %>%
-    select(ID ,
-           Sex,
-           Date,
-           Event,
-           code) %>%
+    select(ID, Sex, Date, Event, code) %>%
     arrange(ID, Date) %>%
     distinct()
 
-  event_fact <- c(
-    "birth"    ,
-    "capture"  ,
-    "transfer" ,
-    "breed"    ,
-    "btp"      ,
-    "death"
-  )
-  studbook <- bind_rows(
-    birth_dates,
-    births,
-    transfers,
-    btps,
-    deaths
-  ) %>%
+  event_fact <- c("birth", "capture", "transfer", "breed", "btp", "death")
+  studbook <- bind_rows(birth_dates, births, transfers, btps, deaths) %>%
     mutate(Event = factor(Event, levels = event_fact)) %>%
     left_join(loc_orders, by = join_by(ID, code)) %>%
     arrange(ID, loc_order, Event, Date) %>%
     group_by(ID) %>%
     fill(Sire, Dam, Sex, .direction = "downup") %>%
     mutate(loc_order = consecutive_id(code),
-           Status    = if_else(ID %in% living, "A", "D")) %>%
-    mutate(Date_last  = case_when(Status == "D" & Event == "death" ~Date,
-                                  Status == "A" ~today())) %>%
+           Status = if_else(ID %in% living, "A", "D")) %>%
+    mutate(Date_last = case_when(Status == "D" & Event == "death" ~ Date,
+                                 Status == "A" ~ today())) %>%
     fill(Date_last, .direction = "up") %>%
     mutate(Date_last = if_else(is.na(Date_last), last(Date) + years(1), Date_last),
-           Loc_last  = last(code)) %>%
+           Loc_last = last(code)) %>%
     filter(Event != "death") %>%
     mutate(Date_birth = if_else(Event == "birth", Date, NA),
-           Loc_birth  = if_else(Event == "birth", code, NA)) %>%
+           Loc_birth = if_else(Event == "birth", code, NA)) %>%
     fill(Date_birth, Loc_birth) %>%
     filter(Event != "birth") %>%
     distinct() %>%
     mutate(event_order = row_number()) %>%
-    select(
-      ID,
-      Date_birth,
-      Date,
-      event_order,
-      Event,
-      Date_last,
-      Status,
-      Loc_event = code,
-      Loc_birth,
-      Loc_last,
-      Sex,
-      Sire,
-      Dam
-    ) %>%
+    select(ID, Date_birth, Date, event_order, Event, Date_last, Status,
+           Loc_event = code, Loc_birth, Loc_last, Sex, Sire, Dam) %>%
     mutate(Date = case_when(
-      is.na(Date) & event_order == 1 & !is.na(Date_birth) ~est_date_btn(lead(Date), Date_birth),
-      is.na(Date) & event_order == 1 & is.na(Date_birth) ~lead(Date) - years(1),
+      is.na(Date) & event_order == 1 & !is.na(Date_birth) ~ est_date_btn(lead(Date), Date_birth),
+      is.na(Date) & event_order == 1 & is.na(Date_birth) ~ lead(Date) - years(1),
       .default = Date
     )) %>%
     mutate(Date_birth = if_else(is.na(Date_birth), first(Date) - years(2), Date_birth)) %>%
     fill(Date_birth) %>%
     mutate(age_event = calculate_age(Date_birth, Date),
-           age_last  = calculate_age(Date_birth, Date_last)) %>%
+           age_last = calculate_age(Date_birth, Date_last)) %>%
     left_join(select(std, ID, Type_birth), by = join_by(ID)) %>%
     left_join(select(btp, ID, Date, Event, exclude), by = join_by(ID, Date, Event)) %>%
     fill(exclude) %>%
-    mutate(exclude = case_when(Status == "D" ~"deceased",
-                               Status == "A" & Event == "breed" ~"n",
+    mutate(exclude = case_when(Status == "D" ~ "deceased",
+                               Status == "A" & Event == "breed" ~ "n",
                                .default = exclude),
            Type_birth = replace_na(Type_birth, "Undetermined"),
-           Year_birth  = year(floor_date(Date_birth, "years")),
-           across(c(Loc_event, Loc_birth, Loc_last),  ~replace_na(., "UND"))) %>%
+           Year_birth = year(floor_date(Date_birth, "years")),
+           across(c(Loc_event, Loc_birth, Loc_last), ~replace_na(., "UND"))) %>%
     fill(exclude, Type_birth, .direction = "downup") %>%
     mutate(across(c(Sire, Dam), ~if_else(is.na(.) & Type_birth == "Undetermined", 0, .))) %>%
     ungroup() %>%
     left_join(loc_key, by = join_by(Loc_birth == code)) %>%
-    rename(Institution_birth    = Institution,
+    rename(Institution_birth = Institution,
            State_Province_birth = State_Province,
-           Country_birth        = Country,
-           iconLoc_birth        = iconLoc,
-           colorLoc_birth       = colorLoc) %>%
+           Country_birth = Country,
+           iconLoc_birth = iconLoc,
+           colorLoc_birth = colorLoc) %>%
     select(-c(code_country, Location)) %>%
     left_join(loc_key, by = join_by(Loc_last == code)) %>%
-    rename(Institution_last     = Institution,
-           State_Province_last  = State_Province,
-           Country_last         = Country,
-           iconLoc_last         = iconLoc,
-           colorLoc_last        = colorLoc) %>%
+    rename(Institution_last = Institution,
+           State_Province_last = State_Province,
+           Country_last = Country,
+           iconLoc_last = iconLoc,
+           colorLoc_last = colorLoc) %>%
     select(-c(code_country, Location)) %>%
     distinct()
 
@@ -416,12 +354,14 @@ read_studbook <- function(file_in, loc_key, btp) {
 
 #' Create a Short Version of the Studbook
 #'
-#' Produces a condensed version of the studbook with selected columns.
+#' Generates a condensed version of the studbook by reducing multiple records per individual to a single row.
 #'
-#' @param studbook A data frame containing full studbook data.
-#' @return A data frame with a short version of the studbook.
+#' @param studbook A data frame containing the full studbook data (with multiple rows per individual) produced by \code{read_studbook}.
+#' @return A data frame in which each unique individual ID is represented by exactly one row.
 #' @importFrom dplyr arrange select distinct
+#' @importFrom tidyselect ends_with
 #' @export
+#'
 studbook_short <- function(studbook) {
   studbook %>%
     arrange(Date) %>%
@@ -441,17 +381,18 @@ studbook_short <- function(studbook) {
 
 #' Generate Location Census Data
 #'
-#' Creates a census of locations based on studbook data and location key mappings.
+#' Creates an annual census of locations based on studbook data and location key mappings. The result is a nested list organized by the floor date (January 1) for each year represented in the data. Each year contains a list of locations, with each location represented by a tibble listing the individuals recorded there along with their sex and age.
 #'
-#' @param studbook A data frame of studbook data.
-#' @param loc_key A data frame containing location key mappings.
-#' @return A nested list of location census data.
-#' @importFrom dplyr filter select distinct arrange group_by mutate left_join summarize
+#' @param studbook A data frame of studbook data produced by \code{read_studbook}.
+#' @param loc_key A data frame containing location key mappings produced by \code{read_locations}.
+#' @return A nested list of location census data organized by year.
+#' @importFrom dplyr filter select distinct arrange group_by mutate left_join summarize if_else row_number
 #' @importFrom lubridate floor_date ceiling_date
 #' @importFrom purrr pmap map
 #' @importFrom tidyr unnest
 #' @importFrom tibble tibble
 #' @export
+#'
 location_census <- function(studbook, loc_key) {
   locations <- studbook %>%
     filter(Event == "transfer") %>%
@@ -469,13 +410,12 @@ location_census <- function(studbook, loc_key) {
     arrange(ID, Date_event) %>%
     group_by(ID) %>%
     mutate(Loc_start = if_else(row_number() == 1, Date_birth, NA),
-           Loc_end   = if_else(row_number() == max(row_number()),
-                               Date_last, lead(Date_event))) %>%
+           Loc_end = if_else(row_number() == max(row_number()), Date_last, lead(Date_event))) %>%
     group_by(ID, Loc_event) %>%
     mutate(Loc_start = if_else(is.na(Loc_start), min(Date_event), Loc_start)) %>%
     ungroup() %>%
     mutate(Start = floor_date(Loc_start, "years"),
-           End   = ceiling_date(Loc_end, "years")) %>%
+           End = ceiling_date(Loc_end, "years")) %>%
     select(
       ID,
       Sex,
@@ -487,11 +427,11 @@ location_census <- function(studbook, loc_key) {
     left_join(loc_key, by = join_by(code)) %>%
     mutate(Dates = pmap(list(Start, End), \(x, y) seq(x, y, by = "years"))) %>%
     unnest(Dates) %>%
-    mutate(Date      = Dates,
-           Location  = code,
-           Age       = calculate_age(Date_birth, Date)) %>%
+    mutate(Date = Dates,
+           Location = code,
+           Age = calculate_age(Date_birth, Date)) %>%
     group_by(Date, Location) %>%
-    summarize(Individuals = list(tibble(ID, Sex, Age)))  %>%
+    summarize(Individuals = list(tibble(ID, Sex, Age))) %>%
     group_by(Date) %>%
     summarize(Locations = split(Individuals, Location)) %>%
     split(.$Date) %>%
@@ -501,14 +441,15 @@ location_census <- function(studbook, loc_key) {
 
 #' Match Birth Records by Parent Sex
 #'
-#' Filters and orders birth records to match a given parent's sex.
+#' Filters and orders candidate birth records to identify potential parent matches based on the specified sex.
 #'
 #' @param x A data frame or tibble of candidate birth records.
-#' @param sex_parent A character indicating the parent's sex ("M" or "F").
-#' @return A tibble with matching birth records.
+#' @param sex_parent A character string indicating the parent's sex ("M" or "F").
+#' @return A tibble of matching birth records sorted in descending order by age, or a tibble with default values if \code{x} is \code{NULL}.
 #' @importFrom dplyr filter arrange distinct
 #' @importFrom tibble tibble
 #' @export
+#'
 match_births <- function(x, sex_parent) {
   if (is.null(x)) {
     return(tibble(ID = NA, Sex = "None", Age = 0))
@@ -521,12 +462,13 @@ match_births <- function(x, sex_parent) {
 
 #' Retrieve Detailed Parent Information
 #'
-#' Joins candidate parent records with a short version of the studbook to return detailed information.
+#' Joins candidate parent records with a condensed version of the studbook to provide detailed information for potential parental assignments. This function is intended for internal use by \code{find_parent}.
 #'
 #' @param x A data frame containing candidate parent records.
-#' @param studbook A data frame of full studbook data.
+#' @param studbook A data frame containing the full studbook data.
 #' @return A tibble with detailed parent information.
-#' @importFrom dplyr left_join distinct
+#' @importFrom dplyr left_join distinct join_by
+#' @importFrom tibble tibble
 #' @export
 parent_details <- function(x, studbook) {
   studbook_short <- studbook_short(studbook)
@@ -540,35 +482,37 @@ parent_details <- function(x, studbook) {
 
 #' Find Parent Information from the Studbook
 #'
-#' Searches for parent candidates (sire or dam) in the studbook and returns matching details.
+#' Searches the studbook for potential parent candidates (sire or dam) based on the birth institution and birth year, and returns matching details. This function assists in identifying likely paternity or maternity assignments.
 #'
-#' @param studbook A data frame of studbook data.
-#' @param loc_key A data frame containing location key mappings.
-#' @param parent A character string indicating the parent type (e.g., "Sire", "sire", "dad", "father").
-#' @return A list of matched parent details.
-#' @importFrom dplyr filter mutate relocate distinct pull
+#' @param studbook A data frame of studbook data produced by \code{read_studbook}.
+#' @param loc_key A data frame containing location key mappings produced by \code{read_locations}.
+#' @param parent A character string indicating the parent type (e.g., "Sire", "sire", "dad", "father" for males; analogous values for females).
+#' @return A list of tibbles containing matched parent details. Each tibble corresponds to an individual and lists potential parent matches.
+#' @importFrom dplyr filter mutate relocate distinct pull select
 #' @importFrom tibble deframe
+#' @importFrom lubridate floor_date
 #' @importFrom purrr imap pluck set_names map_depth
 #' @export
+#'
 find_parent <- function(studbook, loc_key, parent) {
   if (parent %in% c("Sire", "sire", "dad", "father")) {
     sex_parent <- "M"
-    subjects       <- studbook_short(studbook) %>%
+    subjects <- studbook_short(studbook) %>%
       filter(Type_birth != "Wild" & is.na(Sire)) %>%
       mutate(Date = floor_date(Date_birth, unit = "years")) %>%
       relocate(Sire, Dam, .after = Loc_birth) %>%
       distinct()
   } else {
     sex_parent <- "F"
-    subjects       <- studbook_short(studbook) %>%
+    subjects <- studbook_short(studbook) %>%
       filter(Type_birth != "Wild" & is.na(Dam)) %>%
       mutate(Date = floor_date(Date_birth, unit = "years")) %>%
       relocate(Sire, Dam, .after = Loc_birth) %>%
       distinct()
   }
-  loc_census     <- location_census(studbook, loc_key)
-  names          <- pull(subjects, ID) %>% unique()
-  search         <- as.list(deframe(select(subjects, Date, Loc_birth)))
+  loc_census <- location_census(studbook, loc_key)
+  names <- pull(subjects, ID) %>% unique()
+  search <- as.list(deframe(select(subjects, Date, Loc_birth)))
   imap(search, \(x, idx) pluck(loc_census, idx, x, 1)) %>%
     set_names(., as.list(deframe(select(subjects, ID)))) %>%
     map_depth(., 1, \(x) match_births(x, sex_parent)) %>%
@@ -577,69 +521,66 @@ find_parent <- function(studbook, loc_key, parent) {
 
 #' Add Hypothetical Parent Entries to the Studbook
 #'
-#' Adds a hypothetical parent (sire or dam) to the studbook based on given IDs.
+#' Creates a hypothetical parent entry (sire or dam) for the specified offspring IDs and returns a single-row data frame representing the new entry. This function is intended for internal use by \code{add_all_hypotheticals}.
 #'
-#' @param studbook A data frame of studbook data.
-#' @param parent A character string indicating the parent type ("sire" or "dam").
-#' @param ids A vector of IDs.
-#' @param loc_key A data frame containing location key mappings.
-#' @return A data frame with hypothetical parent entries appended.
-#' @importFrom dplyr filter arrange select bind_cols mutate left_join bind_rows distinct
+#' @param studbook A data frame of studbook data produced by \code{read_studbook}.
+#' @param parent A character string indicating the parent type (e.g., "Sire", "sire", "dad", "father" for sires; analogous values for dams).
+#' @param ids A vector of one or more IDs for which a hypothetical parent should be created.
+#' @param loc_key A data frame containing location key mappings produced by \code{read_locations}.
+#' @return A data frame with one row representing the new hypothetical parent entry.
+#' @importFrom dplyr filter arrange select bind_cols mutate left_join bind_rows distinct slice_head
 #' @importFrom tibble tibble
-#' @importFrom lubridate years
+#' @importFrom lubridate year
 #' @export
+#'
 add_hypotheticals <- function(studbook, parent, ids, loc_key) {
   if (parent %in% c("Sire", "sire", "dad", "father")) {
     sex_parent <- "M"
-    add  <- 10000
+    add <- 10000
   } else {
     sex_parent <- "F"
-    add  <- 20000
+    add <- 20000
   }
   hypSire <- min(ids) + 10000
-  hypDam  <- min(ids) + 20000
+  hypDam <- min(ids) + 20000
 
   hyp_cols <- tibble(
-    event_order         = 1,
-    Event               = "breed",
-    Status              = "H",
-    Loc_birth           = "UND",
-    Sex                 = sex_parent,
-    Sire                = 0,
-    Dam                 = 0,
-    age_event           = 2,
-    Type_birth          = "Undetermined",
-    exclude             = "hypothetical"
+    event_order = 1,
+    Event = "breed",
+    Status = "H",
+    Loc_birth = "UND",
+    Sex = sex_parent,
+    Sire = 0,
+    Dam = 0,
+    age_event = 2,
+    Type_birth = "Undetermined",
+    exclude = "hypothetical"
   )
 
-  hypotheticals <-  studbook %>%
+  hypotheticals <- studbook %>%
     filter(ID %in% ids) %>%
     arrange(Date_birth) %>%
-    select(Date                = Date_birth,
-           Loc_event           = Loc_birth,
-           Institution_last    = Institution_birth,
+    select(Date = Date_birth,
+           Loc_event = Loc_birth,
+           Institution_last = Institution_birth,
            State_Province_last = State_Province_birth,
-           Country_last        = Country_birth,
-           iconLoc_last        = iconLoc_birth,
-           colorLoc_last       = colorLoc_birth
-    ) %>%
+           Country_last = Country_birth,
+           iconLoc_last = iconLoc_birth,
+           colorLoc_last = colorLoc_birth) %>%
     bind_cols(hyp_cols) %>%
-    mutate(ID                  = min(ids) + add,
-           Date_birth          = first(Date) - years(2),
-           Loc_last            = Loc_event,
-           Date_last           = last(Date) + years(2)
-    ) %>%
-    mutate(age_last            = calculate_age(Date_birth, Date_last),
-           Year_birth          = year(Date_birth)) %>%
-    left_join(select(
-      loc_key,
-      Loc_birth            = code,
-      Institution_birth    = Institution,
-      State_Province_birth = State_Province,
-      Country_birth        = Country,
-      iconLoc_birth        = iconLoc,
-      colorLoc_birth       = colorLoc
-    ), by = join_by(Loc_birth)) %>%
+    mutate(ID = min(ids) + add,
+           Date_birth = first(Date) - years(2),
+           Loc_last = Loc_event,
+           Date_last = last(Date) + years(2)) %>%
+    mutate(age_last = calculate_age(Date_birth, Date_last),
+           Year_birth = year(Date_birth)) %>%
+    left_join(select(loc_key,
+                     Loc_birth = code,
+                     Institution_birth = Institution,
+                     State_Province_birth = State_Province,
+                     Country_birth = Country,
+                     iconLoc_birth = iconLoc,
+                     colorLoc_birth = colorLoc), by = join_by(Loc_birth)) %>%
     bind_rows(slice_head(., n = 1)) %>%
     distinct()
 
@@ -648,15 +589,16 @@ add_hypotheticals <- function(studbook, parent, ids, loc_key) {
 
 #' Add All Hypothetical Parent Entries to the Studbook
 #'
-#' Combines hypothetical sire and dam entries and appends them to the studbook.
+#' Combines hypothetical parent entries for both sires and dams and appends them to the studbook. This function processes a list of missing parentage definitions and returns an updated studbook with new hypothetical entries.
 #'
-#' @param studbook A data frame of studbook data.
-#' @param hyp_defs A list containing definitions for hypothetical sires and dams.
-#' @param loc_key A data frame containing location key mappings.
-#' @return A data frame with all hypothetical parent entries added to the studbook.
-#' @importFrom purrr map_depth
+#' @param studbook A data frame of studbook data produced by \code{read_studbook}.
+#' @param loc_key A data frame containing location key mappings produced by \code{read_locations}.
+#' @param hyp_defs A list containing definitions for individuals that remain missing a parental assignment after manual matching using \code{find_parent}.
+#' @return A data frame with all hypothetical parent entries added as new rows and assigned to the relevant offspring.
+#' @importFrom purrr map_depth list_rbind
 #' @importFrom dplyr bind_rows distinct arrange
 #' @export
+#'
 add_all_hypotheticals <- function(studbook, hyp_defs, loc_key) {
   hypothetical_sires <- map_depth(hyp_defs$sires, 1, \(x) add_hypotheticals(studbook, "sire", x, loc_key)) %>%
     list_rbind(.)

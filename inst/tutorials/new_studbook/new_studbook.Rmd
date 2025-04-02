@@ -1,14 +1,35 @@
 ---
 title: "Load and Clean Studbook Data for Pygmy Slow Loris Provisional SSP"
+tutorial:
+  id: "new_studbook"
+  version: 1.0
 author: "Alicia Rich"
+date: "`r Sys.Date()`"
 output: learnr::tutorial
-    code_folding: "show"
 runtime: shiny_prerendered
+
 ---
 
 ```{r setup, include=FALSE}
+library(conflicted)
+library(here)
+library(knitr)
 library(learnr)
-knitr::opts_chunk$set(echo = FALSE)
+library(paletteer)
+library(shiny)
+library(tidyverse)
+library(zoopop)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  message  = FALSE,
+  warning  = FALSE,
+  echo     = TRUE,
+  include  = TRUE,
+  eval     = TRUE,
+  comment  = ""
+)
+conflicts_prefer(lubridate::interval)
+conflicts_prefer(dplyr::filter)
 ```
 
 
@@ -88,4 +109,74 @@ Now you have all three files that you need to perform the rest of the data wrang
 - `studbook_original.csv`, `locations_original.csv`, `btp_original.csv`
 
 ## Process Data
+
+### Institutions
+
+*Note that this code will automatically export an updated version of the dataset to the second path provided as a parameter.*
+
+```{r}
+locations <- read_locations("../../extdata/locations_original.csv", 
+                            "../../extdata/locations.csv", 
+                            "stratigraphy")
+```
+
+### Breeding and Transfer Plans
+
+*Note that this code will automatically export an updated version of the dataset to the second path provided as a parameter.*
+
+```{r}
+btp <- read_btp("../../extdata/btp_original.csv", "../../extdata/btp.csv", locations)
+```
+
+### Studbook
+
+```{r}
+studbook  <- read_studbook("../../extdata/studbook_original.csv", locations, btp)
+```
+
+### Fill Missing Parentage
+
+I created the function below to assist with scanning the studbook for missing Sire or Dam values for non-founders. It will produce a list of tibbles named by the individuals' ID. Each row of the tibble represents all males (if searching sires) or females (if searching dams) present at their birth institution during their birth year. Use this to screen for likely paternity/maternity assignments.
+
+```{r}
+missing_dads <- find_parent(studbook, locations, "sire")
+missing_moms <- find_parent(studbook, locations, "dam")
+```
+
+The list used for the `add_all_hypotheticals` function includes all individuals still missing a parental assignment. It will create hypothetical rows of data and ID's as placeholders in the studbook for optimal functioning with pedigree-based R packages/analyses. The function returns a version of the original studbook with these new rows and the parental assignments included.
+
+```{r}
+hyp_defs <- list(
+  sires = list(
+    c(1045, 1046),
+    2108,
+    1087,
+    2717
+    ),
+  dams = list(
+    1087,
+    2717
+    )
+  )
+studbook_revised <- studbook %>%
+  mutate(
+    Sire = case_match(ID, 
+                      1047 ~ 1012, 
+                      2738 ~ 2622, 
+                      .default = Sire),
+    Dam  = case_match(ID, 
+                      2738 ~ 2630, 
+                      .default = Dam)
+  ) %>%
+  add_all_hypotheticals(hyp_defs, locations)
+```
+
+Now we will export this version of the studbook as a csv file that we can use for other workflows and functions in this package.
+
+```{r}
+
+write_csv(studbook_revised, "../../extdata/studbook.csv")
+```
+
+
 

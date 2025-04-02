@@ -1,309 +1,95 @@
-﻿BTP,Institution,SB ID,Local ID,Sex,Age,Disposition,Location,Breeding,With,Notes,Facility_Note
-2022,"AKRON
-Akron Zoological Park
-Akron, OH",2605,101471,F,13,HOLD,AKRON,DO NOT BREED,,Excluded - Behavior,Facility Note: Male #2667 will remain at your facility at least until June 2022 since the female he will be paired with does not turn one until then and therefore cannot leave her group.
-2022,"AKRON
-Akron Zoological Park
-Akron, OH",2667,101772,M,5,SEND TO,CLEVELAND,BREED WITH,2714,,Facility Note: Male #2667 will remain at your facility at least until June 2022 since the female he will be paired with does not turn one until then and therefore cannot leave her group.
-2022,"AKRON
-Akron Zoological Park
-Akron, OH",2689,200616,M,2,RECEIVE FROM,CLEVELAND,DO NOT BREED,,,Facility Note: Male #2667 will remain at your facility at least until June 2022 since the female he will be paired with does not turn one until then and therefore cannot leave her group.
-2022,"AKRON
-Akron Zoological Park
-Akron, OH",2690,200617,M,2,RECEIVE FROM,CLEVELAND,DO NOT BREED,,,Facility Note: Male #2667 will remain at your facility at least until June 2022 since the female he will be paired with does not turn one until then and therefore cannot leave her group.
-2022,"BLOOMINGT
-Miller Park Zoo
-Bloomington, IL",2661,M17002,F,6,HOLD,BLOOMINGT,BREED WITH,2682,,Facility Note: Female #2661 has not reproduced yet at the age of six; no female has reproduced for the first time past the age of 10. Please contact the SSP Coordinator to discuss strategies to improve the chances of reproduction.
-2022,"BLOOMINGT
-Miller Park Zoo
-Bloomington, IL",2682,M19007,M,4,HOLD,BLOOMINGT,BREED WITH,2661,,Facility Note: Female #2661 has not reproduced yet at the age of six; no female has reproduced for the first time past the age of 10. Please contact the SSP Coordinator to discuss strategies to improve the chances of reproduction.
-2022,"CHICAGOBR
-Chicago Zoological Park / Brookfield Zoo
-Brookfield, IL",2626,4920,F,10,HOLD,CHICAGOBR,BREED WITH,2631,,"Facility Note: Both females can be sent out around August 2022, as close as possible to the same time."
-2022,"CHICAGOBR
-Chicago Zoological Park / Brookfield Zoo
-Brookfield, IL",2631,4919,M,11,HOLD,CHICAGOBR,BREED WITH,2626,,"Facility Note: Both females can be sent out around August 2022, as close as possible to the same time."
-2022,"CHICAGOBR
-Chicago Zoological Park / Brookfield Zoo
-Brookfield, IL",2707,9545,F,1,SEND TO,NY BRONX,BREED WITH,2713,,"Facility Note: Both females can be sent out around August 2022, as close as possible to the same time."
-2022,"CHICAGOBR
-Chicago Zoological Park / Brookfield Zoo
-Brookfield, IL",2708,9546,F,1,SEND TO,NZP-WASH,BREED WITH,2715,,"Facility Note: Both females can be sent out around August 2022, as close as possible to the same time."
-2022,"CHICAGOLP
-Lincoln Park Zoological Gardens
-Chicago, IL",2637,23548,F,10,HOLD,CHICAGOLP,DO NOT BREED,,,
-2022,"CHICAGOLP
-Lincoln Park Zoological Gardens
-Chicago, IL",2646,23550,M,8,HOLD,CHICAGOLP,DO NOT BREED,,,
-2022,"CINCINNAT
-Cincinnati Zoo & Botanical Garden
-Cincinnati, OH",2622,119021,M,11,HOLD,CINCINNAT,BREED WITH,2630,,
-2022,"CINCINNAT
-Cincinnati Zoo & Botanical Garden
-Cincinnati, OH",2630,UNK,F,11,HOLD,CINCINNAT,BREED WITH,2622,,
-2022,"CLEVELAND
-Cleveland Metroparks Zoo
-Cleveland, OH",2667,101772,M,5,RECEIVE FROM,AKRON,BREED WITH,2714,,Facility Note: Transfers will not occur until June 2022 at the earliest.
-2022,"CLEVELAND
-Cleveland Metroparks Zoo
-Cleveland, OH",2689,200616,M,2,SEND TO,AKRON,DO NOT BREED,,,Facility Note: Transfers will not occur until June 2022 at the earliest.
-2022,"CLEVELAND
-Cleveland Metroparks Zoo
-Cleveland, OH",2690,200617,M,2,SEND TO,AKRON,DO NOT BREED,,,Facility Note: Transfers will not occur until June 2022 at the earliest.
-2022,"CLEVELAND
-Cleveland Metroparks Zoo
-Cleveland, OH",2714,7878,F,0,RECEIVE FROM,LITTLEROC,BREED WITH,2667,,Facility Note: Transfers will not occur until June 2022 at the earliest.
-2022,"DULUTH
-Lake Superior Zoological Gardens
-Duluth, MN",2679,100503,F,4,HOLD,DULUTH,BREED WITH,2685,,Facility Note: Please contact the SSP Coordinator when you are ready to receive animals.
-2022,"DULUTH
-Lake Superior Zoological Gardens
-Duluth, MN",2685,100504,M,3,HOLD,DULUTH,BREED WITH,2679,,Facility Note: Please contact the SSP Coordinator when you are ready to receive animals.
-2022,"EL PASO
-El Paso Zoo
-El Paso, TX",2450,202198,M,16,HOLD,EL PASO,BREED WITH,2632,,"Facility Note: This pair has a low likelihood of success due to the male’s age, however, please do not limit breeding. No recorded male has reproduced past the age of 16."
-2022,"EL PASO
-El Paso Zoo
-El Paso, TX",2632,201291,F,11,HOLD,EL PASO,BREED WITH,2450,,"Facility Note: This pair has a low likelihood of success due to the male’s age, however, please do not limit breeding. No recorded male has reproduced past the age of 16."
-2022,"EVANSVLLE
-Mesker Park Zoo
-Evansville, IN",2502,119021,F,14,HOLD,EVANSVLLE,BREED WITH,2641,,"Facility Note: This pair has a low likelihood of success due to the female’s age, however, please do not limit
-breeding. No recorded female has reproduced past the age of 14."
-2022,"EVANSVLLE
-Mesker Park Zoo
-Evansville, IN",2641,118015,M,9,HOLD,EVANSVLLE,BREED WITH,2502,,"Facility Note: This pair has a low likelihood of success due to the female’s age, however, please do not limit
-breeding. No recorded female has reproduced past the age of 14."
-2022,"GARDENCTY
-Lee Richardson Zoo
-Garden City, KS",2666,117017,F,5,HOLD,GARDENCTY,BREED WITH,2671,,
-2022,"GARDENCTY
-Lee Richardson Zoo
-Garden City, KS",2671,117022,M,5,HOLD,GARDENCTY,BREED WITH,2666,,
-2022,"LITTLEROC
-Little Rock Zoological Gardens
-Little Rock, AK",2634,7403,M,11,HOLD,LITTLEROC,BREED WITH,2654,,Facility Note: Juveniles will be sent out no earlier than June 2022.
-2022,"LITTLEROC
-Little Rock Zoological Gardens
-Little Rock, AK",2654,7508,F,7,HOLD,LITTLEROC,BREED WITH,2634,,Facility Note: Juveniles will be sent out no earlier than June 2022.
-2022,"LITTLEROC
-Little Rock Zoological Gardens
-Little Rock, AK",2714,7878,F,0,SEND TO,CLEVELAND,BREED WITH,2667,,Facility Note: Juveniles will be sent out no earlier than June 2022.
-2022,"LITTLEROC
-Little Rock Zoological Gardens
-Little Rock, AK",2715,7879,M,0,SEND TO,NZP-WASH,BREED WITH,2708,,Facility Note: Juveniles will be sent out no earlier than June 2022.
-2022,"MEMPHIS
-Memphis Zoological Garden & Aquarium
-Memphis, TN",2673,19M042,M,4,HOLD,MEMPHIS,BREED WITH,2683,,
-2022,"MEMPHIS
-Memphis Zoological Garden & Aquarium
-Memphis, TN",2683,10M021,F,4,HOLD,MEMPHIS,BREED WITH,2673,,
-2022,"MOODY
-Aquarium & Rainforest at Moody Gardens
-Galveston, TX",2638,6379,F,10,HOLD,MOODY,BREED WITH,2649,,
-2022,"MOODY
-Aquarium & Rainforest at Moody Gardens
-Galveston, TX",2649,7832,M,9,HOLD,MOODY,BREED WITH,2638,,
-2022,"NY BRONX
-Bronx Zoo/Wildlife Conservation Society
-Bronx, NY",2623,M14052,M,11,HOLD,NY BRONX,BREED WITH,2640,,Facility Note: Will receive female from CHCIAGOBR no earlier than August 2022.
-2022,"NY BRONX
-Bronx Zoo/Wildlife Conservation Society
-Bronx, NY",2640,M14053,F,9,HOLD,NY BRONX,BREED WITH,2623,,Facility Note: Will receive female from CHCIAGOBR no earlier than August 2022.
-2022,"NY BRONX
-Bronx Zoo/Wildlife Conservation Society
-Bronx, NY",2707,9545,F,1,RECEIVE FROM,CHICAGOBR,BREED WITH,2713,,Facility Note: Will receive female from CHCIAGOBR no earlier than August 2022.
-2022,"NY BRONX
-Bronx Zoo/Wildlife Conservation Society
-Bronx, NY",2713,M21015,M,0,HOLD,NY BRONX,BREED WITH,2707,,Facility Note: Will receive female from CHCIAGOBR no earlier than August 2022.
-2022,"NZP-WASH
-Smithsonian National Zoological Park
-Washington, DC",2708,9546,F,1,RECEIVE FROM,CHICAGOBR,BREED WITH,2715,,"Facility Note: Welcome to the SSP! The female from CHICAGOBR will arrive no earlier than August 2022 and the male from LITTLEROC no earlier than June 2022. If possible, the male transfer could be delayed until August to coincide with the female."
-2022,"NZP-WASH
-Smithsonian National Zoological Park
-Washington, DC",2715,7879,M,0,RECEIVE FROM,LITTLEROC,BREED WITH,2708,,"Facility Note: Welcome to the SSP! The female from CHICAGOBR will arrive no earlier than August 2022 and the male from LITTLEROC no earlier than June 2022. If possible, the male transfer could be delayed until August to coincide with the female."
-2022,"OMAHA
-Omaha's Henry Doorly Zoo
-Omaha, NE",2652,24485,M,8,HOLD,OMAHA,BREED WITH,2677,,
-2022,"OMAHA
-Omaha's Henry Doorly Zoo
-Omaha, NE",2677,24709,F,4,HOLD,OMAHA,BREED WITH,2652,,
-2022,"PHILADELP
-Philadelphia Zoo
-Philadelphia, PA",2504,P09015,M,14,RECEIVE FROM,PROSPECTP,BREED WITH,2617,,Facility Note: Please talk to the SSP Coordinator for details regarding the transfer of male #2676.
-2022,"PHILADELP
-Philadelphia Zoo
-Philadelphia, PA",2617,104733,F,11,HOLD,PHILADELP,BREED WITH,2504,,Facility Note: Please talk to the SSP Coordinator for details regarding the transfer of male #2676.
-2022,"PHILADELP
-Philadelphia Zoo
-Philadelphia, PA",2676,105322,M,5,SEND TO,TBD,SEE NOTES,,Breed With 2659,Facility Note: Please talk to the SSP Coordinator for details regarding the transfer of male #2676.
-2022,"PROSPECTP
-Prospect Park Zoo
-Brooklyn, NY",2504,P09015,M,14,SEND TO,PHILADELP,BREED WITH,2617,,
-2022,"PUEBLO
-Pueblo Zoo
-Pueblo, CO",2614,M39021,F,12,HOLD,PUEBLO,SEE NOTES,,,"Facility Note: This pair has a low likelihood of success due to the female’s age and lack of prior reproduction, however, please do not limit breeding. No recorded female has bred for the first time past the age of 10."
-2022,"PUEBLO
-Pueblo Zoo
-Pueblo, CO",2653,M39022,M,7,HOLD,PUEBLO,SEE NOTES,,,"Facility Note: This pair has a low likelihood of success due to the female’s age and lack of prior reproduction, however, please do not limit breeding. No recorded female has bred for the first time past the age of 10."
-2025,"AKRON
-Akron Zoological Park
-500 Edgewood Avenue, Akron, Ohio 44307, United States",2690,102386,M,5,HOLD,AKRON,DO NOT BREED,,,
-2025,"BLOOMINGT
-Miller Park Zoo
-1020 S Morris Avenue, Bloomington, Illinois 61701, United States",2622,119021,M,14,RECEIVE FROM,CINCINNAT,BREED WITH,2661,,
-2025,"BLOOMINGT
-Miller Park Zoo
-1020 S Morris Avenue, Bloomington, Illinois 61701, United States",2661,M17002,F,9,HOLD,BLOOMINGT,BREED WITH,2622,,
-2025,"BLOOMINGT
-Miller Park Zoo
-1020 S Morris Avenue, Bloomington, Illinois 61701, United States",2682,M19007,M,7,SEND TO,NY BRONX,BREED WITH,2708,,
-2025,"CHICAGOLP
-Lincoln Park Zoological Gardens
-2001 N Clark Street, Chicago, Illinois 60614, United States",2637,23548,F,13,HOLD,CHICAGOLP,DO NOT BREED,,Excluded - Behavior,"Facility Note: The SSP Coordinator is aware of the health monitoring of #2707, please reach out if you are interested in breeding in the future."
-2025,"CHICAGOLP
-Lincoln Park Zoological Gardens
-2001 N Clark Street, Chicago, Illinois 60614, United States",2646,23550,M,11,HOLD,CHICAGOLP,DO NOT BREED,,,"Facility Note: The SSP Coordinator is aware of the health monitoring of #2707, please reach out if you are interested in breeding in the future."
-2025,"CHICAGOLP
-Lincoln Park Zoological Gardens
-2001 N Clark Street, Chicago, Illinois 60614, United States",2707,24349,F,4,HOLD,CHICAGOLP,DO NOT BREED,,,"Facility Note: The SSP Coordinator is aware of the health monitoring of #2707, please reach out if you are interested in breeding in the future."
-2025,"CINCINNAT
-Cincinnati Zoo & Botanical Garden
-3400 Vine Street, Cincinnati, Ohio 45220, United States",2622,119021,M,14,SEND TO,BLOOMINGT,BREED WITH,2661,,Facility Note: A breeding option for male #2738 will be identified as more space and individuals become available.
-2025,"CINCINNAT
-Cincinnati Zoo & Botanical Garden
-3400 Vine Street, Cincinnati, Ohio 45220, United States",2630,UND,F,14,HOLD,CINCINNAT,DO NOT BREED,,Excluded - Behavior,Facility Note: A breeding option for male #2738 will be identified as more space and individuals become available.
-2025,"CINCINNAT
-Cincinnati Zoo & Botanical Garden
-3400 Vine Street, Cincinnati, Ohio 45220, United States",2738,124049,M,0,HOLD,CINCINNAT,DO NOT BREED,,,Facility Note: A breeding option for male #2738 will be identified as more space and individuals become available.
-2025,"CLEVELAND
-Cleveland Metroparks Zoo
-3900 Wildlife Way, Cleveland, Ohio 44109, United States",2667,UND,M,8,HOLD,CLEVELAND,DO NOT BREED,,,
-2025,"CLEVELAND
-Cleveland Metroparks Zoo
-3900 Wildlife Way, Cleveland, Ohio 44109, United States",2714,220801,F,3,HOLD,CLEVELAND,DO NOT BREED,,,
-2025,"CLEVELAND
-Cleveland Metroparks Zoo
-3900 Wildlife Way, Cleveland, Ohio 44109, United States",2727,230707,M,1,HOLD,CLEVELAND,DO NOT BREED,,,
-2025,"COLUMBUS
-Columbus Zoo and Aquarium
-PO Box 400, Powell, Ohio 43065, United States",2639,213146,M,13,HOLD,COLUMBUS,DO NOT BREED,,"Died during comment
-period",
-2025,"COLUMBUS
-Columbus Zoo and Aquarium
-PO Box 400, Powell, Ohio 43065, United States",2642,213145,F,13,HOLD,COLUMBUS,BREED WITH,2689,,
-2025,"COLUMBUS
-Columbus Zoo and Aquarium
-PO Box 400, Powell, Ohio 43065, United States",2689,219051,M,5,HOLD,COLUMBUS,BREED WITH,2642,,
-2025,"DULUTH
-Lake Superior Zoological Gardens
-7210 Fremont Street, Duluth, Minnesota 55807, United States",2679,100503,F,7,HOLD,DULUTH,BREED WITH,2685,,
-2025,"DULUTH
-Lake Superior Zoological Gardens
-7210 Fremont Street, Duluth, Minnesota 55807, United States",2685,100504,M,7,HOLD,DULUTH,BREED WITH,2679,,
-2025,"EL PASO
-El Paso Zoo
-4001 E Paisano Drive, El Paso, Texas 79905, United States",2504,202393,F,17,HOLD,EL PASO,DO NOT BREED,,Excluded - Age,Facility Note: Please reach out to the SSP Coordinator when you are ready to receive new individuals.
-2025,"GARDENCTY
-Lee Richardson Zoo
-312 Finnup Drive, Garden City, Kansas 67846, United States",2666,117017,F,8,HOLD,GARDENCTY,BREED WITH,2671,,
-2025,"GARDENCTY
-Lee Richardson Zoo
-312 Finnup Drive, Garden City, Kansas 67846, United States",2671,117022,M,8,HOLD,GARDENCTY,BREED WITH,2666,,
-2025,"LITTLEROC
-Little Rock Zoological Gardens
-One Jonesboro Drive, Little Rock, Arkansas 72205, United States",2634,7403,M,14,HOLD,LITTLEROC,DO NOT BREED,,"Died during comment
-period","Facility Note: The SSP Coordinator is aware of your request to place the offspring and will work to fulfill this request as more
-space becomes available."
-2025,"LITTLEROC
-Little Rock Zoological Gardens
-One Jonesboro Drive, Little Rock, Arkansas 72205, United States",2654,7508,F,10,HOLD,LITTLEROC,DO NOT BREED,,,"Facility Note: The SSP Coordinator is aware of your request to place the offspring and will work to fulfill this request as more
-space becomes available."
-2025,"LITTLEROC
-Little Rock Zoological Gardens
-One Jonesboro Drive, Little Rock, Arkansas 72205, United States",2729,7997,M,1,HOLD,LITTLEROC,DO NOT BREED,,,"Facility Note: The SSP Coordinator is aware of your request to place the offspring and will work to fulfill this request as more
-space becomes available."
-2025,"LITTLEROC
-Little Rock Zoological Gardens
-One Jonesboro Drive, Little Rock, Arkansas 72205, United States",2730,7998,M,1,HOLD,LITTLEROC,DO NOT BREED,,,"Facility Note: The SSP Coordinator is aware of your request to place the offspring and will work to fulfill this request as more
-space becomes available."
-2025,"MEMPHIS
-Memphis Zoological Garden & Aquarium
-2000 Prentiss Place, Memphis, Tennessee 38112, United States",2673,19M042,M,8,HOLD,MEMPHIS,BREED WITH,2718,,
-2025,"MEMPHIS
-Memphis Zoological Garden & Aquarium
-2000 Prentiss Place, Memphis, Tennessee 38112, United States",2718,24M011,F,2,HOLD,MEMPHIS,BREED WITH,2673,,
-2025,"MEMPHIS
-Memphis Zoological Garden & Aquarium
-2000 Prentiss Place, Memphis, Tennessee 38112, United States",2732,23M072,M,1,HOLD,MEMPHIS,DO NOT BREED,,,
-2025,"MILWAUKEE
-Milwaukee County Zoological Gardens
-10001 W Bluemound Road, Milwaukee, Wisconsin 53226, United States",2626,UND,F,14,HOLD,MILWAUKEE,DO NOT BREED,,Excluded - Behavior,
-2025,"MILWAUKEE
-Milwaukee County Zoological Gardens
-10001 W Bluemound Road, Milwaukee, Wisconsin 53226, United States",2631,UND,M,14,HOLD,MILWAUKEE,DO NOT BREED,,,
-2025,"MOODY
-Aquarium at Moody Gardens
-1 Hope Boulevard, Galveston, Texas 77554, United States",2649,7832,M,12,HOLD,MOODY,BREED WITH,2659,,
-2025,"MOODY
-Aquarium at Moody Gardens
-1 Hope Boulevard, Galveston, Texas 77554, United States",2659,10066,F,9,HOLD,MOODY,BREED WITH,2649,,
-2025,"MOODY
-Aquarium at Moody Gardens
-1 Hope Boulevard, Galveston, Texas 77554, United States",2719,10167,F,2,HOLD,MOODY,BREED WITH,2723,,
-2025,"MOODY
-Aquarium at Moody Gardens
-1 Hope Boulevard, Galveston, Texas 77554, United States",2723,9885,M,1,HOLD,MOODY,BREED WITH,2719,,
-2025,"NY BRONX
-Bronx Zoo/Wildlife Conservation Society
-2300 Southern Boulevard, Bronx, New York 10460, United States",2623,M14052,M,14,HOLD,NY BRONX,BREED WITH,2640,,
-2025,"NY BRONX
-Bronx Zoo/Wildlife Conservation Society
-2300 Southern Boulevard, Bronx, New York 10460, United States",2640,M14053,F,12,HOLD,NY BRONX,BREED WITH,2623,,
-2025,"NY BRONX
-Bronx Zoo/Wildlife Conservation Society
-2300 Southern Boulevard, Bronx, New York 10460, United States",2682,M19007,M,7,RECEIVE FROM,BLOOMINGT,BREED WITH,2708,,
-2025,"NY BRONX
-Bronx Zoo/Wildlife Conservation Society
-2300 Southern Boulevard, Bronx, New York 10460, United States",2708,116283,F,4,RECEIVE FROM,NZP-WASH,BREED WITH,2682,,
-2025,"NZP-WASH
-Smithsonian National Zoological Park
-3001 Connecticut Avenue NW, Washington, DC 20008, United States",2708,116283,F,4,SEND TO,NY BRONX,BREED WITH,2682,,
-2025,"NZP-WASH
-Smithsonian National Zoological Park
-3001 Connecticut Avenue NW, Washington, DC 20008, United States",2715,116282,M,3,HOLD,NZP-WASH,DO NOT BREED,,,
-2025,"NZP-WASH
-Smithsonian National Zoological Park
-3001 Connecticut Avenue NW, Washington, DC 20008, United States",2735,116461,M,0,HOLD,NZP-WASH,DO NOT BREED,,,
-2025,"NZP-WASH
-Smithsonian National Zoological Park
-3001 Connecticut Avenue NW, Washington, DC 20008, United States",2736,116462,F,0,HOLD,NZP-WASH,DO NOT BREED,,,
-2025,"OMAHA
-Omaha's Henry Doorly Zoo
-3701 S 10th Street, Omaha, Nebraska 68107, United States",2652,24485,M,11,HOLD,OMAHA,BREED WITH,2677,,
-2025,"OMAHA
-Omaha's Henry Doorly Zoo
-3701 S 10th Street, Omaha, Nebraska 68107, United States",2677,24709,F,7,HOLD,OMAHA,BREED WITH,2652,,
-2025,"PHILADELP
-Philadelphia Zoo
-3400 W Girard Avenue, Philadelphia, Pennsylvania 19104, United States",2617,104733,F,14,HOLD,PHILADELP,DO NOT BREED,,Excluded - Age/No breeding success,
-2025,"PHILADELP
-Philadelphia Zoo
-3400 W Girard Avenue, Philadelphia, Pennsylvania 19104, United States",2676,105322,M,8,HOLD,PHILADELP,BREED WITH,2713,,
-2025,"PHILADELP
-Philadelphia Zoo
-3400 W Girard Avenue, Philadelphia, Pennsylvania 19104, United States",2713,2815,F,3,RECEIVE FROM,W ORANGE,BREED WITH,2676,,
-2025,"PUEBLO
-Pueblo Zoo
-3455 Nuckolls Avenue, Pueblo, Colorado 81005, United States",2614,M39021,F,15,HOLD,PUEBLO,BREED WITH,2653,,"Facility Note: The SSP Coordinator acknowledges the lower likelihood of this pair breeding due to the female’s age, however, please do not prevent breeding."
-2025,"PUEBLO
-Pueblo Zoo
-3455 Nuckolls Avenue, Pueblo, Colorado 81005, United States",2653,M39022,M,10,HOLD,PUEBLO,BREED WITH,2614,,"Facility Note: The SSP Coordinator acknowledges the lower likelihood of this pair breeding due to the female’s age, however, please do not prevent breeding."
-2025,"W ORANGE
-Turtle Back Zoo
-560 Northfield Avenue, West Orange, New Jersey 7052, United States",2641,2889,M,12,HOLD,W ORANGE,BREED WITH,2717,,
-2025,"W ORANGE
-Turtle Back Zoo
-560 Northfield Avenue, West Orange, New Jersey 7052, United States",2713,2815,F,3,SEND TO,PHILADELP,BREED WITH,2676,,
-2025,"W ORANGE
-Turtle Back Zoo
-560 Northfield Avenue, West Orange, New Jersey 7052, United States",2717,2691,F,---,HOLD,W ORANGE,BREED WITH,2641,,
+ID,include,exclude,Sex,year,Date,Event,age,Year_birth,Location,transfer,breeding,mate,note,code,Institution,State_Province,Country,code_country,iconLoc,colorLoc,transfer_code
+2450,y,n,M,2022,2022-02-01,btp,16,2006,ELPASO,NA,BREED WITH,2632,"This pair has a low likelihood of success due to the male’s age, however, please do not limit breeding. No recorded male has reproduced past the age of 16.",ELP,El Paso Zoo,Texas,United States,USA,🇺🇸,#7FC64E,NA
+2502,y,n,F,2022,2022-02-01,btp,14,2008,EVANSVLLE,NA,BREED WITH,2641,"This pair has a low likelihood of success due to the female’s age, however, please do not limit
+breeding. No recorded female has reproduced past the age of 14.",EVA,Mesker Park Zoo,Indiana,United States,USA,🇺🇸,#8CCD57,NA
+2504,y,n,M,2022,2022-02-01,btp,14,2008,PROSPECTP,PHILADELP,BREED WITH,2617,Please talk to the SSP Coordinator for details regarding the transfer of male #2676.,PRO,Prospect Park Zoo,New York,United States,USA,🇺🇸,#FDB462,PHI
+2504,n,age,F,2025,2025-02-01,btp,17,2008,ELPASO,NA,DO NOT BREED,NA,Please reach out to the SSP Coordinator when you are ready to receive new individuals.,ELP,El Paso Zoo,Texas,United States,USA,🇺🇸,#7FC64E,NA
+2605,n,behavior,F,2022,2022-02-01,btp,13,2009,AKRON,NA,DO NOT BREED,NA,Male #2667 will remain at your facility at least until June 2022 since the female he will be paired with does not turn one until then and therefore cannot leave her group.,AKR,Akron Zoological Park,Ohio,United States,USA,🇺🇸,#A6D84A,NA
+2614,y,n,F,2022,2022-02-01,btp,12,2010,PUEBLO,NA,SEE NOTES,NA,"This pair has a low likelihood of success due to the female’s age and lack of prior reproduction, however, please do not limit breeding. No recorded female has bred for the first time past the age of 10.",PUE,Pueblo Zoo,Colorado,United States,USA,🇺🇸,#D9F0DF,NA
+2614,y,n,F,2025,2025-02-01,btp,15,2010,PUEBLO,NA,BREED WITH,2653,"The SSP Coordinator acknowledges the lower likelihood of this pair breeding due to the female’s age, however, please do not prevent breeding.",PUE,Pueblo Zoo,Colorado,United States,USA,🇺🇸,#D9F0DF,NA
+2617,y,n,F,2022,2022-02-01,btp,11,2011,PHILADELP,NA,BREED WITH,2504,Please talk to the SSP Coordinator for details regarding the transfer of male #2676.,PHI,Philadelphia Zoo,Pennsylvania,United States,USA,🇺🇸,#A6D975,NA
+2617,n,age,F,2025,2025-02-01,btp,14,2011,PHILADELP,NA,DO NOT BREED,NA,NA,PHI,Philadelphia Zoo,Pennsylvania,United States,USA,🇺🇸,#A6D975,NA
+2622,y,n,M,2022,2022-02-01,btp,11,2011,CINCINNAT,NA,BREED WITH,2630,NA,CIN,Cincinnati Zoo & Botanical Garden,Ohio,United States,USA,🇺🇸,#34B2C9,NA
+2622,y,n,M,2025,2025-02-01,btp,14,2011,CINCINNAT,BLOOMINGT,BREED WITH,2661,A breeding option for male #2738 will be identified as more space and individuals become available.,CIN,Cincinnati Zoo & Botanical Garden,Ohio,United States,USA,🇺🇸,#34B2C9,BLO
+2623,y,n,M,2022,2022-02-01,btp,11,2011,NYBRONX,NA,BREED WITH,2640,Will receive female from CHCIAGOBR no earlier than August 2022.,NYB,Bronx Zoo/Wildlife Conservation Society,New York,United States,USA,🇺🇸,#CCEBD1,NA
+2623,y,n,M,2025,2025-02-01,btp,14,2011,NYBRONX,NA,BREED WITH,2640,NA,NYB,Bronx Zoo/Wildlife Conservation Society,New York,United States,USA,🇺🇸,#CCEBD1,NA
+2626,y,n,F,2022,2022-02-01,btp,10,2012,CHICAGOBR,NA,BREED WITH,2631,"Both females can be sent out around August 2022, as close as possible to the same time.",CBR,Chicago Zoological Park / Brookfield Zoo,Illinois,United States,USA,🇺🇸,#FDC091,NA
+2626,n,behavior,F,2025,2025-02-01,btp,14,2011,MILWAUKEE,NA,DO NOT BREED,NA,NA,MIL,Milwaukee County Zoological Gardens,Wisconsin,United States,USA,🇺🇸,#FFF2BA,NA
+2630,y,n,F,2022,2022-02-01,btp,11,2011,CINCINNAT,NA,BREED WITH,2622,NA,CIN,Cincinnati Zoo & Botanical Garden,Ohio,United States,USA,🇺🇸,#34B2C9,NA
+2630,n,behavior,F,2025,2025-02-01,btp,14,2011,CINCINNAT,NA,DO NOT BREED,NA,A breeding option for male #2738 will be identified as more space and individuals become available.,CIN,Cincinnati Zoo & Botanical Garden,Ohio,United States,USA,🇺🇸,#34B2C9,NA
+2631,y,n,M,2022,2022-02-01,btp,11,2011,CHICAGOBR,NA,BREED WITH,2626,"Both females can be sent out around August 2022, as close as possible to the same time.",CBR,Chicago Zoological Park / Brookfield Zoo,Illinois,United States,USA,🇺🇸,#FDC091,NA
+2631,y,n,M,2025,2025-02-01,btp,14,2011,MILWAUKEE,NA,DO NOT BREED,NA,NA,MIL,Milwaukee County Zoological Gardens,Wisconsin,United States,USA,🇺🇸,#FFF2BA,NA
+2632,y,n,F,2022,2022-02-01,btp,11,2011,ELPASO,NA,BREED WITH,2450,"This pair has a low likelihood of success due to the male’s age, however, please do not limit breeding. No recorded male has reproduced past the age of 16.",ELP,El Paso Zoo,Texas,United States,USA,🇺🇸,#7FC64E,NA
+2634,y,n,M,2022,2022-02-01,btp,11,2011,LITTLEROC,NA,BREED WITH,2654,Juveniles will be sent out no earlier than June 2022.,LIT,Little Rock Zoological Gardens,Arkansas,United States,USA,🇺🇸,#C983BF,NA
+2634,n,deceased,M,2025,2025-02-01,btp,14,2011,LITTLEROC,NA,DO NOT BREED,NA,"The SSP Coordinator is aware of your request to place the offspring and will work to fulfill this request as more
+space becomes available.",LIT,Little Rock Zoological Gardens,Arkansas,United States,USA,🇺🇸,#C983BF,NA
+2637,y,n,F,2022,2022-02-01,btp,10,2012,CHICAGOLP,NA,DO NOT BREED,NA,NA,CHI,Lincoln Park Zoological Gardens,Illinois,United States,USA,🇺🇸,#67C5CA,NA
+2637,n,behavior,F,2025,2025-02-01,btp,13,2012,CHICAGOLP,NA,DO NOT BREED,NA,"The SSP Coordinator is aware of the health monitoring of #2707, please reach out if you are interested in breeding in the future.",CHI,Lincoln Park Zoological Gardens,Illinois,United States,USA,🇺🇸,#67C5CA,NA
+2638,y,n,F,2022,2022-02-01,btp,10,2012,MOODY,NA,BREED WITH,2649,NA,MOO,Aquarium & Rainforest at Moody Gardens,Texas,United States,USA,🇺🇸,#FDCC8A,NA
+2639,n,deceased,M,2025,2025-02-01,btp,13,2012,COLUMBUS,NA,DO NOT BREED,NA,NA,COL,Columbus Zoo and Aquarium,Ohio,United States,USA,🇺🇸,#FED99A,NA
+2640,y,n,F,2022,2022-02-01,btp,9,2013,NYBRONX,NA,BREED WITH,2623,Will receive female from CHCIAGOBR no earlier than August 2022.,NYB,Bronx Zoo/Wildlife Conservation Society,New York,United States,USA,🇺🇸,#CCEBD1,NA
+2640,y,n,F,2025,2025-02-01,btp,12,2013,NYBRONX,NA,BREED WITH,2623,NA,NYB,Bronx Zoo/Wildlife Conservation Society,New York,United States,USA,🇺🇸,#CCEBD1,NA
+2641,y,n,M,2022,2022-02-01,btp,9,2013,EVANSVLLE,NA,BREED WITH,2502,"This pair has a low likelihood of success due to the female’s age, however, please do not limit
+breeding. No recorded female has reproduced past the age of 14.",EVA,Mesker Park Zoo,Indiana,United States,USA,🇺🇸,#8CCD57,NA
+2641,y,n,M,2025,2025-02-01,btp,12,2013,WORANGE,NA,BREED WITH,2717,NA,WGE,Turtle Back Zoo,New Jersey,United States,USA,🇺🇸,#E5D075,NA
+2642,y,n,F,2025,2025-02-01,btp,13,2012,COLUMBUS,NA,BREED WITH,2689,NA,COL,Columbus Zoo and Aquarium,Ohio,United States,USA,🇺🇸,#FED99A,NA
+2646,y,n,M,2022,2022-02-01,btp,8,2014,CHICAGOLP,NA,DO NOT BREED,NA,NA,CHI,Lincoln Park Zoological Gardens,Illinois,United States,USA,🇺🇸,#67C5CA,NA
+2646,y,n,M,2025,2025-02-01,btp,11,2014,CHICAGOLP,NA,DO NOT BREED,NA,"The SSP Coordinator is aware of the health monitoring of #2707, please reach out if you are interested in breeding in the future.",CHI,Lincoln Park Zoological Gardens,Illinois,United States,USA,🇺🇸,#67C5CA,NA
+2649,y,n,M,2022,2022-02-01,btp,9,2013,MOODY,NA,BREED WITH,2638,NA,MOO,Aquarium & Rainforest at Moody Gardens,Texas,United States,USA,🇺🇸,#FDCC8A,NA
+2649,y,n,M,2025,2025-02-01,btp,12,2013,MOODY,NA,BREED WITH,2659,NA,MOO,Aquarium & Rainforest at Moody Gardens,Texas,United States,USA,🇺🇸,#FDCC8A,NA
+2652,y,n,M,2022,2022-02-01,btp,8,2014,OMAHA,NA,BREED WITH,2677,NA,OMA,Omaha's Henry Doorly Zoo,Nebraska,United States,USA,🇺🇸,#009270,NA
+2652,y,n,M,2025,2025-02-01,btp,11,2014,OMAHA,NA,BREED WITH,2677,NA,OMA,Omaha's Henry Doorly Zoo,Nebraska,United States,USA,🇺🇸,#009270,NA
+2653,y,n,M,2022,2022-02-01,btp,7,2015,PUEBLO,NA,SEE NOTES,NA,"This pair has a low likelihood of success due to the female’s age and lack of prior reproduction, however, please do not limit breeding. No recorded female has bred for the first time past the age of 10.",PUE,Pueblo Zoo,Colorado,United States,USA,🇺🇸,#D9F0DF,NA
+2653,y,n,M,2025,2025-02-01,btp,10,2015,PUEBLO,NA,BREED WITH,2614,"The SSP Coordinator acknowledges the lower likelihood of this pair breeding due to the female’s age, however, please do not prevent breeding.",PUE,Pueblo Zoo,Colorado,United States,USA,🇺🇸,#D9F0DF,NA
+2654,y,n,F,2022,2022-02-01,btp,7,2015,LITTLEROC,NA,BREED WITH,2634,Juveniles will be sent out no earlier than June 2022.,LIT,Little Rock Zoological Gardens,Arkansas,United States,USA,🇺🇸,#C983BF,NA
+2654,y,n,F,2025,2025-02-01,btp,10,2015,LITTLEROC,NA,DO NOT BREED,NA,"The SSP Coordinator is aware of your request to place the offspring and will work to fulfill this request as more
+space becomes available.",LIT,Little Rock Zoological Gardens,Arkansas,United States,USA,🇺🇸,#C983BF,NA
+2659,y,n,F,2025,2025-02-01,btp,9,2016,MOODY,NA,BREED WITH,2649,NA,MOO,Aquarium & Rainforest at Moody Gardens,Texas,United States,USA,🇺🇸,#FDCC8A,NA
+2661,y,n,F,2022,2022-02-01,btp,6,2016,BLOOMINGT,NA,BREED WITH,2682,Female #2661 has not reproduced yet at the age of six; no female has reproduced for the first time past the age of 10. Please contact the SSP Coordinator to discuss strategies to improve the chances of reproduction.,BLO,Miller Park Zoo,Illinois,United States,USA,🇺🇸,#FFE619,NA
+2661,y,n,F,2025,2025-02-01,btp,9,2016,BLOOMINGT,NA,BREED WITH,2622,NA,BLO,Miller Park Zoo,Illinois,United States,USA,🇺🇸,#FFE619,NA
+2666,y,n,F,2022,2022-02-01,btp,5,2017,GARDENCTY,NA,BREED WITH,2671,NA,GAR,Lee Richardson Zoo,Kansas,United States,USA,🇺🇸,#F0047F,NA
+2666,y,n,F,2025,2025-02-01,btp,8,2017,GARDENCTY,NA,BREED WITH,2671,NA,GAR,Lee Richardson Zoo,Kansas,United States,USA,🇺🇸,#F0047F,NA
+2667,y,n,M,2022,2022-02-01,btp,5,2017,AKRON,CLEVELAND,BREED WITH,2714,Transfers will not occur until June 2022 at the earliest.Male #2667 will remain at your facility at least until June 2022 since the female he will be paired with does not turn one until then and therefore cannot leave her group.,AKR,Akron Zoological Park,Ohio,United States,USA,🇺🇸,#A6D84A,CLE
+2667,y,n,M,2025,2025-02-01,btp,8,2017,CLEVELAND,NA,DO NOT BREED,NA,NA,CLE,Cleveland Metroparks Zoo,Ohio,United States,USA,🇺🇸,#FFFF4D,NA
+2671,y,n,M,2022,2022-02-01,btp,5,2017,GARDENCTY,NA,BREED WITH,2666,NA,GAR,Lee Richardson Zoo,Kansas,United States,USA,🇺🇸,#F0047F,NA
+2671,y,n,M,2025,2025-02-01,btp,8,2017,GARDENCTY,NA,BREED WITH,2666,NA,GAR,Lee Richardson Zoo,Kansas,United States,USA,🇺🇸,#F0047F,NA
+2673,y,n,M,2022,2022-02-01,btp,4,2018,MEMPHIS,NA,BREED WITH,2683,NA,MEM,Memphis Zoological Garden & Aquarium,Tennessee,United States,USA,🇺🇸,#FCC0B2,NA
+2673,y,n,M,2025,2025-02-01,btp,8,2017,MEMPHIS,NA,BREED WITH,2718,NA,MEM,Memphis Zoological Garden & Aquarium,Tennessee,United States,USA,🇺🇸,#FCC0B2,NA
+2676,y,n,M,2022,2022-02-01,btp,5,2017,NA,TBD,SEE NOTES,2659,Please talk to the SSP Coordinator for details regarding the transfer of male #2676.,NA,NA,NA,NA,NA,NA,NA,NA
+2676,y,n,M,2025,2025-02-01,btp,8,2017,PHILADELP,NA,BREED WITH,2713,NA,PHI,Philadelphia Zoo,Pennsylvania,United States,USA,🇺🇸,#A6D975,NA
+2677,y,n,F,2022,2022-02-01,btp,4,2018,OMAHA,NA,BREED WITH,2652,NA,OMA,Omaha's Henry Doorly Zoo,Nebraska,United States,USA,🇺🇸,#009270,NA
+2677,y,n,F,2025,2025-02-01,btp,7,2018,OMAHA,NA,BREED WITH,2652,NA,OMA,Omaha's Henry Doorly Zoo,Nebraska,United States,USA,🇺🇸,#009270,NA
+2679,y,n,F,2022,2022-02-01,btp,4,2018,DULUTH,NA,BREED WITH,2685,Please contact the SSP Coordinator when you are ready to receive animals.,DUL,Lake Superior Zoological Gardens,Minnesota,United States,USA,🇺🇸,#1A9D6F,NA
+2679,y,n,F,2025,2025-02-01,btp,7,2018,DULUTH,NA,BREED WITH,2685,NA,DUL,Lake Superior Zoological Gardens,Minnesota,United States,USA,🇺🇸,#1A9D6F,NA
+2682,y,n,M,2022,2022-02-01,btp,4,2018,BLOOMINGT,NA,BREED WITH,2661,Female #2661 has not reproduced yet at the age of six; no female has reproduced for the first time past the age of 10. Please contact the SSP Coordinator to discuss strategies to improve the chances of reproduction.,BLO,Miller Park Zoo,Illinois,United States,USA,🇺🇸,#FFE619,NA
+2682,y,n,M,2025,2025-02-01,btp,7,2018,BLOOMINGT,NYBRONX,BREED WITH,2708,NA,BLO,Miller Park Zoo,Illinois,United States,USA,🇺🇸,#FFE619,NYB
+2683,y,n,F,2022,2022-02-01,btp,4,2018,MEMPHIS,NA,BREED WITH,2673,NA,MEM,Memphis Zoological Garden & Aquarium,Tennessee,United States,USA,🇺🇸,#FCC0B2,NA
+2685,y,n,M,2022,2022-02-01,btp,3,2019,DULUTH,NA,BREED WITH,2679,Please contact the SSP Coordinator when you are ready to receive animals.,DUL,Lake Superior Zoological Gardens,Minnesota,United States,USA,🇺🇸,#1A9D6F,NA
+2685,y,n,M,2025,2025-02-01,btp,7,2018,DULUTH,NA,BREED WITH,2679,NA,DUL,Lake Superior Zoological Gardens,Minnesota,United States,USA,🇺🇸,#1A9D6F,NA
+2689,y,n,M,2022,2022-02-01,btp,2,2020,CLEVELAND,AKRON,DO NOT BREED,NA,Male #2667 will remain at your facility at least until June 2022 since the female he will be paired with does not turn one until then and therefore cannot leave her group.Transfers will not occur until June 2022 at the earliest.,CLE,Cleveland Metroparks Zoo,Ohio,United States,USA,🇺🇸,#FFFF4D,AKR
+2689,y,n,M,2025,2025-02-01,btp,5,2020,COLUMBUS,NA,BREED WITH,2642,NA,COL,Columbus Zoo and Aquarium,Ohio,United States,USA,🇺🇸,#FED99A,NA
+2690,y,n,M,2022,2022-02-01,btp,2,2020,CLEVELAND,AKRON,DO NOT BREED,NA,Male #2667 will remain at your facility at least until June 2022 since the female he will be paired with does not turn one until then and therefore cannot leave her group.Transfers will not occur until June 2022 at the earliest.,CLE,Cleveland Metroparks Zoo,Ohio,United States,USA,🇺🇸,#FFFF4D,AKR
+2690,y,n,M,2025,2025-02-01,btp,5,2020,AKRON,NA,DO NOT BREED,NA,NA,AKR,Akron Zoological Park,Ohio,United States,USA,🇺🇸,#A6D84A,NA
+2707,y,n,F,2022,2022-02-01,btp,1,2021,CHICAGOBR,NYBRONX,BREED WITH,2713,"Will receive female from CHCIAGOBR no earlier than August 2022.Both females can be sent out around August 2022, as close as possible to the same time.",CBR,Chicago Zoological Park / Brookfield Zoo,Illinois,United States,USA,🇺🇸,#FDC091,NYB
+2707,y,n,F,2025,2025-02-01,btp,4,2021,CHICAGOLP,NA,DO NOT BREED,NA,"The SSP Coordinator is aware of the health monitoring of #2707, please reach out if you are interested in breeding in the future.",CHI,Lincoln Park Zoological Gardens,Illinois,United States,USA,🇺🇸,#67C5CA,NA
+2708,y,n,F,2022,2022-02-01,btp,1,2021,CHICAGOBR,NZPWASH,BREED WITH,2715,"Welcome to the SSP! The female from CHICAGOBR will arrive no earlier than August 2022 and the male from LITTLEROC no earlier than June 2022. If possible, the male transfer could be delayed until August to coincide with the female.Both females can be sent out around August 2022, as close as possible to the same time.",CBR,Chicago Zoological Park / Brookfield Zoo,Illinois,United States,USA,🇺🇸,#FDC091,NZP
+2708,y,n,F,2025,2025-02-01,btp,4,2021,NZPWASH,NYBRONX,BREED WITH,2682,NA,NZP,Smithsonian National Zoological Park,District of Columbia,United States,USA,🇺🇸,#CCEA97,NYB
+2713,y,n,M,2022,2022-02-01,btp,0,2022,NYBRONX,NA,BREED WITH,2707,Will receive female from CHCIAGOBR no earlier than August 2022.,NYB,Bronx Zoo/Wildlife Conservation Society,New York,United States,USA,🇺🇸,#CCEBD1,NA
+2713,y,n,F,2025,2025-02-01,btp,3,2022,WORANGE,PHILADELP,BREED WITH,2676,NA,WGE,Turtle Back Zoo,New Jersey,United States,USA,🇺🇸,#E5D075,PHI
+2714,y,n,F,2022,2022-02-01,btp,0,2022,LITTLEROC,CLEVELAND,BREED WITH,2667,Transfers will not occur until June 2022 at the earliest.Juveniles will be sent out no earlier than June 2022.,LIT,Little Rock Zoological Gardens,Arkansas,United States,USA,🇺🇸,#C983BF,CLE
+2714,y,n,F,2025,2025-02-01,btp,3,2022,CLEVELAND,NA,DO NOT BREED,NA,NA,CLE,Cleveland Metroparks Zoo,Ohio,United States,USA,🇺🇸,#FFFF4D,NA
+2715,y,n,M,2022,2022-02-01,btp,0,2022,LITTLEROC,NZPWASH,BREED WITH,2708,"Welcome to the SSP! The female from CHICAGOBR will arrive no earlier than August 2022 and the male from LITTLEROC no earlier than June 2022. If possible, the male transfer could be delayed until August to coincide with the female.Juveniles will be sent out no earlier than June 2022.",LIT,Little Rock Zoological Gardens,Arkansas,United States,USA,🇺🇸,#C983BF,NZP
+2715,y,n,M,2025,2025-02-01,btp,3,2022,NZPWASH,NA,DO NOT BREED,NA,NA,NZP,Smithsonian National Zoological Park,District of Columbia,United States,USA,🇺🇸,#CCEA97,NA
+2717,y,n,F,2025,2025-02-01,btp,NA,NA,WORANGE,NA,BREED WITH,2641,NA,WGE,Turtle Back Zoo,New Jersey,United States,USA,🇺🇸,#E5D075,NA
+2718,y,n,F,2025,2025-02-01,btp,2,2023,MEMPHIS,NA,BREED WITH,2673,NA,MEM,Memphis Zoological Garden & Aquarium,Tennessee,United States,USA,🇺🇸,#FCC0B2,NA
+2719,y,n,F,2025,2025-02-01,btp,2,2023,MOODY,NA,BREED WITH,2723,NA,MOO,Aquarium & Rainforest at Moody Gardens,Texas,United States,USA,🇺🇸,#FDCC8A,NA
+2723,y,n,M,2025,2025-02-01,btp,1,2024,MOODY,NA,BREED WITH,2719,NA,MOO,Aquarium & Rainforest at Moody Gardens,Texas,United States,USA,🇺🇸,#FDCC8A,NA
+2727,y,n,M,2025,2025-02-01,btp,1,2024,CLEVELAND,NA,DO NOT BREED,NA,NA,CLE,Cleveland Metroparks Zoo,Ohio,United States,USA,🇺🇸,#FFFF4D,NA
+2729,y,n,M,2025,2025-02-01,btp,1,2024,LITTLEROC,NA,DO NOT BREED,NA,"The SSP Coordinator is aware of your request to place the offspring and will work to fulfill this request as more
+space becomes available.",LIT,Little Rock Zoological Gardens,Arkansas,United States,USA,🇺🇸,#C983BF,NA
+2730,y,n,M,2025,2025-02-01,btp,1,2024,LITTLEROC,NA,DO NOT BREED,NA,"The SSP Coordinator is aware of your request to place the offspring and will work to fulfill this request as more
+space becomes available.",LIT,Little Rock Zoological Gardens,Arkansas,United States,USA,🇺🇸,#C983BF,NA
+2732,y,n,M,2025,2025-02-01,btp,1,2024,MEMPHIS,NA,DO NOT BREED,NA,NA,MEM,Memphis Zoological Garden & Aquarium,Tennessee,United States,USA,🇺🇸,#FCC0B2,NA
+2735,y,n,M,2025,2025-02-01,btp,0,2025,NZPWASH,NA,DO NOT BREED,NA,NA,NZP,Smithsonian National Zoological Park,District of Columbia,United States,USA,🇺🇸,#CCEA97,NA
+2736,y,n,F,2025,2025-02-01,btp,0,2025,NZPWASH,NA,DO NOT BREED,NA,NA,NZP,Smithsonian National Zoological Park,District of Columbia,United States,USA,🇺🇸,#CCEA97,NA
+2738,y,n,M,2025,2025-02-01,btp,0,2025,CINCINNAT,NA,DO NOT BREED,NA,A breeding option for male #2738 will be identified as more space and individuals become available.,CIN,Cincinnati Zoo & Botanical Garden,Ohio,United States,USA,🇺🇸,#34B2C9,NA
