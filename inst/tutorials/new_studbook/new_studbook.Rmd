@@ -130,8 +130,15 @@ btp <- read_btp("../../extdata/btp_original.csv", "../../extdata/btp.csv", locat
 
 ### Studbook
 
+For this function we can optionally assign values to a column `name_spec` for just some individuals we will want to highlight in different tables and figures. Any individuals not mentioned will present empty cells for that column, and if nothing is assigned then all rows will be empty values for this column.\
+\
+In our case, we want two subjects to stand out, so we will give them a name value for the `name_spec` column.
+
 ```{r}
-studbook  <- read_studbook("../../extdata/studbook_original.csv", locations, btp)
+names     <- c(Culi = "2652", Warble = "2677")
+
+studbook  <- read_studbook("../../extdata/studbook_original.csv", 
+                           locations, btp, names = names)
 ```
 
 ### Fill Missing Parentage

@@ -169,6 +169,29 @@ read_btp <- function(file_in, file_out, loc_key) {
   return(df)
 }
 
+#' Label Names
+#'
+#' Adds names or other string values to a column based on unique, numerical IDs
+#'
+#' @param studbook A data frame of studbook data produced by \code{read_studbook}.
+#' @param names Factor labeling vector written as `c({String} = "{ID}")` for assigning each name to an ID number.
+#' @return A data frame of studbook data now containing a column `label_special` with a string only for those IDs specified in the `names` parameter.
+#' @importFrom dplyr mutate
+#' @importFrom forcats fct_recode fct_other
+#' @export
+#'
+label_names <- function(studbook, names = NULL) {
+
+  if (!is.null(names)) {
+    studbook %>%
+      mutate(ID        = as.character(ID)) %>%
+      mutate(name_spec = fct_recode(ID, !!!names)) %>%
+      mutate(ID        = as.integer(ID)) %>%
+      mutate(name_spec = name_spec(name, keep = c(names(names)), other_level = ""))
+  } else {return(studbook)}
+
+}
+
 #' Read and Process Studbook Data
 #'
 #' Reads a CSV file containing studbook data, processes it together with BTP data and location key mappings, and returns a cleaned studbook data frame. This function merges multiple exported files, removes redundant entries, and performs necessary corrections for downstream analyses.
@@ -176,6 +199,7 @@ read_btp <- function(file_in, file_out, loc_key) {
 #' @param file_in A file path to the input CSV file. Export the studbook tables from the published PDF using Adobe Acrobat (or a similar tool), and ensure that the file contains the columns: \code{ID}, \code{Sex}, \code{Sire}, \code{Dam}, \code{Birth_Type}, \code{Event}, \code{Date}, and \code{Location}. Combine rows from multiple files as needed.
 #' @param loc_key A data frame containing location key mappings produced by \code{read_locations}.
 #' @param btp A data frame containing formatted BTP data produced by \code{read_btp}.
+#' @param names Factor labeling vector written as `c({String} = "{ID}")` for assigning special name labels to selected ID numbers (optional - will return empty cells for all rows if not included).
 #' @return A data frame with processed studbook data that can be used to resolve missing parental assignments.
 #' @importFrom readr read_csv
 #' @importFrom dplyr filter left_join rename mutate select distinct arrange group_by if_else bind_rows row_number lead join_by last case_when setdiff across consecutive_id pull first desc
@@ -186,13 +210,13 @@ read_btp <- function(file_in, file_out, loc_key) {
 #' @importFrom tidyselect where
 #' @export
 #'
-read_studbook <- function(file_in, loc_key, btp) {
+read_studbook <- function(file_in, loc_key, btp, names = NULL) {
   events <- c(
-    birth = "birth/hatch",
-    capture = "wild capture",
+    birth    = "birth/hatch",
+    capture  = "wild capture",
     transfer = "transfer",
-    ltf = "go ltf",
-    death = "death"
+    ltf      = "go ltf",
+    death    = "death"
   )
   std <- read_csv(file_in) %>%
     mutate(across(where(is.character), ~str_squish(.))) %>%
@@ -347,7 +371,8 @@ read_studbook <- function(file_in, loc_key, btp) {
            iconLoc_last = iconLoc,
            colorLoc_last = colorLoc) %>%
     select(-c(code_country, Location)) %>%
-    distinct()
+    distinct() %>%
+    label_names(c(Culi = "2652", Warble = "2677"))
 
   return(studbook)
 }
@@ -367,6 +392,7 @@ studbook_short <- function(studbook) {
     arrange(Date) %>%
     select(
       ID,
+      name_spec,
       Sex,
       Status,
       Sire,
@@ -542,45 +568,46 @@ add_hypotheticals <- function(studbook, parent, ids, loc_key) {
     add <- 20000
   }
   hypSire <- min(ids) + 10000
-  hypDam <- min(ids) + 20000
+  hypDam  <- min(ids) + 20000
 
   hyp_cols <- tibble(
     event_order = 1,
-    Event = "breed",
-    Status = "H",
-    Loc_birth = "UND",
-    Sex = sex_parent,
-    Sire = 0,
-    Dam = 0,
-    age_event = 2,
-    Type_birth = "Undetermined",
-    exclude = "hypothetical"
+    Event       = "breed",
+    Status      = "H",
+    Loc_birth   = "UND",
+    Sex         = sex_parent,
+    Sire        = 0,
+    Dam         = 0,
+    age_event   = 2,
+    Type_birth  = "Undetermined",
+    exclude     = "hypothetical",
+    name_spec   = ""
   )
 
   hypotheticals <- studbook %>%
     filter(ID %in% ids) %>%
     arrange(Date_birth) %>%
-    select(Date = Date_birth,
-           Loc_event = Loc_birth,
-           Institution_last = Institution_birth,
+    select(Date                = Date_birth,
+           Loc_event           = Loc_birth,
+           Institution_last    = Institution_birth,
            State_Province_last = State_Province_birth,
-           Country_last = Country_birth,
-           iconLoc_last = iconLoc_birth,
-           colorLoc_last = colorLoc_birth) %>%
+           Country_last        = Country_birth,
+           iconLoc_last        = iconLoc_birth,
+           colorLoc_last       = colorLoc_birth) %>%
     bind_cols(hyp_cols) %>%
-    mutate(ID = min(ids) + add,
+    mutate(ID         = min(ids) + add,
            Date_birth = first(Date) - years(2),
-           Loc_last = Loc_event,
-           Date_last = last(Date) + years(2)) %>%
-    mutate(age_last = calculate_age(Date_birth, Date_last),
+           Loc_last   = Loc_event,
+           Date_last  = last(Date) + years(2)) %>%
+    mutate(age_last   = calculate_age(Date_birth, Date_last),
            Year_birth = year(Date_birth)) %>%
     left_join(select(loc_key,
-                     Loc_birth = code,
-                     Institution_birth = Institution,
+                     Loc_birth            = code,
+                     Institution_birth    = Institution,
                      State_Province_birth = State_Province,
-                     Country_birth = Country,
-                     iconLoc_birth = iconLoc,
-                     colorLoc_birth = colorLoc), by = join_by(Loc_birth)) %>%
+                     Country_birth        = Country,
+                     iconLoc_birth        = iconLoc,
+                     colorLoc_birth       = colorLoc), by = join_by(Loc_birth)) %>%
     bind_rows(slice_head(., n = 1)) %>%
     distinct()
 

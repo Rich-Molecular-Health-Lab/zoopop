@@ -66,7 +66,8 @@ utils::globalVariables(c(
   "Dam",
   "Date",
   "Date_last",
-  "Dates"
+  "Dates",
+  "name_spec"
 ))
 
 

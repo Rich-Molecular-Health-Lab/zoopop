@@ -41,61 +41,50 @@ deceased <- function(studbook, include = "all") {
 #' Generate cohort-structured data
 #'
 #' @param df A tibble of birth records
-#' @param minYear Start year of cohorts
-#' @param maxYear End year
+#' @param Year_min Start year of cohorts
+#' @param Year_max End year
 #' @param span Years per cohort
-#' @param maxAge Max age to include
+#' @param age_max Max age to include
 #' @param include_sex Whether to include sex as a grouping var
 #' @return A joined and restructured tibble
 #' @export
 #'
-#' @importFrom dplyr across
-#' @importFrom dplyr arrange
-#' @importFrom dplyr case_when
-#' @importFrom dplyr filter
-#' @importFrom dplyr full_join
-#' @importFrom dplyr join_by
-#' @importFrom dplyr mutate
-#' @importFrom dplyr relocate
-#' @importFrom dplyr right_join
-#' @importFrom dplyr select
+#' @importFrom dplyr across arrange case_when filter full_join join_by mutate relocate right_join select
 #' @importFrom tibble tibble
-#' @importFrom tidyr expand_grid
-#' @importFrom tidyr replace_na
+#' @importFrom tidyr expand_grid replace_na
 #' @importFrom tidyselect where
 #' @importFrom magrittr %>%
-make_cohorts <- function(df, minYear, maxYear, span, maxAge, include_sex = TRUE) {
-  N_letters <- (maxYear - minYear + 1)/span
+make_cohorts <- function(df, Year_min, Year_max, span, age_max, include_sex = TRUE) {
+  N_letters <- (Year_max - Year_min + 1)/span
   cohorts <- expand_grid(
-    Age = 0:maxAge,
-    Sex = c("M", "F"),
-    BirthYear = minYear:maxYear
+    Age        = 0:age_max,
+    Sex        = c("M", "F"),
+    Year_birth = Year_min:Year_max
   ) %>%
-    full_join(tibble(BirthYear = minYear:maxYear,
-                     BirthCohort = rep(LETTERS[1:N_letters], each = span)),
-              by = join_by(BirthYear)) %>%
-    mutate(CohortMin = min(BirthYear), CohortMax = max(BirthYear), .by = BirthCohort) %>%
-    mutate(CohortLabel = case_when(
-      CohortMin <= 2013 & CohortMax >= 2013 ~ paste0(CohortMin, "-", CohortMax, "\n(Culi)"),
-      CohortMin <= 2017 & CohortMax >= 2013 ~ paste0(CohortMin, "-", CohortMax, "\n(Warble)"),
-      TRUE                                  ~ paste0(CohortMin, "-", CohortMax)
-    )) %>%
-    select(CohortLabel, BirthCohort, BirthYear, Sex, Age) %>%
-    arrange(BirthCohort, BirthYear, Sex, Age) %>%
-    filter(BirthYear + Age <= 2025)
+    full_join(tibble(Year_birth   = Year_min:Year_max,
+                     Cohort_birth = rep(LETTERS[1:N_letters], each = span)),
+              by = join_by(Year_birth)) %>%
+    mutate(Cohort_min   = min(Year_birth), Cohort_max = max(Year_birth), .by = Cohort_birth) %>%
+    mutate(Cohort_label = if_else(
+      str_detect(name_spec, "\\w+"),
+      str_glue("{Cohort_min}", "-", "{Cohort_max}", " \\(", "{name_spec}", "\\)"),
+      str_glue("{Cohort_min}", "-", "{Cohort_max}"))) %>%
+    select(Cohort_label, Cohort_birth, Year_birth, Sex, Age) %>%
+    arrange(Cohort_birth, Year_birth, Sex, Age) %>%
+    filter(Year_birth + Age <= 2025)
 
   if (include_sex) {
     df %>%
-      right_join(cohorts, by = join_by(BirthYear, Sex, Age)) %>%
-      mutate(Cohort = paste0(Sex, BirthCohort),
+      right_join(cohorts, by = join_by(Year_birth, Sex, Age)) %>%
+      mutate(Cohort = paste0(Sex, Cohort_birth),
              across(where(is.numeric), ~ replace_na(., 0)))
   } else {
     df %>%
-      right_join(distinct(cohorts, Age, BirthYear, BirthCohort, CohortLabel),
-                 by = join_by(BirthYear, Age)) %>%
-      mutate(Cohort = BirthCohort,
+      right_join(distinct(cohorts, Age, Year_birth, Cohort_birth, Cohort_label),
+                 by = join_by(Year_birth, Age)) %>%
+      mutate(Cohort = Cohort_birth,
              across(where(is.numeric), ~ replace_na(., 0)),
              Sex = "Total") %>%
-      relocate(CohortLabel, BirthCohort, Sex, Age)
+      relocate(Cohort_label, Cohort_birth, Sex, Age)
   }
 }
