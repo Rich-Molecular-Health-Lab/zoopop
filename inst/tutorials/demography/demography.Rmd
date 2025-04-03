@@ -66,10 +66,32 @@ knitr::opts_chunk$set(
 )
 conflicts_prefer(lubridate::interval)
 conflicts_prefer(dplyr::filter)
-
-
 loc_key  <- read_csv(here("inst/extdata/locations.csv"))
 studbook <- read_csv(here("inst/extdata/studbook.csv"))
+```
+
+
+```{r setup, context="setup"}
+cols_default <- c(
+  "ID"                  ,
+  "name_spec"           ,
+  "exclude"             ,
+  "Loc_birth"           ,
+  "Sire"                ,
+  "Dam"                 ,
+  "Status"              ,
+  "Date_birth"          ,
+  "age_last"            ,
+  "Loc_last"            ,
+  "Date_last"           ,
+  "Sex"                 ,
+  "Type_birth"          ,
+  "Institution_birth"   ,
+  "iconLoc_birth"       ,
+  "Institution_last"    ,
+  "iconLoc_last"        
+)
+
 ```
 
 # Studbook Overview
@@ -77,7 +99,7 @@ studbook <- read_csv(here("inst/extdata/studbook.csv"))
 Let's create a graphical table to summarize our studbook data.
 
 ```{r studbook-view, exercise=TRUE}
-studbook.tbl <- studbook %>% studbook_react(., studbook.cols(.), groupBy = "Status")
+studbook.tbl <- studbook %>% studbook_react(., df_cols = c(cols_default))
 studbook.tbl
 ```
 

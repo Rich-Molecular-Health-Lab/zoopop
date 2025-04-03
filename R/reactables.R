@@ -12,19 +12,32 @@
 #' @rdname react_cols
 #' @export
 #'
+#' @importFrom htmltools div span tagList
+#' @importFrom knitr image_uri
 #' @importFrom reactable colDef
-#' @importFrom reactablefmtr color_tiles
+#' @importFrom stringr str_to_lower
 #' @importFrom tippy tippy
 ID <- function(df) {
   colDef(
     header   = tippy("ID", tooltip = "Studbook ID color-coded by sex (maroon = F, blue = M, green = Undetermined)"),
     maxWidth = 70,
-    cell     = color_tiles(
-      data       = df,
-      color_ref  = "color",
-      box_shadow = TRUE,
-      bold_text  = TRUE
-    )
+    cell     = function(value, index) {
+      Sex     <- str_to_lower(df$Sex[index])
+      Status  <- df$Status[index]
+      icon    <- if (Status == "A") { sprintf("icon_%s.png", Sex) } else { sprintf("icon_%s_deceased.png", Sex) }
+      icon_path <- system.file("icons", icon, package = "zoopop")
+      img_src   <- knitr::image_uri(icon_path)
+      image   <- img(src = img_src, style = "height: 24px;", alt = Sex)
+
+      text <- if (is.na(df$name_spec[index])) {
+        div(style = "font-weight: 600; font-size:12pt", value)
+      } else {
+        div(style = "display:grid; row-gap:2px", div(style = "font-weight: 300; font-size:10pt", value),
+            div(style = "font-weight: 600; font-size:10pt; text-decoration-line: overline", df$name_spec[index]))
+      }
+
+      tagList(div(style = "display: inline-block; width: 45px", image), text)
+    }
   )
 }
 #'
@@ -36,20 +49,17 @@ ID <- function(df) {
 #' @importFrom htmlwidgets JS
 #' @importFrom reactable colDef
 #' @importFrom tippy tippy
-Status <- function() {
+exclude <- function(df) {
   colDef(
-    header   = tippy("Status", tooltip = "Alive or Deceased"),
+    header   = tippy("Status", tooltip = "Most recent report status - deceased, included (implies living), excluded (for either behavior or age - also implies living)"),
     maxWidth = 100,
-    style    = JS("
-      function(rowInfo, column, state) {
-        const firstSorted = state.sorted[0]
-        if (!firstSorted || firstSorted.id === 'Status') {
-          const prevRow = state.pageRows[rowInfo.viewIndex - 1]
-          if (prevRow && rowInfo.values['Status'] === prevRow['Status']) {
-            return { visibility: 'hidden' }
-          }
-        }
-      }")
+    cell     = function(value) {
+      exclude <- if (value == "n") "include" else value
+      icon_path <- system.file("icons", sprintf("icon_%s.png", exclude), package = "zoopop")
+      img_src   <- knitr::image_uri(icon_path)
+      image   <- img(src = img_src, style = "height: 24px;", alt = exclude)
+      tagList(div(style = "display: inline-block; width: 45px", image))
+    }
   )
 }
 #'
@@ -62,7 +72,7 @@ Status <- function() {
 #' @importFrom reactablefmtr color_tiles
 #' @importFrom scales label_date
 #' @importFrom tippy tippy
-Date_birth <- function(df, colors = set_colors()) {
+Date_birth <- function(df, colors = colors) {
   colDef(
     header   = tippy("Birthdate", tooltip = "Date of birth (captive-born) or capture (wild-born)"),
     maxWidth = 200,
@@ -87,7 +97,7 @@ Date_birth <- function(df, colors = set_colors()) {
 #' @importFrom reactablefmtr color_tiles
 #' @importFrom scales label_date
 #' @importFrom tippy tippy
-Date_last <- function(df, colors = set_colors()) {
+Date_last <- function(df, colors = colors) {
   colDef(
     header   = tippy("Death Date", tooltip = "Date of death (NA for living individuals)"),
     maxWidth = 200,
@@ -108,7 +118,7 @@ Date_last <- function(df, colors = set_colors()) {
 #' @rdname react_cols
 #' @export
 #'
-#' @importFrom htmltools div htmltools span
+#' @importFrom htmltools div span
 #' @importFrom reactable colDef
 #' @importFrom tippy tippy
 Loc_birth <- function(df) {
@@ -155,32 +165,11 @@ Loc_last <- function(df) {
 #' @rdname react_cols
 #' @export
 #'
-#' @importFrom htmltools div span
-#' @importFrom reactable colDef
-#' @importFrom tippy tippy
-Current_Location <- function(df) {
-  colDef(
-    header   = tippy("Current Location", tooltip = "Current institution"),
-    maxWidth = 70,
-    cell     = function(value, index) {
-      flag <- df$iconLoc_last[index]
-      name <- span(style = "text-decoration: underline; text-decoration-style: dotted",
-                   tippy(value, df$Institution_last[index]))
-      div(style = "display:inline-block", flag, name)
-    }
-  )
-}
-#'
-#' @param df A data frame passed to the reactable column definition
-#'
-#' @rdname react_cols
-#' @export
-#'
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr pill_buttons
 #' @importFrom scales label_date
 #' @importFrom tippy tippy
-age_last <- function(df, colors = set_colors()) {
+age_last <- function(df, colors = colors) {
   colDef(
     header   = tippy("Age", tooltip = "Now (Alive) or at time of death (Deceased)"),
     maxWidth = 50,
@@ -204,7 +193,7 @@ age_last <- function(df, colors = set_colors()) {
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr bubble_grid
 #' @importFrom tippy tippy
-bubble_count <- function(df, name, colors = set_colors()) {
+bubble_count <- function(df, name, colors = colors) {
   colDef(
     name     = name,
     maxWidth = 250,
@@ -227,7 +216,7 @@ bubble_count <- function(df, name, colors = set_colors()) {
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr pill_buttons
 #' @importFrom tippy tippy
-Sire <- function(df, colors = set_colors()) {
+Sire <- function(df, colors = colors) {
   colDef(
     header   = tippy("Father", tooltip = "Studbook ID of Sire (0 if wildborn or unknown)"),
     maxWidth = 70,
@@ -249,7 +238,7 @@ Sire <- function(df, colors = set_colors()) {
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr pill_buttons
 #' @importFrom tippy tippy
-Dam <- function(df, colors = set_colors()) {
+Dam <- function(df, colors = colors) {
   colDef(
     header   = tippy("Mother", tooltip = "Studbook ID of Dam (0 if wildborn or unknown)"),
     maxWidth = 70,
@@ -272,7 +261,7 @@ Dam <- function(df, colors = set_colors()) {
 #' @importFrom reactablefmtr data_bars
 #' @importFrom scales label_percent
 #' @importFrom tippy tippy
-Rel_Contribution <- function(df, colors = set_colors()) {
+Rel_Contribution <- function(df, colors = colors) {
   colDef(
     header   = tippy("Relative Contribution", tooltip = "Individual's contribution to living population relative to total founder representation"),
     maxWidth = 200,
@@ -296,7 +285,7 @@ Rel_Contribution <- function(df, colors = set_colors()) {
 #' @importFrom reactablefmtr data_bars
 #' @importFrom scales label_number
 #' @importFrom tippy tippy
-inbred <- function(df, colors = set_colors()) {
+inbred <- function(df, colors = colors) {
   colDef(
     header   = tippy("F", tooltip = "Inbreeding coefficient: probability two alleles are identical by descent"),
     align    = "center",
@@ -324,105 +313,37 @@ inbred <- function(df, colors = set_colors()) {
 #' @export
 #'
 #' @importFrom reactable colDef
-studbook.cols <- function(df) {
+#' @importFrom purrr keep_at
+studbook_cols <- function(df, df_cols, colors = colors) {
   list(
-    Status            = Status(),
-    ID                = ID(df),
-    Loc_birth         = Loc_birth(df),
-    age_last          = age_last(df),
-    Loc_last          = Loc_last(df),
-    Sire              = Sire(df),
-    Dam               = Dam(df),
-    Date_last         = colDef(show = FALSE),
-    Date_birth        = colDef(show = FALSE),
-    Sex               = colDef(show = FALSE),
-    color             = colDef(show = FALSE),
-    Year_birth        = colDef(show = FALSE),
-    Month_birth       = colDef(show = FALSE),
-    Year_last         = colDef(show = FALSE),
-    Date_last         = colDef(show = FALSE),
-    iconLoc_birth     = colDef(show = FALSE),
-    colorLoc_birth    = colDef(show = FALSE),
-    iconLoc_last      = colDef(show = FALSE),
-    colorLoc_last     = colDef(show = FALSE),
-    Institution_birth = colDef(show = FALSE),
-    Institution_last  = colDef(show = FALSE),
+    ID                  = ID(df),
+    exclude             = exclude(df),
+    Loc_birth           = Loc_birth(df),
+    age_last            = age_last(df),
+    Loc_last            = Loc_last(df),
+    Sire                = Sire(df),
+    Dam                 = Dam(df),
+    name_spec           = colDef(show = FALSE),
+    Date_birth          = colDef(show = FALSE),
+    Date_last           = colDef(show = FALSE),
+    Sex                 = colDef(show = FALSE),
+    color               = colDef(show = FALSE),
+    Type_birth          = colDef(show = FALSE),
+    Status              = colDef(show = FALSE),
+    Year_birth          = colDef(show = FALSE),
+    Institution_birth   = colDef(show = FALSE),
+    State_Province_birth= colDef(show = FALSE),
+    Country_birth       = colDef(show = FALSE),
+    iconLoc_birth       = colDef(show = FALSE),
+    colorLoc_birth      = colDef(show = FALSE),
+    Institution_last    = colDef(show = FALSE),
+    State_Province_last = colDef(show = FALSE),
+    Country_last        = colDef(show = FALSE),
+    iconLoc_last        = colDef(show = FALSE),
+    colorLoc_last       = colDef(show = FALSE),
     sex_ped           = colDef(show = FALSE),
     sex_kinship       = colDef(show = FALSE)
-  )
-}
-
-#' Column definitions for founder summary tables
-#'
-#' @param df A filtered founder summary dataframe
-#' @return A named list of column definitions
-#' @export
-#'
-#' @importFrom reactable colDef
-founder.cols <- function(df) {
-  list(
-    Status            = Status(),
-    ID                = ID(df),
-    Loc_birth         = Loc_birth(df),
-    age_last          = age_last(df),
-    Loc_last          = Loc_last(df),
-    Rel_Contribution  = Rel_Contribution(df),
-    Sire              = colDef(show = FALSE),
-    Dam               = colDef(show = FALSE),
-    Date_last         = colDef(show = FALSE),
-    Date_birth        = colDef(show = FALSE),
-    Sex               = colDef(show = FALSE),
-    color             = colDef(show = FALSE),
-    Year_birth        = colDef(show = FALSE),
-    Month_birth       = colDef(show = FALSE),
-    Year_last         = colDef(show = FALSE),
-    Date_last         = colDef(show = FALSE),
-    iconLoc_birth     = colDef(show = FALSE),
-    colorLoc_birth    = colDef(show = FALSE),
-    iconLoc_last      = colDef(show = FALSE),
-    colorLoc_last     = colDef(show = FALSE),
-    Institution_birth = colDef(show = FALSE),
-    Institution_last  = colDef(show = FALSE),
-    sex_ped           = colDef(show = FALSE),
-    sex_kinship       = colDef(show = FALSE)
-  )
-}
-
-#' Column definitions for living individual summaries
-#'
-#' @param df A living population summary dataframe
-#' @return A named list of column definitions
-#' @export
-#'
-#' @importFrom reactable colDef
-living.cols <- function(df) {
-  list(
-    LocCurrent        = Current_Location(df),
-    ID                = ID(df),
-    Loc_birth         = Loc_birth(df),
-    Age               = age_last(df),
-    Sire              = Sire(df),
-    Dam               = Dam(df),
-    inbred            = inbred(df),
-    N_Ancestors       = bubble_count(df, "Ancestors"),
-    N_Descendants     = bubble_count(df, "Descendants"),
-    N_Children        = bubble_count(df, "Offspring"),
-    N_Siblings        = bubble_count(df, "Siblings"),
-    Date_birth        = colDef(show = FALSE),
-    Sex               = colDef(show = FALSE),
-    color             = colDef(show = FALSE),
-    Year_birth        = colDef(show = FALSE),
-    Month_birth       = colDef(show = FALSE),
-    Year_last         = colDef(show = FALSE),
-    iconLoc_birth     = colDef(show = FALSE),
-    colorLoc_birth    = colDef(show = FALSE),
-    iconLoc_last      = colDef(show = FALSE),
-    colorLoc_last     = colDef(show = FALSE),
-    Institution_birth = colDef(show = FALSE),
-    Institution_last  = colDef(show = FALSE),
-    sex_ped           = colDef(show = FALSE),
-    sex_kinship       = colDef(show = FALSE)
-  )
+  ) %>% keep_at(., c(df_cols))
 }
 
 #' Column groupings for living summary table
@@ -470,8 +391,9 @@ kin.cols <- function() {
 #' @export
 #' @importFrom reactable reactable
 #' @importFrom reactablefmtr flatly
-studbook_react <- function(df, cols, ...) {
-  reactable(
+studbook_react <- function(df, df_cols, colors = set_colors(), ...) {
+  df <- select(df, df_cols)
+  reactable::reactable(
     df,
     fullWidth           = TRUE,
     theme               = flatly(centered = TRUE),
@@ -483,7 +405,7 @@ studbook_react <- function(df, cols, ...) {
     defaultPageSize     = 20,
     showPageSizeOptions = TRUE,
     highlight           = TRUE,
-    columns             = cols,
+    columns             = studbook_cols(df, df_cols),
     ...
   )
 }

@@ -4,14 +4,14 @@
 \alias{studbook_react}
 \title{Create a reactable summary table from any dataset}
 \usage{
-studbook_react(df, cols, colors = set_colors(), ...)
+studbook_react(df, df_cols, colors = set_colors(), ...)
 }
 \arguments{
 \item{df}{The data frame to summarize}
 
-\item{cols}{A named list of column definitions}
-
 \item{...}{Additional arguments passed to \code{reactable()}}
+
+\item{cols}{A named list of column definitions}
 }
 \value{
 A reactable widget
