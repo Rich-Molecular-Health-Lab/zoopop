@@ -72,7 +72,7 @@ exclude <- function(df) {
 #' @importFrom reactablefmtr color_tiles
 #' @importFrom scales label_date
 #' @importFrom tippy tippy
-Date_birth <- function(df, colors = colors) {
+Date_birth <- function(df, colors = set_colors()) {
   colDef(
     header   = tippy("Birthdate", tooltip = "Date of birth (captive-born) or capture (wild-born)"),
     maxWidth = 200,
@@ -97,7 +97,7 @@ Date_birth <- function(df, colors = colors) {
 #' @importFrom reactablefmtr color_tiles
 #' @importFrom scales label_date
 #' @importFrom tippy tippy
-Date_last <- function(df, colors = colors) {
+Date_last <- function(df, colors = set_colors()) {
   colDef(
     header   = tippy("Death Date", tooltip = "Date of death (NA for living individuals)"),
     maxWidth = 200,
@@ -169,7 +169,7 @@ Loc_last <- function(df) {
 #' @importFrom reactablefmtr pill_buttons
 #' @importFrom scales label_date
 #' @importFrom tippy tippy
-age_last <- function(df, colors = colors) {
+age_last <- function(df, colors = set_colors()) {
   colDef(
     header   = tippy("Age", tooltip = "Now (Alive) or at time of death (Deceased)"),
     maxWidth = 50,
@@ -193,7 +193,7 @@ age_last <- function(df, colors = colors) {
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr bubble_grid
 #' @importFrom tippy tippy
-bubble_count <- function(df, name, colors = colors) {
+bubble_count <- function(df, name, colors = set_colors()) {
   colDef(
     name     = name,
     maxWidth = 250,
@@ -216,7 +216,7 @@ bubble_count <- function(df, name, colors = colors) {
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr pill_buttons
 #' @importFrom tippy tippy
-Sire <- function(df, colors = colors) {
+Sire <- function(df, colors = set_colors()) {
   colDef(
     header   = tippy("Father", tooltip = "Studbook ID of Sire (0 if wildborn or unknown)"),
     maxWidth = 70,
@@ -238,7 +238,7 @@ Sire <- function(df, colors = colors) {
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr pill_buttons
 #' @importFrom tippy tippy
-Dam <- function(df, colors = colors) {
+Dam <- function(df, colors = set_colors()) {
   colDef(
     header   = tippy("Mother", tooltip = "Studbook ID of Dam (0 if wildborn or unknown)"),
     maxWidth = 70,
@@ -261,7 +261,7 @@ Dam <- function(df, colors = colors) {
 #' @importFrom reactablefmtr data_bars
 #' @importFrom scales label_percent
 #' @importFrom tippy tippy
-Rel_Contribution <- function(df, colors = colors) {
+Rel_Contribution <- function(df, colors = set_colors()) {
   colDef(
     header   = tippy("Relative Contribution", tooltip = "Individual's contribution to living population relative to total founder representation"),
     maxWidth = 200,
@@ -285,7 +285,7 @@ Rel_Contribution <- function(df, colors = colors) {
 #' @importFrom reactablefmtr data_bars
 #' @importFrom scales label_number
 #' @importFrom tippy tippy
-inbred <- function(df, colors = colors) {
+inbred <- function(df, colors = set_colors()) {
   colDef(
     header   = tippy("F", tooltip = "Inbreeding coefficient: probability two alleles are identical by descent"),
     align    = "center",
@@ -314,7 +314,7 @@ inbred <- function(df, colors = colors) {
 #'
 #' @importFrom reactable colDef
 #' @importFrom purrr keep_at
-studbook_cols <- function(df, df_cols, colors = colors) {
+studbook_cols <- function(df, df_cols, colors = set_colors()) {
   list(
     ID                  = ID(df),
     exclude             = exclude(df),
