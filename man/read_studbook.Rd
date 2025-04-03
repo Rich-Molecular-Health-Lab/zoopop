@@ -4,7 +4,7 @@
 \alias{read_studbook}
 \title{Read and Process Studbook Data}
 \usage{
-read_studbook(file_in, loc_key, btp)
+read_studbook(file_in, loc_key, btp, names = NULL)
 }
 \arguments{
 \item{file_in}{A file path to the input CSV file. Export the studbook tables from the published PDF using Adobe Acrobat (or a similar tool), and ensure that the file contains the columns: \code{ID}, \code{Sex}, \code{Sire}, \code{Dam}, \code{Birth_Type}, \code{Event}, \code{Date}, and \code{Location}. Combine rows from multiple files as needed.}
@@ -12,6 +12,8 @@ read_studbook(file_in, loc_key, btp)
 \item{loc_key}{A data frame containing location key mappings produced by \code{read_locations}.}
 
 \item{btp}{A data frame containing formatted BTP data produced by \code{read_btp}.}
+
+\item{names}{Factor labeling vector written as \verb{c(\{String\} = "\{ID\}")} for assigning special name labels to selected ID numbers (optional - will return empty cells for all rows if not included).}
 }
 \value{
 A data frame with processed studbook data that can be used to resolve missing parental assignments.

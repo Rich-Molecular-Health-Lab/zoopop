@@ -187,7 +187,7 @@ label_names <- function(studbook, names = NULL) {
       mutate(ID        = as.character(ID)) %>%
       mutate(name_spec = fct_recode(ID, !!!names)) %>%
       mutate(ID        = as.integer(ID)) %>%
-      mutate(name_spec = name_spec(name, keep = c(names(names)), other_level = ""))
+      mutate(name_spec = fct_other(name_spec, keep = c(names(names)), other_level = ""))
   } else {return(studbook)}
 
 }
@@ -333,12 +333,11 @@ read_studbook <- function(file_in, loc_key, btp, names = NULL) {
     fill(Date_birth, Loc_birth) %>%
     filter(Event != "birth") %>%
     distinct() %>%
-    mutate(event_order = row_number()) %>%
-    select(ID, Date_birth, Date, event_order, Event, Date_last, Status,
+    select(ID, Date_birth, Date, Event, Date_last, Status,
            Loc_event = code, Loc_birth, Loc_last, Sex, Sire, Dam) %>%
     mutate(Date = case_when(
-      is.na(Date) & event_order == 1 & !is.na(Date_birth) ~ est_date_btn(lead(Date), Date_birth),
-      is.na(Date) & event_order == 1 & is.na(Date_birth) ~ lead(Date) - years(1),
+      is.na(Date) & row_number() == 1 & !is.na(Date_birth) ~ est_date_btn(lead(Date), Date_birth),
+      is.na(Date) & row_number() == 1 & is.na(Date_birth) ~ lead(Date) - years(1),
       .default = Date
     )) %>%
     mutate(Date_birth = if_else(is.na(Date_birth), first(Date) - years(2), Date_birth)) %>%
@@ -371,8 +370,11 @@ read_studbook <- function(file_in, loc_key, btp, names = NULL) {
            iconLoc_last = iconLoc,
            colorLoc_last = colorLoc) %>%
     select(-c(code_country, Location)) %>%
-    distinct() %>%
-    label_names(c(Culi = "2652", Warble = "2677"))
+    label_names(c(Culi = "2652", Warble = "2677")) %>%
+    relocate(name_spec, .after = ID) %>%
+    ungroup() %>%
+    arrange(ID, Date) %>%
+    distinct()
 
   return(studbook)
 }
@@ -436,12 +438,12 @@ location_census <- function(studbook, loc_key) {
     arrange(ID, Date_event) %>%
     group_by(ID) %>%
     mutate(Loc_start = if_else(row_number() == 1, Date_birth, NA),
-           Loc_end = if_else(row_number() == max(row_number()), Date_last, lead(Date_event))) %>%
+           Loc_end   = if_else(row_number() == max(row_number()), Date_last, lead(Date_event))) %>%
     group_by(ID, Loc_event) %>%
     mutate(Loc_start = if_else(is.na(Loc_start), min(Date_event), Loc_start)) %>%
     ungroup() %>%
     mutate(Start = floor_date(Loc_start, "years"),
-           End = ceiling_date(Loc_end, "years")) %>%
+           End   = ceiling_date(Loc_end, "years")) %>%
     select(
       ID,
       Sex,
@@ -453,13 +455,13 @@ location_census <- function(studbook, loc_key) {
     left_join(loc_key, by = join_by(code)) %>%
     mutate(Dates = pmap(list(Start, End), \(x, y) seq(x, y, by = "years"))) %>%
     unnest(Dates) %>%
-    mutate(Date = Dates,
+    mutate(Date     = Dates,
            Location = code,
-           Age = calculate_age(Date_birth, Date)) %>%
+           Age      = calculate_age(Date_birth, Date)) %>%
     group_by(Date, Location) %>%
     summarize(Individuals = list(tibble(ID, Sex, Age))) %>%
     group_by(Date) %>%
-    summarize(Locations = split(Individuals, Location)) %>%
+    summarize(Locations   = split(Individuals, Location)) %>%
     split(.$Date) %>%
     map(~ .x$Locations)
   return(locations)
@@ -480,7 +482,8 @@ match_births <- function(x, sex_parent) {
   if (is.null(x)) {
     return(tibble(ID = NA, Sex = "None", Age = 0))
   } else {
-    filter(x, Sex == sex_parent & !(ID %in% c(names))) %>%
+    filter(x, Sex == sex_parent) %>%
+      ungroup() %>%
       arrange(desc(Age)) %>%
       distinct()
   }
@@ -536,9 +539,9 @@ find_parent <- function(studbook, loc_key, parent) {
       relocate(Sire, Dam, .after = Loc_birth) %>%
       distinct()
   }
+  names      <- pull(subjects, ID) %>% unique()
   loc_census <- location_census(studbook, loc_key)
-  names <- pull(subjects, ID) %>% unique()
-  search <- as.list(deframe(select(subjects, Date, Loc_birth)))
+  search     <- as.list(deframe(select(subjects, Date, Loc_birth)))
   imap(search, \(x, idx) pluck(loc_census, idx, x, 1)) %>%
     set_names(., as.list(deframe(select(subjects, ID)))) %>%
     map_depth(., 1, \(x) match_births(x, sex_parent)) %>%
@@ -571,7 +574,6 @@ add_hypotheticals <- function(studbook, parent, ids, loc_key) {
   hypDam  <- min(ids) + 20000
 
   hyp_cols <- tibble(
-    event_order = 1,
     Event       = "breed",
     Status      = "H",
     Loc_birth   = "UND",

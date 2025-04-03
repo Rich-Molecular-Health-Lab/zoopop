@@ -1,77 +1,77 @@
 code,Location,Institution,State_Province,Country,code_country,iconLoc,colorLoc
-ABQ,ABQBIOPK,Albuquerque Biological Park,New Mexico,United States,USA,🇺🇸,#FDC07A
-AKR,AKRON,Akron Zoological Park,Ohio,United States,USA,🇺🇸,#A6D84A
-ATT,ATTLEBORO,Capron Park Zoo,Massachusetts,United States,USA,🇺🇸,#F74370
-AUD,AUDUBON,Audubon Zoo,Louisianna,United States,USA,🇺🇸,#FB8D76
-ASI,Asia,Wild,Asia,Asia,UND,?,#BFE6CF
-BAN,BANGKOK,Dusit (Bangkok) Zoological Park,Thailand,Thailand,THA,🇹🇭,#BFD99D
-BLO,BLOOMINGT,Miller Park Zoo,Illinois,United States,USA,🇺🇸,#FFE619
-BOW,BOWMANVIL,Bowmanville Zoological Park,Ontario,Canada,CAN,🇨🇦,#F76898
-BUS,BUSCHTAM,Busch Gardens Tampa Bay,Florida,United States,USA,🇺🇸,#FDB46C
-CAF,CAFGSD,Calif. Fish & Game (San Diego),California,United States,USA,🇺🇸,#E5C468
-CAL,CALGARY,"Calgary Zoo, Garden & Prehistoric Park",Alberta,Canada,CAN,🇨🇦,#42AED0
-CBR,CHICAGOBR,Chicago Zoological Park / Brookfield Zoo,Illinois,United States,USA,🇺🇸,#FDC091
-CHI,CHICAGOLP,Lincoln Park Zoological Gardens,Illinois,United States,USA,🇺🇸,#67C5CA
-CIN,CINCINNAT,Cincinnati Zoo & Botanical Garden,Ohio,United States,USA,🇺🇸,#34B2C9
-CLE,CLEVELAND,Cleveland Metroparks Zoo,Ohio,United States,USA,🇺🇸,#FFFF4D
-COL,COLUMBUS,Columbus Zoo and Aquarium,Ohio,United States,USA,🇺🇸,#FED99A
-CRY,CRYSTALG,Crystal Garden Conservation Center (extinct 2004),British Columbia,Canada,CAN,🇨🇦,#E37B68
-DUK,DUKEPRIM,Duke Lemur Center,North Carolina,United States,USA,🇺🇸,#D9F1F7
-DUL,DULUTH,Lake Superior Zoological Gardens,Minnesota,United States,USA,🇺🇸,#1A9D6F
-ELP,ELPASO,El Paso Zoo,Texas,United States,USA,🇺🇸,#7FC64E
-EVA,EVANSVLLE,Mesker Park Zoo,Indiana,United States,USA,🇺🇸,#8CCD57
-FER,FERNDALE,"International Animal Exchange, Inc.",Michigan,United States,USA,🇺🇸,#FEBF4E
-FIT,FITCHH,Helena Fitch-Snyder (extinct),California,United States,USA,🇺🇸,#33A97E
-FOR,FORSS,Zoo-Forss (Ingvar Forss) (extinct 1985),Denmark,Denmark,DNK,🇩🇰,#BFE6CF
-FRA,FRANKFURT,Zoologischer Garten Frankfurt,Germany,Germany,DEU,🇩🇪,#FFF2D3
-GAR,GARDENCTY,Lee Richardson Zoo,Kansas,United States,USA,🇺🇸,#F0047F
-GRA,GRANBY,Zoo de Granby,Quebec,Canada,CAN,🇨🇦,#E5B75A
-HER,HERSHEY,ZooAmerica (No. American Wildlife Pk.),Pennsylvania,United States,USA,🇺🇸,#F75B89
-HOG,HOGLE,Utah's Hogle Zoo,Utah,United States,USA,🇺🇸,#E5AC4D
-HON,HONOLULU,Honolulu Zoo,Hawaii,United States,USA,🇺🇸,#FDB462
-HOU,HOUSTON,"Houston Zoo, Inc.",Texas,United States,USA,🇺🇸,#99B46C
-IND,INDRIVR,Indian River Reptile Zoo,Ontario,Canada,CAN,🇨🇦,#A6DCB5
-IRC,IRCHEL,Universität Zürich-Irchel Anthropologisches Institut und Museum,Switzerland,Switzerland,CHE,🇨🇭,#A6C583
-KOL,KOLN,Cologne Zoo,Germany,Germany,DEU,🇩🇪,#B3E095
-LAN,LANGLEY,Mountain View Conservation & Breeding,British Columbia,Canada,CAN,🇨🇦,#FCA773
-LIT,LITTLEROC,Little Rock Zoological Gardens,Arkansas,United States,USA,🇺🇸,#C983BF
-LOS,LOSANGELE,Los Angeles Zoo & Botanical Gardens,California,United States,USA,🇺🇸,#CCECF4
-LAO,LaoPeoplesDemocraticRepublic,Wild,Laos,Laos,LAO,🇱🇦,#80CFD8
-MEM,MEMPHIS,Memphis Zoological Garden & Aquarium,Tennessee,United States,USA,🇺🇸,#FCC0B2
-MIL,MILWAUKEE,Milwaukee County Zoological Gardens,Wisconsin,United States,USA,🇺🇸,#FFF2BA
-MIN,MINNESOTA,Minnesota Zoological Garden,Minnesota,United States,USA,🇺🇸,#BFD0C5
-MOO,MOODY,Aquarium & Rainforest at Moody Gardens,Texas,United States,USA,🇺🇸,#FDCC8A
-MOS,MOSCOW,Moscow Zoological Park,Russia,Russian Federation,RUS,🇷🇺,#812B92
-MYA,MYAKKACLR,Lemur Conservation Foundation,Florida,United States,USA,🇺🇸,#B3E2E3
-NYB,NYBRONX,Bronx Zoo/Wildlife Conservation Society,New York,United States,USA,🇺🇸,#CCEBD1
-NZP,NZPWASH,Smithsonian National Zoological Park,District of Columbia,United States,USA,🇺🇸,#CCEA97
-OAS,OASES,OASES (John Creviston),British Columbia,Canada,CAN,🇨🇦,#41B087
-OMA,OMAHA,Omaha's Henry Doorly Zoo,Nebraska,United States,USA,🇺🇸,#009270
-PAI,PAIGNTON,Paignton Zoo Environmental Park,United Kingdom,United Kingdom,GBR,🇬🇧,#7FCA93
-PHI,PHILADELP,Philadelphia Zoo,Pennsylvania,United States,USA,🇺🇸,#A6D975
-POZ,POZNAN,Ogrod Zoologiczny w Poznaniu,Poland,Poland,POL,🇵🇱,#99CEE3
-PRO,PROSPECTP,Prospect Park Zoo,New York,United States,USA,🇺🇸,#FDB462
-PUB,PUBLIC,General Public,Undetermined,Undetermined,UND,?,#B3BE6C
-PUE,PUEBLO,Pueblo Zoo,Colorado,United States,USA,🇺🇸,#D9F0DF
-QUE,QUEBEC,Jardin Zoologique du Quebec (extinct),Quebec,Canada,CAN,🇨🇦,#E36350
-SOZ,SANDIEGOZ,San Diego Zoo,California,United States,USA,🇺🇸,#FFFFBF
-SAN,SANFRAN,San Francisco Zoological Gardens,California,United States,USA,🇺🇸,#FB8069
-SBA,SBARBARA,Santa Barbara Zoological Gardens,California,United States,USA,🇺🇸,#8CCD60
-SDW,SDWAP,San Diego Zoo Safari Park,California,United States,USA,🇺🇸,#FFFF41
-SEA,SEATTLE,Woodland Park Zoo,Washington,United States,USA,🇺🇸,#B168B1
-SHA,SHALDON,Shaldon Wildlife Trust,United Kingdom,United Kingdom,GBR,🇬🇧,#FCB4A2
-SKA,SKANAKV,Skansen Akvariet,Sweden,Sweden,SWE,🇸🇪,#F74370
-STL,STLOUIS,Saint Louis Zoological Park,Missouri,United States,USA,🇺🇸,#BFE6C3
-SWI,SWITZRLNDInvaliduseofGeoRef,SWITZRLND: Invalid use of GeoRef,Switzerland,Switzerland,CHE,🇨🇭,#99B575
+ABQ,ABQBIOPK,Albuquerque Biological Park,New Mexico,United States,USA,🇺🇸,#FB745C
+AKR,AKRON,Akron Zoological Park,Ohio,United States,USA,🇺🇸,#67C5CA
+ATT,ATTLEBORO,Capron Park Zoo,Massachusetts,United States,USA,🇺🇸,#FDB462
+AUD,AUDUBON,Audubon Zoo,Louisianna,United States,USA,🇺🇸,#99CEE3
+ASI,Asia,Wild,Asia,Asia,UND,?,#A6B96C
+BAN,BANGKOK,Dusit (Bangkok) Zoological Park,Thailand,Thailand,THA,🇹🇭,#B3BE6C
+BLO,BLOOMINGT,Miller Park Zoo,Illinois,United States,USA,🇺🇸,#99D69F
+BOW,BOWMANVIL,Bowmanville Zoological Park,Ontario,Canada,CAN,🇨🇦,#FFF2D3
+BUS,BUSCHTAM,Busch Gardens Tampa Bay,Florida,United States,USA,🇺🇸,#E6F47F
+CAF,CAFGSD,Calif. Fish & Game (San Diego),California,United States,USA,🇺🇸,#FD9A52
+CAL,CALGARY,"Calgary Zoo, Garden & Prehistoric Park",Alberta,Canada,CAN,🇨🇦,#B3CA8E
+CBR,CHICAGOBR,Chicago Zoological Park / Brookfield Zoo,Illinois,United States,USA,🇺🇸,#F74370
+CHI,CHICAGOLP,Lincoln Park Zoological Gardens,Illinois,United States,USA,🇺🇸,#E37B68
+CIN,CINCINNAT,Cincinnati Zoo & Botanical Garden,Ohio,United States,USA,🇺🇸,#7FCA93
+CLE,CLEVELAND,Cleveland Metroparks Zoo,Ohio,United States,USA,🇺🇸,#FFF2BA
+COL,COLUMBUS,Columbus Zoo and Aquarium,Ohio,United States,USA,🇺🇸,#E5D075
+CRY,CRYSTALG,Crystal Garden Conservation Center (extinct 2004),British Columbia,Canada,CAN,🇨🇦,#99C078
+DUK,DUKEPRIM,Duke Lemur Center,North Carolina,United States,USA,🇺🇸,#1A9D6F
+DUL,DULUTH,Lake Superior Zoological Gardens,Minnesota,United States,USA,🇺🇸,#80CFD8
+ELP,ELPASO,El Paso Zoo,Texas,United States,USA,🇺🇸,#B3E095
+EVA,EVANSVLLE,Mesker Park Zoo,Indiana,United States,USA,🇺🇸,#8CBEB4
+FER,FERNDALE,"International Animal Exchange, Inc.",Michigan,United States,USA,🇺🇸,#E38776
+FIT,FITCHH,Helena Fitch-Snyder (extinct),California,United States,USA,🇺🇸,#FDB462
+FOR,FORSS,Zoo-Forss (Ingvar Forss) (extinct 1985),Denmark,Denmark,DNK,🇩🇰,#FFE619
+FRA,FRANKFURT,Zoologischer Garten Frankfurt,Germany,Germany,DEU,🇩🇪,#CCDFAA
+GAR,GARDENCTY,Lee Richardson Zoo,Kansas,United States,USA,🇺🇸,#41B087
+GRA,GRANBY,Zoo de Granby,Quebec,Canada,CAN,🇨🇦,#983999
+HER,HERSHEY,ZooAmerica (No. American Wildlife Pk.),Pennsylvania,United States,USA,🇺🇸,#C983BF
+HOG,HOGLE,Utah's Hogle Zoo,Utah,United States,USA,🇺🇸,#FCB482
+HON,HONOLULU,Honolulu Zoo,Hawaii,United States,USA,🇺🇸,#4DB47E
+HOU,HOUSTON,"Houston Zoo, Inc.",Texas,United States,USA,🇺🇸,#BFE7E5
+IND,INDRIVR,Indian River Reptile Zoo,Ontario,Canada,CAN,🇨🇦,#B3E1B6
+IRC,IRCHEL,Universität Zürich-Irchel Anthropologisches Institut und Museum,Switzerland,Switzerland,CHE,🇨🇭,#A6BA80
+KOL,KOLN,Cologne Zoo,Germany,Germany,DEU,🇩🇪,#FEB342
+LAN,LANGLEY,Mountain View Conservation & Breeding,British Columbia,Canada,CAN,🇨🇦,#A6DBAB
+LIT,LITTLEROC,Little Rock Zoological Gardens,Arkansas,United States,USA,🇺🇸,#99C2B5
+LOS,LOSANGELE,Los Angeles Zoo & Botanical Gardens,California,United States,USA,🇺🇸,#F875A7
+LAO,LaoPeoplesDemocraticRepublic,Wild,Laos,Laos,LAO,🇱🇦,#FB8069
+MEM,MEMPHIS,Memphis Zoological Garden & Aquarium,Tennessee,United States,USA,🇺🇸,#FDC07A
+MIL,MILWAUKEE,Milwaukee County Zoological Gardens,Wisconsin,United States,USA,🇺🇸,#CCEBAE
+MIN,MINNESOTA,Minnesota Zoological Garden,Minnesota,United States,USA,🇺🇸,#FFFF33
+MOO,MOODY,Aquarium & Rainforest at Moody Gardens,Texas,United States,USA,🇺🇸,#E36350
+MOS,MOSCOW,Moscow Zoological Park,Russia,Russian Federation,RUS,🇷🇺,#CB8C37
+MYA,MYAKKACLR,Lemur Conservation Foundation,Florida,United States,USA,🇺🇸,#67A599
+NYB,NYBRONX,Bronx Zoo/Wildlife Conservation Society,New York,United States,USA,🇺🇸,#B3E1C2
+NZP,NZPWASH,Smithsonian National Zoological Park,District of Columbia,United States,USA,🇺🇸,#BD8CC3
+OAS,OASES,OASES (John Creviston),British Columbia,Canada,CAN,🇨🇦,#FFF2AE
+OMA,OMAHA,Omaha's Henry Doorly Zoo,Nebraska,United States,USA,🇺🇸,#F73563
+PAI,PAIGNTON,Paignton Zoo Environmental Park,United Kingdom,United Kingdom,GBR,🇬🇧,#8CB06C
+PHI,PHILADELP,Philadelphia Zoo,Pennsylvania,United States,USA,🇺🇸,#FDC07A
+POZ,POZNAN,Ogrod Zoologiczny w Poznaniu,Poland,Poland,POL,🇵🇱,#99C08D
+PRO,PROSPECTP,Prospect Park Zoo,New York,United States,USA,🇺🇸,#CCECF4
+PUB,PUBLIC,General Public,Undetermined,Undetermined,UND,?,#CCEBD1
+PUE,PUEBLO,Pueblo Zoo,Colorado,United States,USA,🇺🇸,#33A97E
+QUE,QUEBEC,Jardin Zoologique du Quebec (extinct),Quebec,Canada,CAN,🇨🇦,#A6D975
+SOZ,SANDIEGOZ,San Diego Zoo,California,United States,USA,🇺🇸,#66C092
+SAN,SANFRAN,San Francisco Zoological Gardens,California,United States,USA,🇺🇸,#FDB46C
+SBA,SBARBARA,Santa Barbara Zoological Gardens,California,United States,USA,🇺🇸,#FFEDB3
+SDW,SDWAP,San Diego Zoo Safari Park,California,United States,USA,🇺🇸,#F668B2
+SEA,SEATTLE,Woodland Park Zoo,Washington,United States,USA,🇺🇸,#FDCDA1
+SHA,SHALDON,Shaldon Wildlife Trust,United Kingdom,United Kingdom,GBR,🇬🇧,#A6D84A
+SKA,SKANAKV,Skansen Akvariet,Sweden,Sweden,SWE,🇸🇪,#FDA75F
+STL,STLOUIS,Saint Louis Zoological Park,Missouri,United States,USA,🇺🇸,#8CCD60
+SWI,SWITZRLNDInvaliduseofGeoRef,SWITZRLND: Invalid use of GeoRef,Switzerland,Switzerland,CHE,🇨🇭,#F2FA8C
 TAI,TAIPEI,Taipei Zoo,Taiwan,Taiwan,TWN,🇹🇼,#9AD9DD
-TOR,TORONTO,Toronto Zoo,Ontario,Canada,CAN,🇨🇦,#678F66
-THA,Thailand,Wild,Thailand,Thailand,THA,🇹🇭,#99D69F
-UND,UNDETERMI,Undetermined Location,Undetermined,Undetermined,UND,?,#FEB342
-USD,USDI,US Dept of the Interior (USDI),Undetermined,United States,USA,🇺🇸,#F74F7C
-USF,USFWS,US Fish and Wildlife Service [General],Undetermined,United States,USA,🇺🇸,#BFE7E5
-VIE,VietNam,Wild,Vietnam,Vietnam,VNM,🇻🇳,#FFFF33
-WAR,WARSAW,Miejski Ogrod Zoologiczny Warsaw,Poland,Poland,POL,🇵🇱,#FDBF6F
-WHE,WHEELING,Oglebay's Good Children's Zoo,West Virginia,United States,USA,🇺🇸,#F04028
-WIL,WILDWRLD,Wildlife World Zoo,Arizona,United States,USA,🇺🇸,#F881B5
-WGE,WORANGE,Turtle Back Zoo,New Jersey,United States,USA,🇺🇸,#E5D075
-WOR,WORLDWIDE,Worldwide Primates (Matt Block),Florida,United States,USA,🇺🇸,#D9EF74
+TOR,TORONTO,Toronto Zoo,Ontario,Canada,CAN,🇨🇦,#BFC26B
+THA,Thailand,Wild,Thailand,Thailand,THA,🇹🇭,#FFF2C7
+UND,UNDETERMI,Undetermined Location,Undetermined,Undetermined,UND,?,#D9EF74
+USD,USDI,US Dept of the Interior (USDI),Undetermined,United States,USA,🇺🇸,#D9F0BB
+USF,USFWS,US Fish and Wildlife Service [General],Undetermined,United States,USA,🇺🇸,#BFE7F1
+VIE,VietNam,Wild,Vietnam,Vietnam,VNM,🇻🇳,#B168B1
+WAR,WARSAW,Miejski Ogrod Zoologiczny Warsaw,Poland,Poland,POL,🇵🇱,#4EB3D3
+WHE,WHEELING,Oglebay's Good Children's Zoo,West Virginia,United States,USA,🇺🇸,#FEF2E0
+WIL,WILDWRLD,Wildlife World Zoo,Arizona,United States,USA,🇺🇸,#74C69C
+WGE,WORANGE,Turtle Back Zoo,New Jersey,United States,USA,🇺🇸,#B3E3EE
+WOR,WORLDWIDE,Worldwide Primates (Matt Block),Florida,United States,USA,🇺🇸,#99D7B3

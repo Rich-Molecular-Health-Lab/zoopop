@@ -46,13 +46,12 @@ learnr::run_tutorial("new_studbook", package = "zoopop")
 
 ## Setup
 
-```{r setup}
+```{r setup, context="setup"}
 here::i_am("inst/tutorials/demography/demography.Rmd")
 library(conflicted)
 library(here)
 library(knitr)
 library(learnr)
-library(paletteer)
 library(shiny)
 library(tidyverse)
 library(zoopop)
@@ -72,4 +71,23 @@ conflicts_prefer(dplyr::filter)
 loc_key  <- read_csv(here("inst/extdata/locations.csv"))
 studbook <- read_csv(here("inst/extdata/studbook.csv"))
 ```
+
+# Studbook Overview
+
+Let's create a graphical table to summarize our studbook data.
+
+```{r studbook-view, exercise=TRUE}
+studbook.tbl <- studbook %>% studbook_react(., studbook.cols(.), groupBy = "Status")
+studbook.tbl
+```
+
+## Summarize Demographic Trends
+
+Let's look at the basic population size over time to begin quantifying growth rate and assessing overall population viability.
+
+```{r census-setup, exercise=TRUE}
+raw.counts      <- census(studbook, "years")
+```
+
+
 
