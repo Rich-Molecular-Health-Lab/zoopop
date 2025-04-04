@@ -20,27 +20,28 @@
 ID <- function(df) {
   colDef(
     header   = tippy("ID", tooltip = "Studbook ID color-coded by sex (maroon = F, blue = M, green = Undetermined)"),
-    maxWidth = 70,
+    align    = "center",
+    maxWidth = 100,
     cell     = function(value, index) {
       Sex     <- str_to_lower(df$Sex[index])
       Status  <- df$Status[index]
       icon    <- if (Status == "A") { sprintf("icon_%s.png", Sex) } else { sprintf("icon_%s_deceased.png", Sex) }
       icon_path <- system.file("icons", icon, package = "zoopop")
       img_src   <- knitr::image_uri(icon_path)
-      image   <- img(src = img_src, style = "height: 24px;", alt = Sex)
+      image   <- img(src = img_src, style = "height: 30px;", alt = Sex)
 
       text <- if (is.na(df$name_spec[index])) {
-        div(style = "font-weight: 600; font-size:12pt", value)
+        div(value)
       } else {
-        div(style = "display:grid; row-gap:2px", div(style = "font-weight: 300; font-size:10pt", value),
-            div(style = "font-weight: 600; font-size:10pt; text-decoration-line: overline", df$name_spec[index]))
+        div(style = "display:grid; row-gap:2px",
+            div(value),
+            div(df$name_spec[index]))
       }
-
-      tagList(div(style = "display: inline-block; width: 45px", image), text)
-    }
+      tagList(div(style = "display: inline-block;", image), text)
+    },
+    style    = list(fontFamily = "Courier New, monospace", fontWeight = "bold")
   )
-}
-#'
+}#'
 #' @param df A data frame passed to the reactable column definition
 #'
 #' @rdname react_cols
@@ -49,67 +50,76 @@ ID <- function(df) {
 #' @importFrom htmlwidgets JS
 #' @importFrom reactable colDef
 #' @importFrom tippy tippy
-exclude <- function(df) {
+Status <- function() {
   colDef(
-    header   = tippy("Status", tooltip = "Most recent report status - deceased, included (implies living), excluded (for either behavior or age - also implies living)"),
+    header   = tippy("Status", tooltip = "Alive or Deceased"),
+    align    = "center",
     maxWidth = 100,
-    cell     = function(value) {
-      exclude <- if (value == "n") "include" else value
-      icon_path <- system.file("icons", sprintf("icon_%s.png", exclude), package = "zoopop")
+    cell     = JS("
+      function(cellInfo) {
+        let val = cellInfo.value;
+        if (val === 'D') {
+          return 'Deceased';
+        } else if (val === 'A') {
+          return 'Alive';
+        } else if (val === 'H') {
+          return 'Hypothetical ID';
+        } else {
+          return val;
+        }
+      }
+    "),
+    style    = JS("
+      function(rowInfo, column, state) {
+        const firstSorted = state.sorted[0]
+        if (!firstSorted || firstSorted.id === 'Status') {
+          const prevRow = state.pageRows[rowInfo.viewIndex - 1]
+          if (prevRow && rowInfo.values['Status'] === prevRow['Status']) {
+            return { visibility: 'hidden' }
+          }
+        }
+      }")
+  )
+}
+
+#'
+#' @param df A data frame passed to the reactable column definition
+#'
+#' @rdname react_cols
+#' @export
+#'
+#' @importFrom reactable colDef
+#' @importFrom htmltools img
+#' @importFrom knitr image_uri
+#' @importFrom tippy tippy
+exclude <- function(df, colors = set_colors()) {
+  colDef(
+    header   = tippy("Breeding Plan",
+                     tooltip = "Most recent report status - deceased, included (implies living), excluded (for either behavior or age - also implies living)"),
+    align    = "center",
+    maxWidth = 150,
+    cell     = function(value, index) {
+      age <- df$age_last[index]
+      tip <- if (value == "deceased") {
+        paste0("Excluded - Deceased at age ", age)
+      } else if (value == "n") {
+        paste0("Included - Age ", age)
+      } else {
+        paste0("Excluded due to ", value, " (Age ", age, ")")
+      }
+      icon <- if (value == "n") {
+        "icon_include.png"
+      } else if (value == "deceased") {
+        "icon_deceased.png"
+      } else {
+        "icon_exclude.png"
+      }
+      icon_path <- system.file("icons", icon, package = "zoopop")
       img_src   <- knitr::image_uri(icon_path)
-      image   <- img(src = img_src, style = "height: 24px;", alt = exclude)
-      tagList(div(style = "display: inline-block; width: 45px", image))
+      image     <- img(src = img_src, style = "height: 30px;", alt = tip)
+
+      div(style = "display: inline-block;", tippy(image, tip))
     }
-  )
-}
-#'
-#' @param df A data frame passed to the reactable column definition
-#'
-#' @rdname react_cols
-#' @export
-#'
-#' @importFrom reactable colDef
-#' @importFrom reactablefmtr color_tiles
-#' @importFrom scales label_date
-#' @importFrom tippy tippy
-Date_birth <- function(df, colors = set_colors()) {
-  colDef(
-    header   = tippy("Birthdate", tooltip = "Date of birth (captive-born) or capture (wild-born)"),
-    maxWidth = 200,
-    cell     = color_tiles(
-      data                = df,
-      colors              = colors[["seq"]],
-      opacity             = 0.4,
-      color_by            = "Year_birth",
-      brighten_text_color = "black",
-      box_shadow          = TRUE,
-      number_fmt          = label_date()
-    )
-  )
-}
-#'
-#' @param df A data frame passed to the reactable column definition
-#'
-#' @rdname react_cols
-#' @export
-#'
-#' @importFrom reactable colDef
-#' @importFrom reactablefmtr color_tiles
-#' @importFrom scales label_date
-#' @importFrom tippy tippy
-Date_last <- function(df, colors = set_colors()) {
-  colDef(
-    header   = tippy("Death Date", tooltip = "Date of death (NA for living individuals)"),
-    maxWidth = 200,
-    cell     = color_tiles(
-      data                = df,
-      colors              = colors[["seq"]],
-      opacity             = 0.4,
-      color_by            = "Year_last",
-      brighten_text_color = "black",
-      box_shadow          = TRUE,
-      number_fmt          = label_date()
-    )
   )
 }
 #'
@@ -124,15 +134,14 @@ Date_last <- function(df, colors = set_colors()) {
 Loc_birth <- function(df) {
   colDef(
     header   = tippy("Born", tooltip = "Location of birth (captive-born) or capture (wild-born)"),
+    align    = "center",
     maxWidth = 100,
     cell     = function(value, index) {
       flag <- df$iconLoc_birth[index]
-      name <- span(style = "text-decoration: underline; text-decoration-style: dotted",
+      name <- span(style = "font-size:75%",
                    tippy(value, df$Institution_birth[index]))
-      date <- div(style = "display:inline",
-                  span(style = "font-weight: 600; font-size:12pt", df$Year_birth[index]),
-                  span(style = "font-size:10pt", paste0(" (", df$Month_birth[index], ")")))
-      div(style = "display:grid; row-gap:2px", div(style = "display:inline-block", flag, name), date)
+      date <- div(style = "font-weight: 400", df$Date_birth[index])
+      div(style = "display:grid; row-gap:2px", div(style = "display: flex; align-items: center;", flag, name), date)
     }
   )
 }
@@ -148,39 +157,15 @@ Loc_birth <- function(df) {
 Loc_last <- function(df) {
   colDef(
     header   = tippy("Last", tooltip = "Current institution (Alive) or institution and date of death (Deceased)"),
+    align    = "center",
     maxWidth = 100,
     cell     = function(value, index) {
       flag <- df$iconLoc_last[index]
-      name <- span(style = "text-decoration: underline; text-decoration-style: dotted",
+      name <- span(style = "font-size:75%",
                    tippy(value, df$Institution_last[index]))
-      date <- div(style = "font-weight: 600; font-size:12pt", df$Date_last[index])
-      div(style = "display:grid; row-gap:2px", div(style = "display:inline-block", flag, name), date)
+      date <- div(df$Date_last[index])
+      div(style = "display:grid; row-gap:2px", div(style = "display: flex; align-items: center;", flag, name), date)
     }
-  )
-}
-
-#'
-#' @param df A data frame passed to the reactable column definition
-#'
-#' @rdname react_cols
-#' @export
-#'
-#' @importFrom reactable colDef
-#' @importFrom reactablefmtr pill_buttons
-#' @importFrom scales label_date
-#' @importFrom tippy tippy
-age_last <- function(df, colors = set_colors()) {
-  colDef(
-    header   = tippy("Age", tooltip = "Now (Alive) or at time of death (Deceased)"),
-    maxWidth = 50,
-    align    = "center",
-    cell     = pill_buttons(
-      data                = df,
-      colors              = colors[["seq"]],
-      opacity             = 0.4,
-      brighten_text_color = "black",
-      box_shadow          = TRUE
-    )
   )
 }
 #'
@@ -219,14 +204,9 @@ bubble_count <- function(df, name, colors = set_colors()) {
 Sire <- function(df, colors = set_colors()) {
   colDef(
     header   = tippy("Father", tooltip = "Studbook ID of Sire (0 if wildborn or unknown)"),
-    maxWidth = 70,
-    cell     = pill_buttons(
-      data                = df,
-      colors              = colors[["sire"]],
-      opacity             = 0.6,
-      brighten_text_color = "black",
-      box_shadow          = TRUE
-    )
+    align    = "center",
+    maxWidth = 100,
+    style    = list(fontFamily = "Courier New, monospace", color = colors$m)
   )
 }
 #'
@@ -241,14 +221,9 @@ Sire <- function(df, colors = set_colors()) {
 Dam <- function(df, colors = set_colors()) {
   colDef(
     header   = tippy("Mother", tooltip = "Studbook ID of Dam (0 if wildborn or unknown)"),
-    maxWidth = 70,
-    cell     = pill_buttons(
-      data                = df,
-      colors              = colors[["dam"]],
-      opacity             = 0.6,
-      brighten_text_color = "black",
-      box_shadow          = TRUE
-    )
+    align    = "center",
+    maxWidth = 100,
+    style    = list(fontFamily = "Courier New, monospace", color = colors$f)
   )
 }
 #'
@@ -316,20 +291,20 @@ inbred <- function(df, colors = set_colors()) {
 #' @importFrom purrr keep_at
 studbook_cols <- function(df, df_cols, colors = set_colors()) {
   list(
+    Status              = Status(),
     ID                  = ID(df),
-    exclude             = exclude(df),
-    Loc_birth           = Loc_birth(df),
-    age_last            = age_last(df),
-    Loc_last            = Loc_last(df),
     Sire                = Sire(df),
     Dam                 = Dam(df),
+    Loc_birth           = Loc_birth(df),
+    exclude             = exclude(df),
+    Loc_last            = Loc_last(df),
+    age_last            = colDef(show = FALSE),
     name_spec           = colDef(show = FALSE),
     Date_birth          = colDef(show = FALSE),
     Date_last           = colDef(show = FALSE),
     Sex                 = colDef(show = FALSE),
     color               = colDef(show = FALSE),
     Type_birth          = colDef(show = FALSE),
-    Status              = colDef(show = FALSE),
     Year_birth          = colDef(show = FALSE),
     Institution_birth   = colDef(show = FALSE),
     State_Province_birth= colDef(show = FALSE),
@@ -390,20 +365,16 @@ kin.cols <- function() {
 #' @return A reactable widget
 #' @export
 #' @importFrom reactable reactable
-#' @importFrom reactablefmtr flatly
+#' @importFrom dplyr distinct
 studbook_react <- function(df, df_cols, colors = set_colors(), ...) {
-  df <- select(df, df_cols)
+  df <- distinct(df, df_cols)
   reactable::reactable(
     df,
     fullWidth           = TRUE,
-    theme               = flatly(centered = TRUE),
-    height              = 700,
+    height              = 900,
     sortable            = TRUE,
-    resizable           = TRUE,
-    filterable          = TRUE,
     defaultExpanded     = TRUE,
     defaultPageSize     = 20,
-    showPageSizeOptions = TRUE,
     highlight           = TRUE,
     columns             = studbook_cols(df, df_cols),
     ...

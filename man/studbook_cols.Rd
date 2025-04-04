@@ -4,7 +4,7 @@
 \alias{studbook_cols}
 \title{Column definitions for full studbook summary tables}
 \usage{
-studbook_cols(df, df_cols, colors = colors)
+studbook_cols(df, df_cols, colors = set_colors())
 }
 \arguments{
 \item{df}{A filtered founder summary dataframe}

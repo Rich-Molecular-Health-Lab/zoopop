@@ -2,12 +2,10 @@
 % Please edit documentation in R/reactables.R
 \name{ID}
 \alias{ID}
+\alias{Status}
 \alias{exclude}
-\alias{Date_birth}
-\alias{Date_last}
 \alias{Loc_birth}
 \alias{Loc_last}
-\alias{age_last}
 \alias{bubble_count}
 \alias{Sire}
 \alias{Dam}
@@ -17,27 +15,23 @@
 \usage{
 ID(df)
 
-exclude(df)
+Status()
 
-Date_birth(df, colors = colors)
-
-Date_last(df, colors = colors)
+exclude(df, colors = set_colors())
 
 Loc_birth(df)
 
 Loc_last(df)
 
-age_last(df, colors = colors)
+bubble_count(df, name, colors = set_colors())
 
-bubble_count(df, name, colors = colors)
+Sire(df, colors = set_colors())
 
-Sire(df, colors = colors)
+Dam(df, colors = set_colors())
 
-Dam(df, colors = colors)
+Rel_Contribution(df, colors = set_colors())
 
-Rel_Contribution(df, colors = colors)
-
-inbred(df, colors = colors)
+inbred(df, colors = set_colors())
 }
 \arguments{
 \item{df}{A data frame passed to the reactable column definition}

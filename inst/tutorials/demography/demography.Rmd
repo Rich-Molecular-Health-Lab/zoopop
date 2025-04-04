@@ -73,19 +73,18 @@ studbook <- read_csv(here("inst/extdata/studbook.csv"))
 
 ```{r setup, context="setup"}
 cols_default <- c(
+  "Status"              ,
   "ID"                  ,
   "name_spec"           ,
   "exclude"             ,
   "Loc_birth"           ,
+  "Loc_last"            ,
   "Sire"                ,
   "Dam"                 ,
-  "Status"              ,
   "Date_birth"          ,
   "age_last"            ,
-  "Loc_last"            ,
   "Date_last"           ,
   "Sex"                 ,
-  "Type_birth"          ,
   "Institution_birth"   ,
   "iconLoc_birth"       ,
   "Institution_last"    ,
@@ -99,7 +98,8 @@ cols_default <- c(
 Let's create a graphical table to summarize our studbook data.
 
 ```{r studbook-view, exercise=TRUE}
-studbook.tbl <- studbook %>% studbook_react(., df_cols = c(cols_default))
+studbook.tbl <- studbook %>% studbook_react(., df_cols = c(cols_default), groupBy = "Status")
+
 studbook.tbl
 ```
 
@@ -107,9 +107,23 @@ studbook.tbl
 
 Let's look at the basic population size over time to begin quantifying growth rate and assessing overall population viability.
 
-```{r census-setup, exercise=TRUE}
-raw.counts      <- census(studbook, "years")
+```{r census, exercise=TRUE}
+population.plot <- plot_census(census(studbook, "years"), title = "Pygmy Loris Population Trends 1966-2025")
+population.plot
 ```
 
+## Life Table Calculations 
 
+Now we will use annual birth counts to follow the standard method for computing a normalized rate of growth over the past 5 years compared to all years.
+
+```{r lifetab, exercise = TRUE}
+lifeTab      <- cohort_lifeTab(studbook, Year_min = 1985, Year_max = 2024, span = 5)
+```
+
+And then we will plot trends in this growth rate based on birth year.
+
+```{r lambda, exercise = TRUE, exercise.setup = "lifetab"}
+lambda.plot  <- plot_lambda(lifeTab, colors, "Population Growth Rates by Cohort")
+lambda.plot
+```
 
