@@ -117,13 +117,72 @@ population.plot
 Now we will use annual birth counts to follow the standard method for computing a normalized rate of growth over the past 5 years compared to all years.
 
 ```{r lifetab, exercise = TRUE}
-lifeTab      <- cohort_lifeTab(studbook, Year_min = 1985, Year_max = 2024, span = 5)
+lifeTab      <- cohort_lifeTab(studbook, 
+                               Year_min = 1985, 
+                               Year_max = 2024, 
+                               span     = 5)
 ```
 
 And then we will plot trends in this growth rate based on birth year.
 
 ```{r lambda, exercise = TRUE, exercise.setup = "lifetab"}
-lambda.plot  <- plot_lambda(lifeTab, colors, "Population Growth Rates by Cohort")
+lambda.plot  <- plot_lambda(lifeTab, 
+                            title = "Population Growth Rates by Cohort")
 lambda.plot
 ```
+
+## Construct Pedigree 
+
+Now we will use `pedtools` to create our pedigree objects based on the studbook data. We will use the pedigree object to generate all genetic stats and projections.
+
+```{r pedigree, exercise = TRUE}
+ped_series <- build_ped_series(studbook)
+```
+
+When working with studbook data, this usually produces a list of multiple pedigree objects, as any founders or lineages not represented in the current living population will form discrete, disconnected trees. There also will probably be several "singletons" which are founders without any connections to the living population. That is why the code above also included a line to thin out your dataset by ignoring the founders that never reproduced.
+
+### Pedigree Plot
+
+Now we will take a look at the data in the form of the traditional pedigree structures produced by `pedtools`. The code below also prepares some formatting variables to assign color-coding that matches the other graphics in this workflow before plotting the pedigree(s).
+
+```{r pedplots, exercise = TRUE, exercise.setup = "pedigree"}
+ped_series_plots <- plot_ped_series(ped_series, 
+                                    studbook, 
+                                    labs_spec = TRUE)
+ped_series_plots
+```
+
+We can download this entire series to a local directory as html files using the function below.
+
+```{r}
+pedsave_series(ped_series, studbook, labs_spec = TRUE)
+```
+
+For many of our operations, it will be easier to work with one pedigree object of interest and ignore the pedigrees not currently represented in the breeding population. The function below helps you extract the pedigree of interest as its own object with a new name.
+
+```{r}
+ped <- extract_pedigree(ped_series, "_comp1", "Contemporary")
+```
+
+Now we can plot just this pedigree on its own.
+
+```{r}
+ped_plot <- plot_pedigree(ped, studbook, labs_spec = TRUE)
+ped_plot
+```
+
+And to download this as a single html file we can use the function below.
+
+```{r}
+pedsave(ped, studbook, labs_spec = TRUE)
+```
+
+#### Interactive Pedigree Graphics
+
+We can also adapt `visNetwork` functions to render javascript-based graphics to represent the pedigree relationships built by `pedtools.`
+
+```{r}
+nodes <- ped_ndf(ped, studbook)
+```
+
 

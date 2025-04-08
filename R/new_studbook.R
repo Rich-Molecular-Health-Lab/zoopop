@@ -31,20 +31,23 @@ calculate_age <- function(birth, date) {
 #'
 #' @param file_in A file path to the input CSV file. This file must include the columns: \code{Institution Name}, \code{Mnemonic}, \code{Country}, and \code{State_Province}. Use a tool such as Adobe Acrobat to extract institution lists from the published studbook report, then edit the file so that every location in your studbook has a matching \code{Mnemonic}.
 #' @param file_out A file path to the output CSV file.
-#' @param khroma_pal A key specifying which khroma palette to use.
+#' @param palette A list of colors to assign to each location value (optional)
 #' @return A data frame with processed location data.
 #' @importFrom readr read_csv write_csv
 #' @importFrom dplyr mutate distinct arrange if_else left_join pull right_join lead
 #' @importFrom stringr str_squish str_remove_all str_sub str_replace str_to_upper
 #' @importFrom tidyr replace_na
 #' @importFrom countrycode countrycode
-#' @importFrom paletteer palettes_d
 #' @importFrom purrr set_names map
 #' @importFrom tibble enframe
 #' @importFrom magrittr %>%
 #' @export
 #'
-read_locations <- function(file_in, file_out, khroma_pal) {
+read_locations <- function(file_in, file_out, palette = NULL) {
+  if (is.null(palette)) {
+    cols    <- set_colors()
+    palette <- cols[["rnd"]]
+  }
   locs <- read_csv(file_in) %>%
     mutate(across(where(is.character), ~str_squish(.))) %>%
     mutate(Location = str_remove_all(Mnemonic, "[^\\w+]"), .keep = "unused") %>%
@@ -62,9 +65,9 @@ read_locations <- function(file_in, file_out, khroma_pal) {
 
   loc_vals <- pull(locs, code) %>% unique() %>% as.list()
 
-  df <- as.list(sample(palettes_d$khroma[[paste0(khroma_pal)]],
-                       size = length(loc_vals),
-                       replace = FALSE)) %>%
+  df <- as.list(
+    sample(palette, size = length(loc_vals), replace = FALSE)
+    ) %>%
     set_names(., map(loc_vals, \(x) paste0(x))) %>%
     enframe(name = "code", value = "colorLoc") %>%
     mutate(colorLoc = as.character(colorLoc),
@@ -200,6 +203,7 @@ label_names <- function(studbook, names = NULL) {
 #' @param loc_key A data frame containing location key mappings produced by \code{read_locations}.
 #' @param btp A data frame containing formatted BTP data produced by \code{read_btp}.
 #' @param names Factor labeling vector written as `c({String} = "{ID}")` for assigning special name labels to selected ID numbers (optional - will return empty cells for all rows if not included).
+#' @param add_births List provided to account for new births implied but not documented in most recent studbook. The top level list names should be an estimated date of birth. The next level should be the names `ID`, `Sire`, and `Dam` with a numeric ID value provided for each. (if `add_births` is not used, then this option is ignored)
 #' @return A data frame with processed studbook data that can be used to resolve missing parental assignments.
 #' @importFrom readr read_csv
 #' @importFrom dplyr filter left_join rename mutate select distinct arrange group_by if_else bind_rows row_number lead join_by last case_when setdiff across consecutive_id pull first desc
@@ -210,7 +214,7 @@ label_names <- function(studbook, names = NULL) {
 #' @importFrom tidyselect where
 #' @export
 #'
-read_studbook <- function(file_in, loc_key, btp, names = NULL) {
+read_studbook <- function(file_in, loc_key, btp, names = NULL, add_births = NULL) {
   events <- c(
     birth    = "birth/hatch",
     capture  = "wild capture",
@@ -218,21 +222,26 @@ read_studbook <- function(file_in, loc_key, btp, names = NULL) {
     ltf      = "go ltf",
     death    = "death"
   )
+  if (!is.null(add_births)) {
+    add_births <- enframe(add_births, name = "Date") %>%
+      unnest_wider(value) %>%
+      mutate(Date = ymd(Date))
+  }
   std <- read_csv(file_in) %>%
     mutate(across(where(is.character), ~str_squish(.))) %>%
     filter(Location != "Location") %>%
     fill(ID, Sex, Sire, Dam, Birth_Type) %>%
-    mutate(Sex = str_sub(Sex, 1L, 1L),
-           Date = dmy(str_extract(Date, "\\d{1,2}[-/]\\w{3}[-/]\\d{2,4}")),
+    mutate(Sex      = str_sub(Sex, 1L, 1L),
+           Date     = dmy(str_extract(Date, "\\d{1,2}[-/]\\w{3}[-/]\\d{2,4}")),
            Location = str_remove_all(Location, "[^\\w+]"),
            across(c(Sire, Dam), ~as.integer(str_replace_all(., "WILD", "0"))),
            Type_birth = str_extract(Birth_Type, "^\\w+(?=\\s)"),
-           Event = str_to_lower(Event)
+           Event      = str_to_lower(Event)
     ) %>%
-    mutate(Event = fct_recode(Event, !!!events),
+    mutate(Event    = fct_recode(Event, !!!events),
            Location = if_else(Location == "Undetermined", "UNDETERMI", Location),
-           Date = if_else(Date > today(), Date - years(100), Date),
-           ID = as.integer(ID)) %>%
+           Date     = if_else(Date > today(), Date - years(100), Date),
+           ID       = as.integer(ID)) %>%
     select(
       ID,
       Sex,
@@ -245,11 +254,13 @@ read_studbook <- function(file_in, loc_key, btp, names = NULL) {
     ) %>%
     left_join(loc_key, by = join_by(Location)) %>%
     mutate(loc_order = consecutive_id(code),
-           Sex = last(Sex), .by = ID)
+           Sex       = last(Sex), .by = ID)
 
   new_births <- setdiff(pull(btp, ID), pull(std, ID))
+
   living <- filter(btp, year == max(year) & exclude != "deceased") %>%
     pull(ID) %>% unique()
+
   loc_orders <- std %>%
     select(ID, code, loc_order) %>%
     distinct()
@@ -259,7 +270,11 @@ read_studbook <- function(file_in, loc_key, btp, names = NULL) {
     select(ID, Sex, Date, Event, code) %>%
     arrange(ID, Date) %>%
     distinct() %>%
-    mutate(Date = floor_date(Date, "years"),
+    bind_rows(add_births) %>%
+    group_by(ID) %>%
+    fill(Date, Sire, Event, code, Dam, .direction = "downup") %>%
+    ungroup() %>%
+    mutate(Date  = if_else(is.na(Date), floor_date(Date, "years"), Date),
            Event = "birth")
 
   btp_deaths <- btp %>%
@@ -287,7 +302,7 @@ read_studbook <- function(file_in, loc_key, btp, names = NULL) {
     select(ID, Sire, Dam, Sex, Date, Event, code) %>%
     distinct() %>%
     pivot_wider(names_from = "Event", values_from = "Date") %>%
-    mutate(Date = if_else(is.na(birth), capture, birth),
+    mutate(Date  = if_else(is.na(birth), capture, birth),
            Event = "birth", .keep = "unused") %>%
     bind_rows(btp_births) %>%
     arrange(ID, Date)
@@ -314,7 +329,7 @@ read_studbook <- function(file_in, loc_key, btp, names = NULL) {
     distinct()
 
   event_fact <- c("birth", "capture", "transfer", "breed", "btp", "death")
-  studbook <- bind_rows(birth_dates, births, transfers, btps, deaths) %>%
+  studbook   <- bind_rows(birth_dates, births, transfers, btps, deaths) %>%
     mutate(Event = factor(Event, levels = event_fact)) %>%
     left_join(loc_orders, by = join_by(ID, code)) %>%
     arrange(ID, loc_order, Event, Date) %>%
@@ -326,24 +341,34 @@ read_studbook <- function(file_in, loc_key, btp, names = NULL) {
                                  Status == "A" ~ today())) %>%
     fill(Date_last, .direction = "up") %>%
     mutate(Date_last = if_else(is.na(Date_last), last(Date) + years(1), Date_last),
-           Loc_last = last(code)) %>%
+           Loc_last  = last(code)) %>%
     filter(Event != "death") %>%
     mutate(Date_birth = if_else(Event == "birth", Date, NA),
-           Loc_birth = if_else(Event == "birth", code, NA)) %>%
+           Loc_birth  = if_else(Event == "birth", code, NA)) %>%
     fill(Date_birth, Loc_birth) %>%
     filter(Event != "birth") %>%
     distinct() %>%
-    select(ID, Date_birth, Date, Event, Date_last, Status,
-           Loc_event = code, Loc_birth, Loc_last, Sex, Sire, Dam) %>%
+    select(ID,
+           Date_birth,
+           Date,
+           Event,
+           Date_last,
+           Status,
+           Loc_event = code,
+           Loc_birth,
+           Loc_last,
+           Sex,
+           Sire,
+           Dam) %>%
     mutate(Date = case_when(
       is.na(Date) & row_number() == 1 & !is.na(Date_birth) ~ est_date_btn(lead(Date), Date_birth),
-      is.na(Date) & row_number() == 1 & is.na(Date_birth) ~ lead(Date) - years(1),
+      is.na(Date) & row_number() == 1 &  is.na(Date_birth) ~ lead(Date) - years(1),
       .default = Date
     )) %>%
     mutate(Date_birth = if_else(is.na(Date_birth), first(Date) - years(2), Date_birth)) %>%
     fill(Date_birth) %>%
     mutate(age_event = calculate_age(Date_birth, Date),
-           age_last = calculate_age(Date_birth, Date_last)) %>%
+           age_last  = calculate_age(Date_birth, Date_last)) %>%
     left_join(select(std, ID, Type_birth), by = join_by(ID)) %>%
     left_join(select(btp, ID, Date, Event, exclude), by = join_by(ID, Date, Event)) %>%
     fill(exclude) %>%
@@ -355,6 +380,9 @@ read_studbook <- function(file_in, loc_key, btp, names = NULL) {
            across(c(Loc_event, Loc_birth, Loc_last), ~replace_na(., "UND"))) %>%
     fill(exclude, Type_birth, .direction = "downup") %>%
     mutate(across(c(Sire, Dam), ~if_else(is.na(.) & Type_birth == "Undetermined", 0, .))) %>%
+    mutate(Sire = if_else(!is.na(Dam) & Dam != 0  & Sire == 0, NA, Sire),
+           Dam  = if_else(!is.na(Sire) & Sire != 0 & Dam  == 0, NA, Dam)) %>%
+    mutate(Sex = last(Sex)) %>%
     ungroup() %>%
     left_join(loc_key, by = join_by(Loc_birth == code)) %>%
     rename(Institution_birth = Institution,
@@ -404,6 +432,7 @@ studbook_short <- function(studbook) {
       exclude
     ) %>%
     arrange(ID) %>%
+    mutate(exclude = last(exclude), .by = ID) %>%
     distinct()
 }
 
@@ -566,9 +595,15 @@ add_hypotheticals <- function(studbook, parent, ids, loc_key) {
   if (parent %in% c("Sire", "sire", "dad", "father")) {
     sex_parent <- "M"
     add <- 10000
+    offspring_dads <- filter(studbook, ID %in% ids) %>%
+      mutate(Sire = min(ids) + 10000)
+    offspring_moms <- filter(studbook, ID %in% ids)
   } else {
     sex_parent <- "F"
     add <- 20000
+    offspring_dads <- filter(studbook, ID %in% ids)
+    offspring_moms <- filter(studbook, ID %in% ids) %>%
+      mutate(Dam = min(ids) + 20000)
   }
   hypSire <- min(ids) + 10000
   hypDam  <- min(ids) + 20000
@@ -585,6 +620,12 @@ add_hypotheticals <- function(studbook, parent, ids, loc_key) {
     exclude     = "hypothetical",
     name_spec   = ""
   )
+
+  offspring <- bind_rows(offspring_dads, offspring_moms) %>%
+    group_by(ID) %>%
+    fill(Sire, Dam, .direction = "downup") %>%
+    ungroup() %>%
+    distinct()
 
   hypotheticals <- studbook %>%
     filter(ID %in% ids) %>%
@@ -611,6 +652,10 @@ add_hypotheticals <- function(studbook, parent, ids, loc_key) {
                      iconLoc_birth        = iconLoc,
                      colorLoc_birth       = colorLoc), by = join_by(Loc_birth)) %>%
     bind_rows(slice_head(., n = 1)) %>%
+    bind_rows(offspring) %>%
+    group_by(ID) %>%
+    fill(Sire, Dam, .direction = "downup") %>%
+    ungroup() %>%
     distinct()
 
   return(hypotheticals)
@@ -634,10 +679,17 @@ add_all_hypotheticals <- function(studbook, hyp_defs, loc_key) {
   hypothetical_dams <- map_depth(hyp_defs$dams, 1, \(x) add_hypotheticals(studbook, "dam", x, loc_key)) %>%
     list_rbind(.)
 
+  offspring <- list_flatten(hyp_defs, name_spec = "") %>%
+    list_c() %>% unique()
+
   hypotheticals <- bind_rows(hypothetical_sires, hypothetical_dams) %>%
     distinct()
 
-  studbook <- bind_rows(studbook, hypotheticals) %>%
+  studbook <- filter(studbook, !(ID %in% offspring)) %>%
+    bind_rows(hypotheticals) %>%
+    group_by(ID) %>%
+    fill(Sire, Dam, .direction = "downup") %>%
+    ungroup() %>%
     distinct() %>%
     arrange(ID, Date)
 

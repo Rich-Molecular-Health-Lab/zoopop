@@ -4,14 +4,14 @@
 \alias{read_locations}
 \title{Read and Process Location Data}
 \usage{
-read_locations(file_in, file_out, khroma_pal)
+read_locations(file_in, file_out, palette = NULL)
 }
 \arguments{
 \item{file_in}{A file path to the input CSV file. This file must include the columns: \code{Institution Name}, \code{Mnemonic}, \code{Country}, and \code{State_Province}. Use a tool such as Adobe Acrobat to extract institution lists from the published studbook report, then edit the file so that every location in your studbook has a matching \code{Mnemonic}.}
 
 \item{file_out}{A file path to the output CSV file.}
 
-\item{khroma_pal}{A key specifying which khroma palette to use.}
+\item{palette}{A list of colors to assign to each location value (optional)}
 }
 \value{
 A data frame with processed location data.

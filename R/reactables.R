@@ -278,6 +278,7 @@ inbred <- function(df, colors = set_colors()) {
     )
   )
 }
+
 # reactable_col_lists.R
 # Column list generators for use in reactable tables
 

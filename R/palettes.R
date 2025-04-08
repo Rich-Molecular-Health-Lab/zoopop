@@ -53,6 +53,7 @@ set_colors <- function(seq  = NULL,
                   dam  = dam )
   return(palette)
 }
+
 #'
 #' Generate fill color mapping for pedigree plots
 #'

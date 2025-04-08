@@ -56,68 +56,6 @@ annotate_cohorts <- function(studbook, Year_min = NULL, Year_max = NULL, span = 
 
 }
 
-#' Generate cohort-structured data
-#'
-#' @param studbook A data frame of studbook data produced by \code{read_studbook}.
-#' @param Year_min Start year of cohorts (optional)
-#' @param Year_max End year (optional)
-#' @param span Years per cohort (optional)
-#' @param age_max Max age to include (optional)
-#' @param include_sex Whether to include sex as a grouping var (optional)
-#' @return A joined and restructured tibble
-#' @export
-#'
-#' @importFrom dplyr across arrange case_when filter full_join join_by mutate relocate right_join select
-#' @importFrom lubridate year today
-#' @importFrom tibble tibble
-#' @importFrom tidyr expand_grid replace_na
-#' @importFrom tidyselect where
-#' @importFrom magrittr %>%
-make_cohorts <- function(studbook, Year_min = NULL, Year_max = NULL, span = 10, age_max = NULL, include_sex = TRUE) {
-  if (is.null(age_max)) { age_max <- max(studbook$age_last) } else { age_max <- age_max }
-  if (is.null(Year_min)) { Year_min <- min(studbook$Year_birth) } else { Year_min <- Year_min }
-  if (is.null(Year_max)) { Year_max <- year(today()) } else { Year_max <- Year_max }
-
-  N_letters <- (Year_max - Year_min + 1)/span
-  cohorts   <- expand_grid(
-    Age        = 0:age_max,
-    Sex        = c("M", "F"),
-    Year_birth = Year_min:Year_max
-  ) %>%
-    full_join(tibble(Year_birth   = Year_min:Year_max,
-                     Cohort_birth = rep(LETTERS[1:N_letters], each = span)),
-              by = join_by(Year_birth)) %>%
-    mutate(Cohort_min   = min(Year_birth),
-           Cohort_max   = max(Year_birth),
-           .by = Cohort_birth) %>%
-    select(Cohort_min, Cohort_max, Cohort_birth, Year_birth, Sex, Age) %>%
-    arrange(Cohort_birth, Year_birth, Sex, Age) %>%
-    filter(Year_birth + Age <= year(today()))
-
-  if (include_sex) {
-    studbook %>%
-      right_join(cohorts, by = join_by(Year_birth, Sex, Age)) %>%
-      mutate(Cohort = paste0(Sex, Cohort_birth),
-             across(where(is.numeric), ~ replace_na(., 0))) %>%
-    mutate(Cohort_label = if_else(
-      str_detect(name_spec, "\\w+"),
-      str_glue("{Cohort_min}", "-", "{Cohort_max}", " \\(", "{name_spec}", "\\)"),
-      str_glue("{Cohort_min}", "-", "{Cohort_max}")), .keep = "unused") %>%
-      relocate(Cohort_label, Cohort_birth, Sex, Age)
-  } else {
-    studbook %>%
-      right_join(distinct(cohorts, Age, Year_birth, Cohort_birth, Cohort_min, Cohort_max),
-                 by = join_by(Year_birth, Age)) %>%
-      mutate(Cohort = Cohort_birth,
-             across(where(is.numeric), ~ replace_na(., 0)),
-             Sex = "Total") %>%
-      mutate(Cohort_label = if_else(
-        str_detect(name_spec, "\\w+"),
-        str_glue("{Cohort_min}", "-", "{Cohort_max}", " \\(", "{name_spec}", "\\)"),
-        str_glue("{Cohort_min}", "-", "{Cohort_max}")), .keep = "unused") %>%
-      relocate(Cohort_label, Cohort_birth, Sex, Age)
-  }
-}
 
 #' Count births and track individual presence over time
 #'
@@ -140,6 +78,7 @@ count_births <- function(studbook) {
   counts <- studbook %>%
     select(
       ID,
+      name_spec,
       Sex,
       Year_birth,
       Start     = Date_birth,
@@ -154,6 +93,7 @@ count_births <- function(studbook) {
     mutate(Year = year(Years),
            Age  = calculate_age(Start, Years)) %>%
     select(ID,
+           name_spec,
            Sex,
            Year_birth,
            Age,
@@ -162,6 +102,7 @@ count_births <- function(studbook) {
     mutate(Births = replace_na(Births, 0)) %>%
     distinct() %>%
     select(ID,
+           name_spec,
            Year_birth,
            Sex,
            Age,
@@ -239,5 +180,115 @@ mle <- function(lx, age) {
 
   mle <- age_low + ((0.5 - lx_low) / (lx_high - lx_low)) * (age_high - age_low)
   return(mle)
+}
+
+#' Return number of generations for individuals
+#'
+#' @param pedigree A pedigree object from `pedtools::ped()`
+#' @return Named vector of generation numbers
+#' @export
+#'
+#' @importFrom pedtools generations
+gen_numbers <- function(pedigree) {
+  gens <- generations(pedigree, what = "indiv")
+  if (length(gens) == 0) {
+    warning("No generation numbers returned using 'indiv'. Trying 'depth'.")
+    gens <- generations(pedigree, what = "depth")
+  }
+  return(gens)
+}
+#' Get generation numbers for living individuals
+#'
+#' @param pedigree A pedigree object from `pedtools::ped()`
+#' @param studbook Studbook tibble
+#' @return Named vector of generations for living IDs
+#' @export
+#'
+#' @importFrom tibble tibble
+gen_numbers_living <- function(pedigree, studbook) {
+  gens <- gen_numbers(pedigree)
+  gens[names(gens) %in% living(studbook)]
+}
+
+#' Annotate lambda growth values with human-readable hover text
+#'
+#' @param df A data frame with a column `lambda`
+#' @return The same data frame with a new `hover_lambda` column
+#' @export
+#'
+#' @importFrom dplyr if_else
+#' @importFrom dplyr mutate
+#' @importFrom glue glue
+annotate_lambda <- function(df) {
+  df %>%
+    mutate(hover_lambda = abs(round((lambda - 1) * 100, digits = 1))) %>%
+    mutate(
+      hover_lambda = if_else(
+        lambda >= 1,
+        as.character(str_glue("Population growing by {hover_lambda}%")),
+        as.character(str_glue("Population declining by {hover_lambda}%"))
+      )
+    )
+}
+
+#' Assign generation levels to individuals in a pedigree
+#'
+#' @param pedigree A pedigree object from `pedtools::ped()`
+#' @return A tibble of individual IDs and generation levels
+#' @export
+#'
+#' @importFrom dplyr across distinct if_else mutate
+#' @importFrom pedtools founders leaves
+#' @importFrom purrr set_names
+#' @importFrom tibble enframe
+pedigree_levels <- function(pedigree) {
+  levels <- gen_numbers(pedigree) %>%
+    as.list() %>%
+    set_names(pedigree$ID) %>%
+    enframe(name = "id", value = "level") %>%
+    mutate(
+      level = as.integer(level),
+      level = if_else(id %in% founders(pedigree), level, level + 2),
+      level = if_else(id %in% leaves(pedigree), level + 1, level)
+    ) %>% distinct()
+  return(levels)
+}
+
+#' Extract and organize tibble of birth events from pedigree object
+#'
+#' @param pedigree A pedigree object
+#' @param studbook A studbook tibble
+#' @return A tibble of unique mating pairs with location info and ids to create nodes for a network
+#' @export
+#'
+#' @importFrom dplyr across distinct left_join join_by mutate row_number transmute
+#' @importFrom pedtools nonfounders parents
+#' @importFrom purrr map set_names
+#' @importFrom tidyr unnest_wider
+#' @importFrom tibble enframe
+#' @importFrom tidyselect ends_with
+pedigree_births <- function(pedigree, studbook) {
+  nonfounders <- as.list(nonfounders(pedigree))
+  birth_info <- studbook_short(studbook) %>%
+    mutate(offspring = as.character(ID)) %>%
+    select(
+      offspring,
+      name_spec,
+      Sex,
+      ends_with("_birth")
+    ) %>% distinct()
+  trios <- map(nonfounders, \(x) as.list(parents(pedigree, x))) %>%
+    set_names(., nonfounders) %>%
+    enframe(name = "offspring", value = "parent") %>%
+    unnest_wider(parent, names_sep = "_") %>%
+    arrange(parent_1, parent_2, offspring) %>%
+    left_join(birth_info, by = "offspring") %>%
+    rename(dad = parent_1, mom = parent_2) %>%
+    rename_with(~str_remove_all(.x, "_birth"), ends_with("_birth")) %>%
+    arrange(Date) %>%
+    mutate(pair = consecutive_id(dad, mom)) %>%
+    select(-Type) %>%
+    mutate(sibs = max(pair) + consecutive_id(pair))
+  return(trios)
 }
 

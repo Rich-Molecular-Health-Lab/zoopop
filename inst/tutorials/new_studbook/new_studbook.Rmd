@@ -30,6 +30,7 @@ knitr::opts_chunk$set(
 )
 conflicts_prefer(lubridate::interval)
 conflicts_prefer(dplyr::filter)
+i_am("inst/tutorials/new_studbook/new_studbook.Rmd")
 ```
 
 
@@ -115,9 +116,8 @@ Now you have all three files that you need to perform the rest of the data wrang
 *Note that this code will automatically export an updated version of the dataset to the second path provided as a parameter.*
 
 ```{r}
-locations <- read_locations("../../extdata/locations_original.csv", 
-                            "../../extdata/locations.csv", 
-                            "stratigraphy")
+locations <- read_locations(here("inst/extdata/locations_original.csv"), 
+                            here("inst/extdata/locations.csv"))
 ```
 
 ### Breeding and Transfer Plans
@@ -125,20 +125,41 @@ locations <- read_locations("../../extdata/locations_original.csv",
 *Note that this code will automatically export an updated version of the dataset to the second path provided as a parameter.*
 
 ```{r}
-btp <- read_btp("../../extdata/btp_original.csv", "../../extdata/btp.csv", locations)
+btp <- read_btp(here("inst/extdata/btp_original.csv"),
+                here("inst/extdata/btp.csv"), locations)
 ```
 
 ### Studbook
 
 For this function we can optionally assign values to a column `name_spec` for just some individuals we will want to highlight in different tables and figures. Any individuals not mentioned will present empty cells for that column, and if nothing is assigned then all rows will be empty values for this column.\
 \
-In our case, we want two subjects to stand out, so we will give them a name value for the `name_spec` column.
+In our case, we want two subjects to stand out, so we will give them a name value for the `name_spec` column formatted as a vector as shown below.
 
 ```{r}
 names     <- c(Culi = "2652", Warble = "2677")
+```
 
-studbook  <- read_studbook("../../extdata/studbook_original.csv", 
-                           locations, btp, names = names)
+\
+We can also account for any new births that are implied but not documented in the dataset using the optional parameter `add_births`. This should be provided as a list in the example list called `new_births` shown below.
+
+```{r}
+new_births <- list(
+  "2024-06-01" = list(
+  ID   = 2738,
+  Sire = 2622,
+  Dam  = 2630
+))
+```
+
+
+```{r}
+studbook  <- read_studbook(
+  here("inst/extdata/studbook_original.csv"), 
+  locations, 
+  btp, 
+  names      = names,
+  add_births = new_births
+  )
 ```
 
 ### Fill Missing Parentage
@@ -155,34 +176,27 @@ The list used for the `add_all_hypotheticals` function includes all individuals 
 ```{r}
 hyp_defs <- list(
   sires = list(
-    c(1045, 1046),
-    2108,
-    1087,
-    2717
-    ),
-  dams = list(
-    1087,
-    2717
-    )
+    c(1045, 1046), 
+    2108, 
+    c(2423, 2424),
+    2717),
+  dams  = list(2717)
   )
+```
+
+
+```{r}
 studbook_revised <- studbook %>%
-  mutate(
-    Sire = case_match(ID, 
-                      1047 ~ 1012, 
-                      2738 ~ 2622, 
-                      .default = Sire),
-    Dam  = case_match(ID, 
-                      2738 ~ 2630, 
-                      .default = Dam)
-  ) %>%
+  mutate(Sire = case_match(ID, 
+                           1047 ~ 1012, 
+                           .default = Sire)) %>%
   add_all_hypotheticals(hyp_defs, locations)
 ```
 
 Now we will export this version of the studbook as a csv file that we can use for other workflows and functions in this package.
 
 ```{r}
-
-write_csv(studbook_revised, "../../extdata/studbook.csv")
+write_csv(studbook_revised, here("inst/extdata/studbook.csv"))
 ```
 
 
