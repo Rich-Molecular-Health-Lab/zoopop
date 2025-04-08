@@ -161,20 +161,20 @@ pedsave_series(ped_series, studbook, labs_spec = TRUE)
 For many of our operations, it will be easier to work with one pedigree object of interest and ignore the pedigrees not currently represented in the breeding population. The function below helps you extract the pedigree of interest as its own object with a new name.
 
 ```{r}
-ped <- extract_pedigree(ped_series, "_comp1", "Contemporary")
+pedigree <- extract_pedigree(ped_series, "_comp1", "Contemporary")
 ```
 
 Now we can plot just this pedigree on its own.
 
 ```{r}
-ped_plot <- plot_pedigree(ped, studbook, labs_spec = TRUE)
+ped_plot <- plot_pedigree(pedigree, studbook, labs_spec = TRUE)
 ped_plot
 ```
 
 And to download this as a single html file we can use the function below.
 
 ```{r}
-pedsave(ped, studbook, labs_spec = TRUE)
+pedsave(pedigree, studbook, labs_spec = TRUE)
 ```
 
 #### Interactive Pedigree Graphics
@@ -182,7 +182,7 @@ pedsave(ped, studbook, labs_spec = TRUE)
 We can also adapt `visNetwork` functions to render javascript-based graphics to represent the pedigree relationships built by `pedtools.`
 
 ```{r}
-nodes <- ped_ndf(ped, studbook)
+nodes <- ped_ndf(pedigree, studbook)
 ```
 
 

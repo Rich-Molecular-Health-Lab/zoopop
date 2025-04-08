@@ -1,0 +1,188 @@
+---
+title: "Code Scratch"
+author: "Alicia Rich"
+date: "`r Sys.Date()`"
+output: html_document
+                     
+---
+
+```{r}
+library(devtools)
+library(roxygen2)
+library(pedtools)
+library(tidyverse)
+library(magrittr)
+conflicts_prefer(purrr::set_names)
+```
+
+
+```{r}
+ studbook_nodes <- studbook_short(studbook) %>%
+    mutate(id      = as.integer(ID))
+```
+
+```{r}
+  colors   <- set_colors() %>%
+    set_names( ~gsub("sire", "m_d", .)) %>%
+    set_names( ~gsub("dam", "f_d", .))
+
+```
+
+
+```{r}
+node_key <- map(as.list(nonfounders(pedigree)), \(x) as.list(parents(pedigree, x))) %>%
+    set_names(., nonfounders) %>%
+    enframe(name = "offspring", value = "parent") %>%
+    unnest_wider(parent, names_sep = "_") %>%
+    arrange(parent_1, parent_2, offspring) %>%
+    rename(dad = parent_1, mom = parent_2) %>%
+    arrange(dad, mom, offspring) %>%
+  group_by(dad) %>%
+  mutate(node_dad = cur_group_id()) %>%
+  ungroup() %>%
+  mutate(max = max(node_dad)) %>%
+  group_by(mom) %>%
+  mutate(node_mom = max + cur_group_id()) %>%
+  ungroup() %>%
+  mutate(max = max(node_mom)) %>%
+  group_by(dad, mom) %>%
+  mutate(node_parents = max + cur_group_id()) %>%
+  ungroup() %>%
+  mutate(max = max(node_parents)) %>%
+  mutate(node_connect = max + node_parents) %>%
+  mutate(max = max(node_connect)) %>%
+  group_by(offspring) %>%
+  mutate(node_offspring = max + cur_group_id(), .keep = "unused") %>%
+  ungroup() %>%
+  rename_with(~paste0("label_", .x), c(offspring:mom))
+```
+
+
+```{r}
+nodes_subjects <- node_key %>%
+  select(-c(node_connect, node_parents)) %>%
+  pivot_longer(
+    starts_with("label_"),
+    names_to  = "group",
+    values_to = "label"
+  ) %>%
+  mutate(group = str_remove_all(group, "label_")) %>%
+  rename_with(~str_remove_all(.x, "node_"), starts_with("node_")) %>%
+  pivot_longer(
+    c(dad:offspring),
+    names_to  = "group_node",
+    values_to = "node"
+  ) %>%
+  filter(group == group_node) %>%
+  distinct(group, node, label) %>%
+  arrange(node)
+```
+
+```{r}
+edge_defaults <- function(df) {
+  df %>%
+    mutate(
+      arrowhead = "none",
+      arrowtail = "none",
+      color     = colorLoc
+    )
+}
+```
+
+
+```{r}
+edges_connectors <- node_key %>%
+  select(from = node_parents, to = node_connect) %>%
+  distinct() %>%
+  mutate(rel    = "connector",
+         minlen = 1)
+```
+
+```{r}
+edges_parents <- node_key %>%
+  select(from = node_dad, to = node_parents) %>%
+  bind_rows(select(node_key, from = node_mom, to = node_parents)) %>%
+  distinct() %>%
+  mutate(rel    = "parent",
+         minlen = 0.5)
+```
+
+```{r}
+edges_offspring <- node_key %>%
+  select(from = node_connect, to = node_offspring) %>%
+  distinct() %>%
+  mutate(rel    = "offspring",
+         minlen = 1.5)
+```
+
+
+
+```{r}
+edges <- bind_rows(edges_connectors, edges_parents, edges_offspring)
+```
+
+
+
+
+```{r}
+nodes_parents <- node_key %>%
+  select(ends_with("_dad"),
+         ends_with("_mom"),
+         node_parents)
+```
+
+```{r}
+edges_parents <- select(node_key, node_dad, node_mom) %>%
+  pivot_longer(cols = everything(),
+               names_to     = "group",
+               values_to    = "from",
+               names_prefix = "node_") %>%
+  left_join(select(node_key, 
+                   from       = node_mom, 
+                   label_from = label_mom, 
+                   to         = node_parents), 
+            by = "from")
+```
+
+
+
+
+```{r}
+node_trios    <- pedigree_births(pedigree, studbook)
+```
+
+```{r}
+node_key <- pedigree_births(pedigree, studbook) %>%
+  select(
+    offspring,
+    
+    dad,
+    mom
+  )
+```
+
+
+```{r}
+  connector_nodes <- node_trios %>%
+    select(
+      pair,
+      sibs,
+      Loc,
+      Institution,
+      State_Province,
+      Country,
+      iconLoc
+    )  %>%
+    pivot_longer(c("pair", "sibs"), names_to = "node_type", values_to = "id") %>%
+    mutate(id = as.integer(id)) %>%
+    arrange(id) %>% distinct() %>%
+    relocate(id, node_type) %>%
+    mutate(style     = "invisible",
+           group     = "connector",
+           shape     = "point",
+           fixedsize = TRUE,
+           height    = 0.1,
+           width     = 0.1)
+
+```
+

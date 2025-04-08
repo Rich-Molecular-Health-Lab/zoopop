@@ -231,6 +231,88 @@ annotate_lambda <- function(df) {
     )
 }
 
+#' Create a character vector from a studbook dataframe to represent location data in a tooltip
+#'
+#' @param df A data frame with rowwise location data containing the columns `iconLoc`, `Loc`, `Institution`, and `State_Province`
+#' @param name A string to use as the name of the new column
+#' @return The same data frame with a new string column
+#' @export
+#'
+#' @importFrom dplyr mutate
+#' @importFrom stringr str_glue
+loc_tooltip <- function(df, name) {
+  df %>%
+    mutate(name = as.character(str_glue("{iconLoc}{Loc}: {Institution}, {State_Province}")))
+}
+
+#' Create a character vector from a studbook dataframe to represent subject's status in the breeding population as a tooltip
+#'
+#' @param df A data frame with rowwise location data containing the following columns:
+#' `exclude`, `ID`, `Sex`, `age_last`, and `Institution_last`, `State_Province_last`, `iconLoc_last`, `Loc_last`, `Date_birth`, `Institution_birth`, `State_Province_birth`, `iconLoc_birth`, `Loc_birth`
+#' @param name A string to use as the name of the new column
+#' @return The same data frame with a new string column
+#' @export
+#'
+#' @importFrom dplyr mutate case_when
+#' @importFrom stringr str_glue
+subj_tooltip <- function(df, name) {
+  df %>%
+    mutate(
+      name    = case_when(
+        exclude  == "n" ~ as.character(str_glue("{ID} {Sex}: Included in breeding population<br>Currently age {age_last} at {Institution_last}, {State_Province_last} ({iconLoc_last}{Loc_last}<br>Born {Date_birth} at {Institution_birth}, {State_Province_birth} ({iconLoc_birth}{Loc_birth})")),
+        exclude  == "age" ~ as.character(str_glue("{ID} {Sex}: Excluded from breeding population due to age<br>Currently age {age_last} at {Institution_last}, {State_Province_last} ({iconLoc_last}{Loc_last}<br>Born {Date_birth} at {Institution_birth}, {State_Province_birth} ({iconLoc_birth}{Loc_birth})")),
+        exclude  == "behavior" ~ as.character(str_glue("{ID} {Sex}: Excluded from breeding population for behavioral reasons<br>Currently age {age_last} at {Institution_last}, {State_Province_last} ({iconLoc_last}{Loc_last}<br>Born {Date_birth} at {Institution_birth}, {State_Province_birth} ({iconLoc_birth}{Loc_birth})")),
+        exclude  == "deceased" ~ as.character(str_glue("{ID} {Sex}: Deceased (age {age_last}) at {Institution_last}, {State_Province_last} ({iconLoc_last}{Loc_last}<br>Born {Date_birth} at {Institution_birth}, {State_Province_birth} ({iconLoc_birth}{Loc_birth})")),
+        exclude  == "hypothetical" ~ as.character(str_glue("{ID} {Sex}: Hypothetical ID created to represent missing parent at {Institution_last}, {State_Province_last} ({iconLoc_last}{Loc_last}"))
+      ))
+}
+
+#' Create a character vector from a studbook dataframe to represent the connector between parents and offspring in a pedigree
+#'
+#' @param df A data frame with rowwise location data containing the following columns:
+#' `dad`, `mom`, `iconLoc`, and `Loc`
+#' @param name A string to use as the name of the new column
+#' @return The same data frame with a new string column
+#' @export
+#'
+#' @importFrom dplyr mutate
+#' @importFrom stringr str_glue
+fam_tooltip <- function(df, name) {
+  df %>% mutate(name = as.character(str_glue("Parents: Sire {dad} + Dam {mom} at {iconLoc}{Loc}")))
+}
+
+#' Create a character vector from a studbook dataframe that matches some attribute vector to an individual's sex and status
+#'
+#' @param df A data frame with rowwise location data containing the following columns:
+#' `Sex`, `exclude`
+#' @param name A string to use as the name of the new column
+#' @param u A character vector to assign to the column where `Sex` is undetermined
+#' @param m_i A character vector to assign to the column where `Sex` is male and individual is included in the breeding population and therefore alive
+#' @param f_i A character vector to assign to the column where `Sex` is female and individual is included in the breeding population and therefore alive
+#' @param m_e A character vector to assign to the column where `Sex` is male and individual is alive but excluded from the breeding population
+#' @param f_e A character vector to assign to the column where `Sex` is female and individual is alive but excluded from the breeding population
+#' @param m_d A character vector to assign to the column where `Sex` is male and individual is deceased
+#' @param f_d A character vector to assign to the column where `Sex` is female and individual is deceased
+#' @return The same data frame with a new character vector column
+#' @export
+#'
+#' @importFrom dplyr mutate
+#' @importFrom stringr str_glue
+ped_attribute <- function(df, name, u, m_i, f_i, m_e, f_e, m_d, f_d) {
+  df %>% mutate(
+    name = case_when(
+      Sex %in% c("M", "m", "male", "Male")     & exclude == "n"                    ~ m_i,
+      Sex %in% c("M", "m", "male", "Male")     & exclude == "deceased"             ~ m_d,
+      Sex %in% c("M", "m", "male", "Male")     & exclude %in% c("behavior", "age") ~ m_e,
+      Sex %in% c("F", "f", "female", "Female") & exclude == "n"                    ~ f_i,
+      Sex %in% c("F", "f", "female", "Female") & exclude == "deceased"             ~ f_d,
+      Sex %in% c("F", "f", "female", "Female") & exclude %in% c("behavior", "age") ~ f_e,
+      Sex %in% c("U", "u", "undetermined", "Undetermined")                         ~u
+    )
+  )
+}
+
+
 #' Assign generation levels to individuals in a pedigree
 #'
 #' @param pedigree A pedigree object from `pedtools::ped()`
