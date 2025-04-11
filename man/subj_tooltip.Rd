@@ -4,13 +4,11 @@
 \alias{subj_tooltip}
 \title{Create a character vector from a studbook dataframe to represent subject's status in the breeding population as a tooltip}
 \usage{
-subj_tooltip(df, name)
+subj_tooltip(df)
 }
 \arguments{
 \item{df}{A data frame with rowwise location data containing the following columns:
 \code{exclude}, \code{ID}, \code{Sex}, \code{age_last}, and \code{Institution_last}, \code{State_Province_last}, \code{iconLoc_last}, \code{Loc_last}, \code{Date_birth}, \code{Institution_birth}, \code{State_Province_birth}, \code{iconLoc_birth}, \code{Loc_birth}}
-
-\item{name}{A string to use as the name of the new column}
 }
 \value{
 The same data frame with a new string column

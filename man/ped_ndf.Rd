@@ -2,18 +2,21 @@
 % Please edit documentation in R/pedigrees.R
 \name{ped_ndf}
 \alias{ped_ndf}
-\title{Generate a node dataframe from the pedigree that functions within \code{DiagrammeR}}
+\title{Create a node data frame to plot a pedigree using DiagrammeR}
 \usage{
-ped_ndf(pedigree, studbook)
+ped_ndf(studbook, pedigree, palette = NULL)
 }
 \arguments{
+\item{studbook}{A studbook tibble}
+
 \item{pedigree}{A pedigree object}
 
-\item{studbook}{A studbook tibble}
+\item{palette}{An optional named list mapping individuals to colors by sex and
+status; if not provided, \code{\link[=set_colors]{set_colors()}} is used.}
 }
 \value{
-A formatted node dataframe for \code{DiagrammeR}
+A formatted node dataframe for graphing with \code{DiagrammeR}
 }
 \description{
-Generate a node dataframe from the pedigree that functions within \code{DiagrammeR}
+Create a node data frame to plot a pedigree using DiagrammeR
 }

@@ -4,12 +4,10 @@
 \alias{loc_tooltip}
 \title{Create a character vector from a studbook dataframe to represent location data in a tooltip}
 \usage{
-loc_tooltip(df, name)
+loc_tooltip(df)
 }
 \arguments{
-\item{df}{A data frame with rowwise location data containing the columns \code{iconLoc}, \code{Loc}, \code{Institution}, and \code{State_Province}}
-
-\item{name}{A string to use as the name of the new column}
+\item{df}{A data frame with rowwise location data containing the columns \code{iconLoc_birth}, \code{Loc_birth}, \code{Institution_birth}, and \code{State_Province_birth}}
 }
 \value{
 The same data frame with a new string column

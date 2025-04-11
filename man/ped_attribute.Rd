@@ -4,13 +4,11 @@
 \alias{ped_attribute}
 \title{Create a character vector from a studbook dataframe that matches some attribute vector to an individual's sex and status}
 \usage{
-ped_attribute(df, name, u, m_i, f_i, m_e, f_e, m_d, f_d)
+ped_attribute(df, u, m_i, f_i, m_e, f_e, m_d, f_d)
 }
 \arguments{
 \item{df}{A data frame with rowwise location data containing the following columns:
 \code{Sex}, \code{exclude}}
-
-\item{name}{A string to use as the name of the new column}
 
 \item{u}{A character vector to assign to the column where \code{Sex} is undetermined}
 
