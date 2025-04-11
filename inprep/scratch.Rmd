@@ -35,18 +35,88 @@ pedigree <- build_ped_series(studbook) %>%
 ```
 
 ```{r}
-studbook_edges <- studbook_nodes(studbook = studbook,
-                                   pedigree = pedigree) %>%
-    select(offspring = label,
-           edge_color = color_connector,
-           tooltip    = tooltip_connector)
+edges_vis <- ped_visEdges(studbook, pedigree)
+nodes_vis <- ped_visNodes(studbook, pedigree)
+nodes_female_deceased <- visGroups(groupname = "female_deceased", color = "#D5328833", shape = "circle")
+nodes_male_deceased   <- visGroups(groupname = "female_deceased", color = "#D5328833", shape = "circle")
+
+network <- visNetwork(nodes_vis, edges_vis, width = "100%")
+```
+
+```{r}
+edge_connectors   <- edges_connectors(
+    studbook = studbook,
+    pedigree = pedigree
+  )
 ```
 
 
 ```{r}
-edf <- ped_edf(studbook, pedigree)
-ndf <- ped_ndf(studbook, pedigree)
+  studbook_connectors <- studbook_nodes(
+    studbook = studbook,
+    pedigree = pedigree
+  ) %>%
+    mutate(offspring= as.integer(label),
+           .keep = "unused") %>%
+    select(
+      offspring,
+      group     = edge_group,
+      tooltip   = tooltip_connector
+    ) %>%
+  left_join(paths, )
+
 ```
+
+
+```{r}
+key_connectors   <- edges_connectors(
+    studbook = studbook,
+    pedigree = pedigree
+  )  %>%
+    select(parents   = from,
+           offspring = to,
+           color     = edge_color,
+           group,
+           tooltip) %>%
+    pivot_longer(c(parents, offspring),
+                 names_to  = "type",
+                 values_to = "node") %>%
+    distinct(node, color, group, tooltip) %>%
+    arrange(node)
+```
+
+
+```{r}
+ndf <- ped_ndf(studbook, pedigree)
+edf <- ped_edf(studbook, pedigree)
+```
+
+```{r}
+paths <- set_ped_paths(studbook, pedigree)
+```
+
+
+```{r}
+ped_igraph <- ped_igraph(studbook, pedigree)
+  
+ped_layout <- layout_with_fr(ped_igraph)
+
+plot(ped_igraph, layout = ped_layout)
+```
+
+```{r}
+ped_clusters <- ped_clusters(studbook, pedigree)
+```
+
+```{r}
+sb_short <- studbook_short(studbook)
+```
+
+
+```{r}
+
+```
+
 
 ```{r}
 net <- create_graph(

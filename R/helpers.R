@@ -294,6 +294,27 @@ ped_attribute <- function(df, u, m_i, f_i, m_e, f_e, m_d, f_d) {
     )
   )
 }
+#' Add group labels based on a series of metadata attributes to a node dataframe
+#'
+#' @param df A working dataframe with one row per node of a pedigree graph
+#' @return The same data frame with two new `group` columns (`subject_group` and `edge_group`)
+#' @export
+#'
+#' @importFrom dplyr mutate case_when
+ped_group <- function(df) {
+  df %>% mutate(
+    subject_group = case_when(
+      Sex %in% c("M", "m", "male", "Male")     & exclude == "n"                             ~ "male_included",
+      Sex %in% c("M", "m", "male", "Male")     & exclude %in% c("deceased", "hypothetical") ~ "male_deceased",
+      Sex %in% c("M", "m", "male", "Male")     & exclude %in% c("behavior", "age")          ~ "male_excluded",
+      Sex %in% c("F", "f", "female", "Female") & exclude == "n"                             ~ "female_included",
+      Sex %in% c("F", "f", "female", "Female") & exclude %in% c("deceased", "hypothetical") ~ "female_deceased",
+      Sex %in% c("F", "f", "female", "Female") & exclude %in% c("behavior", "age")          ~ "female_excluded",
+      Sex %in% c("U", "u", "undetermined", "Undetermined")                                  ~ "undetermined"
+    ),
+    edge_group = Loc_birth
+  )
+}
 
 #' Assign generation levels to individuals in a pedigree
 #'

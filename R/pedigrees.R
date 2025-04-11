@@ -268,6 +268,7 @@ studbook_nodes <- function(studbook, pedigree, palette = NULL) {
     ) %>%
     rename(node_shape_subject  = attribute,
            color_connector     = colorLoc_birth) %>%
+    ped_group() %>%
     select(
       label,
       label_spec_subject,
@@ -276,7 +277,9 @@ studbook_nodes <- function(studbook, pedigree, palette = NULL) {
       node_shape_subject,
       color_connector,
       tooltip_subject,
-      tooltip_connector
+      subject_group,
+      tooltip_connector,
+      edge_group
     ) %>%
     distinct()
   return(studbook_nodes)
@@ -329,6 +332,19 @@ set_ped_paths <- function(studbook, pedigree, palette = NULL) {
 #'
 edges_parents <- function(studbook, pedigree, palette = NULL) {
   if (is.null(palette)) {palette <- set_colors()}
+  key <- studbook_nodes(
+    studbook = studbook,
+    pedigree = pedigree,
+    palette  = palette
+  ) %>%
+    mutate(from = as.integer(label),
+           .keep = "unused") %>%
+    select(
+      from,
+      group     = subject_group,
+      tooltip   = tooltip_subject
+    )
+
   edges <- set_ped_paths(
                 studbook = studbook,
                 pedigree = pedigree,
@@ -345,10 +361,13 @@ edges_parents <- function(studbook, pedigree, palette = NULL) {
            minlen     = 0.0,
            weight     = 2.0,
            from       = as.integer(from)) %>%
+    left_join(key, by = "from") %>%
     select(from,
            to = parents_to,
            rel,
            edge_color,
+           group,
+           tooltip,
            minlen,
            weight)
   return(edges)
@@ -367,13 +386,33 @@ edges_parents <- function(studbook, pedigree, palette = NULL) {
 #'
 edges_connectors <- function(studbook, pedigree, palette = NULL) {
   if (is.null(palette)) {palette <- set_colors()}
+  key <- studbook_nodes(
+    studbook = studbook,
+    pedigree = pedigree,
+    palette  = palette
+  ) %>%
+    mutate(offspring = as.character(label),
+           .keep = "unused") %>%
+    select(
+      offspring,
+      group     = edge_group,
+      tooltip   = tooltip_connector
+    )
+
+
   edges <- set_ped_paths(
                 studbook = studbook,
                 pedigree = pedigree,
                 palette  = palette) %>%
+    left_join(key, by = "offspring") %>%
     select(from = parents_to,
            to   = offspring_from,
-           edge_color) %>%
+           edge_color,
+           group,
+           tooltip) %>%
+    group_by(from, to) %>%
+    slice_tail(n = 1) %>%
+    ungroup() %>%
     distinct() %>%
     mutate(rel    = "connector",
            minlen = 2.5,
@@ -394,6 +433,19 @@ edges_connectors <- function(studbook, pedigree, palette = NULL) {
 #'
 edges_offspring <- function(studbook, pedigree, palette = NULL) {
   if (is.null(palette)) {palette <- set_colors()}
+  key <- studbook_nodes(
+    studbook = studbook,
+    pedigree = pedigree,
+    palette  = palette
+  ) %>%
+    mutate(to    = as.integer(label),
+           .keep = "unused") %>%
+    select(
+      to,
+      group     = subject_group,
+      tooltip   = tooltip_subject
+    )
+
   edges <- set_ped_paths(
     studbook = studbook,
     pedigree = pedigree,
@@ -405,9 +457,56 @@ edges_offspring <- function(studbook, pedigree, palette = NULL) {
     mutate(rel    = "offspring",
            minlen = 2.5,
            weight = 1.5,
-           to     = as.integer(to))
+           to     = as.integer(to)) %>%
+    left_join(key, by = "to")
   return(edges)
 }
+#' Create a data frame with basic metadata attached to edges connecting individuals
+#'
+#' @param studbook A studbook tibble
+#' @param pedigree A pedigree object
+#' @param palette An optional named list mapping individuals to colors by sex and
+#'   status; if not provided, [set_colors()] is used.
+#' @return A new dataframe to use for building edge and node dataframes with `DiagrammeR`
+#' @export
+#'
+#' @importFrom dplyr mutate cur_group_id
+#' @importFrom stringr str_glue
+#'
+ped_edges <- function(studbook, pedigree, palette = NULL) {
+  if (is.null(palette)) {palette <- set_colors()}
+  node_ids <- ped_ndf(studbook = studbook,
+                      pedigree = pedigree,
+                      palette  = palette) %>%
+    select(id, node)
+  offspring <- edges_offspring(
+    studbook = studbook,
+    pedigree = pedigree,
+    palette  = palette)
+  parents <- edges_parents(
+    studbook = studbook,
+    pedigree = pedigree,
+    palette  = palette)
+  connectors <- edges_connectors(
+    studbook = studbook,
+    pedigree = pedigree,
+    palette  = palette)
+  edges <- bind_rows(offspring, parents, connectors) %>%
+    rename(color   = edge_color) %>%
+    mutate(
+      arrowhead = "none",
+      arrowtail = "none",
+      style     = "solid",
+      penwidth  = 3,) %>%
+    left_join(node_ids, by = join_by(from == node)) %>%
+    mutate(from = id, .keep = "unused") %>%
+    left_join(node_ids, by = join_by(to == node)) %>%
+    mutate(to = id, .keep = "unused") %>%
+    arrange(from, to)
+  return(edges)
+}
+
+
 #' Create a data frame with basic metadata to attach to nodes
 #'
 #' @param studbook A studbook tibble
@@ -422,13 +521,48 @@ edges_offspring <- function(studbook, pedigree, palette = NULL) {
 #'
 ped_nodes <- function(studbook, pedigree, palette = NULL) {
   if (is.null(palette)) {palette <- set_colors()}
+  key_subjects   <- studbook_nodes(
+    studbook = studbook,
+    pedigree = pedigree,
+    palette  = palette
+  ) %>%
+    mutate(node     = as.integer(label),
+           label    = label_spec_subject,
+           .keep = "unused") %>%
+    select(
+      node,
+      label,
+      group     = subject_group,
+      color     = node_color_subject,
+      fillcolor = node_fillcolor_subject,
+      shape     = node_shape_subject,
+      tooltip   = tooltip_subject
+    )
+
+  key_connectors   <- edges_connectors(
+    studbook = studbook,
+    pedigree = pedigree,
+    palette  = palette
+  ) %>%
+    select(parents   = from,
+           offspring = to,
+           color     = edge_color,
+           group,
+           tooltip) %>%
+    pivot_longer(c(parents, offspring),
+                 names_to  = "type",
+                 values_to = "node") %>%
+    mutate(group = as.character(str_glue("connector_{type}"))) %>%
+    distinct(node, color, group, tooltip) %>%
+    arrange(node)
+
   offspring <- edges_offspring(
             studbook = studbook,
             pedigree = pedigree,
             palette  = palette) %>%
     select(connector = from, subject = to)
 
-  nodes <- edges_parents(studbook = studbook,
+  nodes_long <- edges_parents(studbook = studbook,
                          pedigree = pedigree,
                          palette  = palette) %>%
     select(connector = to, subject = from) %>%
@@ -440,6 +574,27 @@ ped_nodes <- function(studbook, pedigree, palette = NULL) {
     ) %>%
     arrange(node) %>%
     distinct()
+
+  nodes_subjects <- nodes_long %>%
+    filter(type == "subject") %>%
+    mutate(fixedsize = FALSE,
+           style     = "filled",
+           width     = 1.5,
+           height    = 1.5,
+           fontsize  = 22) %>%
+    left_join(key_subjects, by = "node")
+  nodes_connectors <- nodes_long %>%
+    filter(type == "connector") %>%
+    left_join(key_connectors, by = "node") %>%
+    mutate(shape     = "point",
+           fixedsize = TRUE,
+           width     = 0.02,
+           height    = 0.02,
+           style     = "invisible")
+  nodes <- bind_rows(nodes_subjects, nodes_connectors) %>%
+    arrange(node)
+
+
   return(nodes)
 }
 
@@ -457,60 +612,12 @@ ped_nodes <- function(studbook, pedigree, palette = NULL) {
 #'
 ped_ndf <- function(studbook, pedigree, palette = NULL) {
   if (is.null(palette)) {palette <- set_colors()}
-  key_subjects   <- studbook_nodes(
+
+  nodes <- ped_nodes(
     studbook = studbook,
     pedigree = pedigree,
     palette  = palette
-    ) %>%
-    mutate(node     = as.integer(label),
-           label    = label_spec_subject,
-           .keep = "unused") %>%
-    select(
-      node,
-      label,
-      color     = node_color_subject,
-      fillcolor = node_fillcolor_subject,
-      shape     = node_shape_subject
-    )
-  key_connectors   <- edges_connectors(
-    studbook = studbook,
-    pedigree = pedigree,
-    palette  = palette
-  ) %>%
-    select(parents   = from,
-           offspring = to,
-           color     = edge_color) %>%
-    pivot_longer(c(parents, offspring),
-                 names_to  = "group",
-                 values_to = "node") %>%
-    distinct(node, color) %>%
-    arrange(node)
-  nodes_subjects <- ped_nodes(
-    studbook = studbook,
-    pedigree = pedigree,
-    palette  = palette
-  ) %>%
-    filter(type == "subject") %>%
-    mutate(fixedsize = FALSE,
-           style     = "filled",
-           width     = 1.5,
-           height    = 1.5,
-           fontsize  = 22) %>%
-    left_join(key_subjects, by = "node")
-  nodes_connectors <- ped_nodes(
-    studbook = studbook,
-    pedigree = pedigree,
-    palette  = palette
-  ) %>%
-    filter(type == "connector") %>%
-    left_join(key_connectors, by = "node") %>%
-    mutate(shape     = "point",
-           fixedsize = TRUE,
-           width     = 0.02,
-           height    = 0.02,
-           style     = "invisible")
-  nodes <- bind_rows(nodes_subjects, nodes_connectors) %>%
-    arrange(node)
+  )
 
   ndf <- create_node_df(
     n         = length(unique(nodes$node)),
@@ -542,34 +649,10 @@ ped_ndf <- function(studbook, pedigree, palette = NULL) {
 #'
 ped_edf <- function(studbook, pedigree, palette = NULL) {
   if (is.null(palette)) {palette <- set_colors()}
-  node_ids <- ped_ndf(studbook = studbook,
-                      pedigree = pedigree,
-                      palette  = palette) %>%
-    select(id, node)
-  offspring <- edges_offspring(
+  edges <- ped_edges(
     studbook = studbook,
     pedigree = pedigree,
     palette  = palette)
-  parents <- edges_parents(
-    studbook = studbook,
-    pedigree = pedigree,
-    palette  = palette)
-  connectors <- edges_connectors(
-    studbook = studbook,
-    pedigree = pedigree,
-    palette  = palette)
-  edges <- bind_rows(offspring, parents, connectors) %>%
-    rename(color   = edge_color) %>%
-    mutate(
-      arrowhead = "none",
-      arrowtail = "none",
-      style     = "solid",
-      penwidth  = 3,) %>%
-    left_join(node_ids, by = join_by(from == node)) %>%
-    mutate(from = id, .keep = "unused") %>%
-    left_join(node_ids, by = join_by(to == node)) %>%
-    mutate(to = id, .keep = "unused") %>%
-    arrange(from, to)
   edf <- create_edge_df(
     from      = edges$from     ,
     to        = edges$to       ,
@@ -612,3 +695,177 @@ ped_graphv <- function(studbook, pedigree, palette = NULL) {
   )
   return(graph)
 }
+#' Create a pedigree vertex dataframe that will work with `igraph`
+#'
+#' @param studbook A studbook tibble
+#' @param pedigree A pedigree object
+#' @param palette An optional named list mapping individuals to colors by sex and
+#'   status; if not provided, [set_colors()] is used.
+#' @return A dataframe of vertices to use with `igraph`
+#' @export
+#'
+#' @importFrom dplyr mutate
+#'
+igraph_vertices <- function(studbook, pedigree, palette = NULL) {
+  if (is.null(palette)) {palette <- set_colors()}
+  vertices <- ped_ndf(
+    studbook = studbook,
+    pedigree = pedigree,
+    palette  = palette
+  ) %>%
+    mutate(frame.color = color) %>%
+    mutate(color        = if_else(is.na(fillcolor), color, fillcolor),
+           shape        = case_when(shape == "point" ~ "circle", shape == "diamond" ~ "vrectangle", .default = shape),
+           size         = if_else(style == "invisible", 1, 7),
+           label.color  = if_else(str_ends(fillcolor, "FF"), "white", "black"),
+           label.font   = 1,
+           label.cex    = 0.25,
+           label.family = "Helvetica") %>%
+    select(
+      id,
+      vertex = node,
+      label,
+      label.color,
+      label.font,
+      label.cex,
+      label.family,
+      color,
+      frame.color,
+      shape,
+      size
+    )
+
+  return(vertices)
+}
+
+
+#' Create a pedigree edge dataframe that will work with `igraph`
+#'
+#' @param studbook A studbook tibble
+#' @param pedigree A pedigree object
+#' @param palette An optional named list mapping individuals to colors by sex and
+#'   status; if not provided, [set_colors()] is used.
+#' @return A dataframe of edges to use with `igraph`
+#' @export
+#'
+#' @importFrom dplyr mutate
+#'
+igraph_edges <- function(studbook, pedigree, palette = NULL) {
+  if (is.null(palette)) {palette <- set_colors()}
+  edges <- ped_edges(
+    studbook = studbook,
+    pedigree = pedigree,
+    palette  = palette
+  ) %>%
+    mutate(arrow.size = 0,
+           curved     = 0,
+           width      = 1) %>%
+    select(
+      from,
+      to,
+      color,
+      lty = style,
+      width,
+      arrow.size,
+      curved
+    )
+
+  return(edges)
+}
+
+
+#' Create a pedigree graph using `igraph`
+#'
+#' @param studbook A studbook tibble
+#' @param pedigree A pedigree object
+#' @param palette An optional named list mapping individuals to colors by sex and
+#'   status; if not provided, [set_colors()] is used.
+#' @return A graph object built with `igraph`
+#' @export
+#'
+#' @importFrom dplyr mutate cur_group_id
+#' @importFrom igraph graph_from_data_frame
+#'
+ped_igraph <- function(studbook, pedigree, palette = NULL) {
+  if (is.null(palette)) {palette <- set_colors()}
+  edges <- igraph_edges(
+    studbook = studbook,
+    pedigree = pedigree,
+    palette  = palette
+  )
+  vertices <- igraph_vertices(
+    studbook = studbook,
+    pedigree = pedigree,
+    palette  = palette
+  )
+
+  graph <- graph_from_data_frame(edges, vertices = vertices)
+
+  return(graph)
+}
+
+#' Create a pedigree node dataframe that works with `visNetwork`
+#'
+#' @param studbook A studbook tibble
+#' @param pedigree A pedigree object
+#' @param palette An optional named list mapping individuals to colors by sex and
+#'   status; if not provided, [set_colors()] is used.
+#' @return A node dataframe that works with `visNetwork`
+#' @export
+#'
+#' @importFrom dplyr mutate case_when select left_join if_else
+#'
+ped_visNodes <- function(studbook, pedigree, palette = NULL) {
+  if (is.null(palette)) {palette <- set_colors()}
+  node_ids <- ped_ndf(studbook = studbook,
+                      pedigree = pedigree,
+                      palette  = palette) %>%
+    select(id, node)
+
+  nodes <- ped_nodes(studbook, pedigree) %>%
+    left_join(node_ids, by = "node") %>%
+    mutate(color = if_else(is.na(fillcolor), color, fillcolor)) %>%
+    select(
+      id,
+      node,
+      label,
+      group,
+      title = tooltip,
+      shape,
+      color
+    )
+  return(nodes)
+}
+
+#' Create a pedigree edge dataframe that works with `visNetwork`
+#'
+#' @param studbook A studbook tibble
+#' @param pedigree A pedigree object
+#' @param palette An optional named list mapping individuals to colors by sex and
+#'   status; if not provided, [set_colors()] is used.
+#' @return An edge dataframe that works with `visNetwork`
+#' @export
+#'
+#' @importFrom dplyr mutate case_when select
+#' @importFrom stringr str_starts
+#'
+ped_visEdges <- function(studbook, pedigree, palette = NULL) {
+  if (is.null(palette)) {palette <- set_colors()}
+  edges <- ped_edges(studbook = studbook,
+                     pedigree = pedigree,
+                     palette  = palette) %>%
+    mutate(width = 1.5,
+           group = case_when(rel == "connector" ~ rel,
+                             rel == "parents" & str_starts(group, "female") ~ "mom",
+                             rel == "parents" & str_starts(group, "male")   ~ "dad",
+                             rel == "offspring" ~ group,
+                             .default = group)) %>%
+    select(from,
+           to,
+           color,
+           group,
+           width,
+           title = tooltip)
+  return(edges)
+}
+
