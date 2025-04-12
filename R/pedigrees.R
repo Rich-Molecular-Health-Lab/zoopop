@@ -830,9 +830,7 @@ ped_visNodes <- function(studbook, pedigree, palette = NULL) {
       node,
       label,
       group,
-      title = tooltip,
-      shape,
-      color
+      title = tooltip
     )
   return(nodes)
 }
@@ -867,5 +865,61 @@ ped_visEdges <- function(studbook, pedigree, palette = NULL) {
            width,
            title = tooltip)
   return(edges)
+}
+
+#' Add formatted groups to a `visNetwork` pedigree object
+#'
+#' @param visNetwork A `visNetwork` object
+#' @return A `visNetwork` object with group-based attributes
+#' @export
+#'
+#' @importFrom visNetwork visGroups
+#'
+ped_visGroups <- function(visNetwork) {
+  image_path <- "https://github.com/Rich-Molecular-Health-Lab/zoopop/tree/main/inst/icons/"
+  network <- visNetwork %>% visGroups(
+      groupname = "connector",
+      shape     = "circularImage",
+      image     = paste0(image_path, "connector.png"),
+      size      = 5
+    ) %>%
+  visGroups(
+    groupname = "female_deceased",
+    shape     = "circularImage",
+    image     = paste0(image_path, "female_deceased.png"),
+    size      = 35
+    ) %>%
+    visGroups(
+      groupname = "female_excluded",
+      shape     = "circularImage",
+      image     = paste0(image_path, "female_excluded.png"),
+      size      = 35
+    ) %>%
+    visGroups(
+      groupname = "female_included",
+      shape     = "circularImage",
+      image     = paste0(image_path, "female_included.png"),
+      size      = 40
+    ) %>%
+    visGroups(
+      groupname = "male_deceased",
+      shape     = "image",
+      image     = paste0(image_path, "male_deceased.png"),
+      size      = 35
+    ) %>%
+    visGroups(
+      groupname = "male_excluded",
+      shape     = "image",
+      image     = paste0(image_path, "male_excluded.png"),
+      size      = 35
+    ) %>%
+    visGroups(
+      groupname = "male_included",
+      shape     = "image",
+      image     = paste0(image_path, "male_included.png"),
+      size      = 40
+    )
+
+  return(network)
 }
 

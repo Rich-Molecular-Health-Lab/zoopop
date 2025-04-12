@@ -37,10 +37,8 @@ pedigree <- build_ped_series(studbook) %>%
 ```{r}
 edges_vis <- ped_visEdges(studbook, pedigree)
 nodes_vis <- ped_visNodes(studbook, pedigree)
-nodes_female_deceased <- visGroups(groupname = "female_deceased", color = "#D5328833", shape = "circle")
-nodes_male_deceased   <- visGroups(groupname = "female_deceased", color = "#D5328833", shape = "circle")
-
-network <- visNetwork(nodes_vis, edges_vis, width = "100%")
+network <- visNetwork(nodes_vis, edges_vis, width = "100%") %>%
+  ped_visGroups()
 ```
 
 ```{r}
