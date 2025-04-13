@@ -35,10 +35,119 @@ pedigree <- build_ped_series(studbook) %>%
 ```
 
 ```{r}
+paths <- set_ped_paths(studbook, pedigree)
+```
+
+```{r}
+subnucs <- subnucs(pedigree)
+```
+
+
+
+```{r}
+paths <- set_ped_paths(studbook, pedigree) %>% 
+  mutate(across(c(offspring, dad, mom), ~as.numeric(.))) %>%
+  left_join(levels, by = join_by(offspring == node)) %>%
+  rename(offspring_generation = generation) %>%
+  left_join(levels, by = join_by(mom == node)) %>%
+  rename(mom_generation = generation) %>%
+  left_join(levels, by = join_by(dad == node)) %>%
+  rename(dad_generation = generation) %>%
+  mutate(parents_to_level = if_else(
+    dad_generation >= mom_generation, dad_generation, mom_generation
+    )) %>%
+  mutate(offspring_from_level = parents_to_level + 1) %>%
+  mutate(offspring_level      = offspring_from_level + 1) %>%
+  select(
+    offspring,
+    offspring_level,
+    offspring_from,
+    offspring_from_level,
+    parents_to,
+    parents_to_level,
+    dad,
+    dad_level = dad_generation,
+    mom,
+    mom_level = mom_generation,
+    edge_color
+  ) %>%
+  arrange(offspring_level, offspring)
+```
+
+```{r}
+levels_wide <- paths %>%
+  select(offspring_to_node    = offspring,
+         offspring_to_level   = offspring_level,
+         offspring_from_node  = offspring_from,
+         offspring_from_level ,
+         parents_to_node      = parents_to,
+         parents_to_level     ,
+         mom_from_node        = mom,
+         mom_from_level       = mom_level,
+         dad_from_node        = dad,
+         dad_from_level       = dad_level) %>%
+  mutate(mom_to_node = parents_to_node,
+         dad_to_node = parents_to_node,
+         mom_to_level = parents_to_level,
+         dad_to_level = parents_to_level, .keep = "unused")
+```
+
+```{r}
+levels_wide <- paths %>%
+  select(offspring_node      = offspring,
+         parents_to_node     = parents_to,
+         mom_node            = mom,
+         dad_node            = dad,
+         offspring_from_node = offspring_from,
+         ends_with("_level"))
+```
+
+```{r}
+nodes <- ped_nodes(studbook, pedigree)
+```
+
+
+```{r}
+levels_long <- levels_wide %>%
+  pivot_longer(
+    cols          = everything(),
+    names_to      = c("type", ".value"),
+    names_pattern = "^(.*)_(node|level)$"
+  )
+```
+
+
+
+```{r}
+  levels <- gen_numbers(pedigree) %>%
+    as.list() %>%
+    set_names(pedigree$ID) %>%
+    enframe(name = "node", value = "generation") %>% 
+  mutate(across(everything(), ~as.numeric(.))) %>%
+  distinct() %>%
+  arrange(generation)
+```
+
+```{r}
+ndf <- ped_ndf(studbook, pedigree)
+```
+```{r}
+nodes <- ped_nodes(studbook, pedigree)
+```
+
+
+```{r}
+edges <- ped_edges(studbook, pedigree)
+```
+
+
+
+```{r}
 edges_vis <- ped_visEdges(studbook, pedigree)
 nodes_vis <- ped_visNodes(studbook, pedigree)
 network <- visNetwork(nodes_vis, edges_vis, width = "100%") %>%
-  ped_visGroups()
+  ped_visGroups() %>%
+  visHierarchicalLayout(levelSeparation = 75, shakeTowards = "leaves")
 ```
 
 ```{r}

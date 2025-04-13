@@ -1,0 +1,56 @@
+---
+title: "Code Scratch"
+author: "Alicia Rich"
+date: "`r Sys.Date()`"
+output: html_document
+                     
+---
+
+```{r setup, include=FALSE}
+library(conflicted)
+library(devtools)
+library(DiagrammeR)
+library(here)
+library(igraph)
+library(knitr)
+library(magrittr)
+library(pedtools)
+library(roxygen2)
+library(tidyverse)
+library(visNetwork)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  message  = FALSE,
+  warning  = FALSE,
+  echo     = TRUE,
+  include  = TRUE,
+  eval     = TRUE,
+  comment  = ""
+)
+conflicts_prefer(lubridate::interval)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(purrr::set_names)
+studbook <- read_csv(here("inst/extdata/studbook.csv"))
+pedigree <- featured_pedigree(studbook)
+```
+
+```{r}
+vertices <- ped_verts(studbook, pedigree)
+edges    <- edges_igraph(studbook, pedigree)
+```
+
+```{r}
+ped_vis <- ped_visNet(studbook, pedigree)
+```
+
+```{r}
+nodes <- ped_visNodes(studbook, pedigree)
+```
+
+
+```{r}
+ped_visNet(studbook, pedigree)
+```
+
+
+
