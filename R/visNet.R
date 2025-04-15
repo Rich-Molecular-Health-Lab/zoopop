@@ -1,3 +1,15 @@
+# visNet.R
+
+#' Create Node Data for visNetwork Pedigree Graphs
+#'
+#' This function builds a node data frame for rendering a pedigree graph using visNetwork,
+#' combining subject and subnucleus nodes.
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A data frame of nodes formatted for visNetwork.
+#' @export
+#' @importFrom dplyr select bind_rows arrange
 ped_visNodes <- function(studbook, pedigree) {
   subjects <- nodes_subjects(studbook = studbook,
                              pedigree = pedigree) %>%
@@ -17,7 +29,16 @@ ped_visNodes <- function(studbook, pedigree) {
   return(nodes)
 }
 
-
+#' Create Edge Data for visNetwork Pedigree Graphs
+#'
+#' This function constructs an edge data frame for a pedigree graph formatted for visNetwork.
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A data frame of edges formatted for visNetwork.
+#' @export
+#' @importFrom dplyr select mutate if_else
+#' @importFrom magrittr %>%
 ped_visEdges <- function(studbook, pedigree) {
   colors <- set_colors()
   edges <- ped_edges(studbook = studbook,
@@ -32,7 +53,15 @@ ped_visEdges <- function(studbook, pedigree) {
   return(edges)
 }
 
-
+#' Set Custom Group Appearance for a Specific Node Group in a visNetwork Graph
+#'
+#' This function assigns a custom image to a specific node group in a visNetwork graph.
+#'
+#' @param graph A visNetwork object.
+#' @param groupname A character string representing the group name.
+#' @return The visNetwork object with the specified group settings applied.
+#' @export
+#' @importFrom visNetwork visGroups
 pedNode_visGroup <- function(graph, groupname) {
   path <- "https://rich-molecular-health-lab.github.io/zoopop/inst/icons/"
   file <- paste0(path, groupname, ".png")
@@ -46,6 +75,13 @@ pedNode_visGroup <- function(graph, groupname) {
             size      = size)
 }
 
+#' Apply Custom Group Settings to a visNetwork Pedigree Graph
+#'
+#' This function applies multiple predefined group settings for various pedigree groups to a visNetwork object.
+#'
+#' @param graph A visNetwork object.
+#' @return A modified visNetwork object with custom group appearances.
+#' @export
 ped_visGroups <- function(graph) {
   pedNode_visGroup(graph = graph,   groupname = "female_deceased"    ) %>%
     pedNode_visGroup(               groupname = "male_deceased"      ) %>%
@@ -57,30 +93,43 @@ ped_visGroups <- function(graph) {
     pedNode_visGroup(               groupname = "male_hypothetical"  ) %>%
     pedNode_visGroup(               groupname = "undetermined"       ) %>%
     pedNode_visGroup(               groupname = "offspring"          ) %>%
-    pedNode_visGroup(               groupname = "parents"            )
+    pedNode_visGroup(               groupname = "parents"            ) %>%
+    pedNode_visGroup(               groupname = "hub"                ) %>%
+    pedNode_visGroup(               groupname = "connector"          )
 
 }
 
+#' Define Icon Settings for Pedigree Groups
+#'
+#' This function returns a list of FontAwesome icon settings for various pedigree groups.
+#'
+#' @return A list of icon settings.
+#' @export
 ped_groupIcons <- function() {
   colors <- set_colors()
   big    <- 75
   med    <- 60
-  small  <- 15
+  sml    <- 5
+
+  big.f    <- big + 10
+  med.f    <- med + 10
+  sml.f    <- sml + 10
+
   icons <- list(
     undetermined        = list(code  = "f219",
                                size  = big,
                                color = colors[["u"]]),
     female_included     = list(code  = "f111",
-                               size  = big,
+                               size  = big.f,
                                color = colors[["f"]]),
     female_excluded     = list(code  = "f056",
-                               size  = big,
+                               size  = big.f,
                                color = colors[["f"]]),
     female_deceased     = list(code  = "f057",
-                               size  = med,
+                               size  = med.f,
                                color = colors[["f"]]),
     female_hypothetical = list(code  = "f47e",
-                               size  = med,
+                               size  = med.f,
                                color = colors[["f"]]),
       male_included     = list(code  = "f0c8",
                                size  = big,
@@ -95,14 +144,29 @@ ped_groupIcons <- function() {
                                size  = med,
                                color = colors[["m"]]),
             offspring = list(code  = "f22d",
-                             size  = small,
+                             size  = sml,
                              color = colors[["u"]]),
             parents   = list(code  = "f22d",
-                             size  = small,
-                             color = colors[["emp"]])
+                             size  = sml,
+                             color = colors[["emp"]]),
+    connector   = list(code  = "f22d",
+                       size  = sml,
+                       color = colors[["emp"]]),
+    hub   = list(code  = "f22d",
+                       size  = sml,
+                       color = colors[["emp"]])
   )
 }
 
+#' Apply Custom Icon Settings to a visNetwork Pedigree Graph
+#'
+#' This function applies custom FontAwesome icon settings for various pedigree groups to a visNetwork object.
+#'
+#' @param graph A visNetwork object.
+#' @return A modified visNetwork object with custom icon groups applied.
+#' @export
+#' @importFrom fontawesome fa
+#' @importFrom visNetwork visGroups addFontAwesome
 ped_visIcons <- function(graph) {
   icons  <- ped_groupIcons()
   dimmed <- 0.8
@@ -151,6 +215,17 @@ ped_visIcons <- function(graph) {
     addFontAwesome()
 }
 
+#' Build an Interactive visNetwork Pedigree Graph
+#'
+#' This function creates an interactive pedigree graph using visNetwork by combining nodes,
+#' edges, and custom icon settings.
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A visNetwork object representing the pedigree graph.
+#' @export
+#' @importFrom visNetwork visNetwork visEdges visInteraction
+#' @importFrom dplyr mutate
 ped_visNet <- function(studbook, pedigree) {
   nodes <- ped_visNodes(
     studbook = studbook,
@@ -171,6 +246,15 @@ ped_visNet <- function(studbook, pedigree) {
   return(graph)
 }
 
+#' Create a Hierarchical visNetwork Pedigree Tree
+#'
+#' This function applies a hierarchical layout to a visNetwork pedigree graph.
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A visNetwork object with a hierarchical layout applied.
+#' @export
+#' @importFrom visNetwork visHierarchicalLayout visPhysics
 ped_visTree <- function(studbook, pedigree) {
   ped_visNet(studbook = studbook,
              pedigree = pedigree) %>%

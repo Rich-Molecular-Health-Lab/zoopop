@@ -1,3 +1,16 @@
+# igraph.R
+
+#' Create Vertices Data for an igraph Pedigree Graph
+#'
+#' This function builds a vertices data frame for constructing an igraph object from pedigree data,
+#' applying custom colors, shapes, and sizes.
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A data frame of vertices with plotting attributes.
+#' @export
+#' @importFrom dplyr mutate case_match case_when select bind_rows arrange
+#' @importFrom stringr str_starts str_ends
 ped_verts <- function(studbook, pedigree) {
   colors   <- set_colors()
   subjects <- nodes_subjects(studbook = studbook,
@@ -50,6 +63,15 @@ ped_verts <- function(studbook, pedigree) {
   return(vertices)
 }
 
+#' Create Edge Data for an igraph Pedigree Graph
+#'
+#' This function constructs an edge data frame for building an igraph object using pedigree data.
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A data frame of edges with attributes for igraph rendering.
+#' @export
+#' @importFrom dplyr select mutate
 edges_igraph <- function(studbook, pedigree) {
   ped_edges(studbook = studbook,
             pedigree = pedigree) %>%
@@ -59,6 +81,15 @@ edges_igraph <- function(studbook, pedigree) {
            width      = 1)
 }
 
+#' Build an igraph Object from Pedigree Data
+#'
+#' This function creates an igraph object from pedigree edge and vertex data.
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return An igraph object representing the pedigree.
+#' @export
+#' @importFrom igraph graph_from_data_frame
 ped_igraph <- function(studbook, pedigree) {
   edges <- edges_igraph(studbook = studbook,
                        pedigree = pedigree)
@@ -68,6 +99,17 @@ ped_igraph <- function(studbook, pedigree) {
   return(graph)
 }
 
+#' Compute Coordinates for Pedigree Nodes Using a Sugiyama Layout
+#'
+#' This function calculates (x, y) coordinates for nodes in the pedigree igraph
+#' using a Sugiyama layout.
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A data frame containing vertex IDs and corresponding \code{x} and \code{y} coordinates.
+#' @export
+#' @importFrom igraph layout_with_sugiyama V
+#' @importFrom tibble tibble
 ped_coords <- function(studbook, pedigree) {
   graph  <- ped_igraph(studbook = studbook,
                        pedigree = pedigree)
@@ -82,6 +124,15 @@ ped_coords <- function(studbook, pedigree) {
   return(layout_df)
 }
 
+#' Plot a Pedigree igraph Object
+#'
+#' This function plots an igraph pedigree using a Sugiyama layout.
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A base R plot of the pedigree igraph.
+#' @export
+#' @importFrom igraph layout_with_sugiyama
 ped_plot_igraph <- function(studbook, pedigree) {
   graph  <- ped_igraph(studbook = studbook,
                        pedigree = pedigree)

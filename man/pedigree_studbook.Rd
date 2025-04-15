@@ -2,20 +2,18 @@
 % Please edit documentation in R/pedigrees.R
 \name{pedigree_studbook}
 \alias{pedigree_studbook}
-\title{Create Numeric Versions of Sex for Pedigree Analysis}
+\title{Create Numeric Versions of Sex Variables for Pedigree Analysis}
 \usage{
 pedigree_studbook(studbook)
 }
 \arguments{
-\item{studbook}{A data frame of studbook data produced by \code{\link[=read_studbook]{read_studbook()}}.}
+\item{studbook}{A data frame containing studbook data with a \code{Sex} column.}
 }
 \value{
-An updated studbook with two new variables, \code{sex_ped} and \code{sex_kin}.
+A data frame with additional numeric columns \code{sex_ped} and \code{sex_kin}.
 }
 \description{
 This function converts the character values in the \code{Sex} column of a studbook
-into numeric representations appropriate for different pedigree tools. The
-\code{sex_ped} variable uses the convention for \code{pedtools} (where 0 represents
-undetermined sex), and the \code{sex_kin} variable uses the convention for \code{kinship2}
-(where 3 represents undetermined sex).
+into numeric representations used by pedigree tools. It creates two new variables,
+\code{sex_ped} and \code{sex_kin}, using different conventions.
 }

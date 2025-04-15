@@ -7,12 +7,11 @@ Authors@R:
 Description: This package contains custom functions designed for the Rich Lab's analysis of AZA Population Management Data like studbooks.
 Depends: R (>= 4.2)
 Imports: 
-    countrycode,
     dplyr,
     forcats,
     lubridate,
     magrittr,
-    paletteer,
+    pedtools,
     purrr,
     readr,
     stringr,
@@ -20,14 +19,19 @@ Imports:
     tibble,
     tidyselect
 Suggests: 
+    countrycode,
     conflicted,
+    fontawesome,
     knitr,
+    igraph,
     learnr,
+    paletteer,
     rmarkdown,
     shiny,
     usethis,
     here,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    visNetwork
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

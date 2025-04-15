@@ -2,21 +2,19 @@
 % Please edit documentation in R/pedigrees.R
 \name{ped_edges}
 \alias{ped_edges}
-\title{Create a data frame with basic metadata attached to edges connecting individuals}
+\title{Combine Pedigree Edge Data}
 \usage{
-ped_edges(studbook, pedigree, palette = NULL)
+ped_edges(studbook, pedigree)
 }
 \arguments{
-\item{studbook}{A studbook tibble}
+\item{studbook}{A data frame containing studbook metadata.}
 
-\item{pedigree}{A pedigree object}
-
-\item{palette}{An optional named list mapping individuals to colors by sex and
-status; if not provided, \code{\link[=set_colors]{set_colors()}} is used.}
+\item{pedigree}{A pedigree object.}
 }
 \value{
-A new dataframe to use for building edge and node dataframes with \code{DiagrammeR}
+A data frame of combined edges.
 }
 \description{
-Create a data frame with basic metadata attached to edges connecting individuals
+This function combines the edges for children, subnuclei, maternal, and paternal connections
+into a single edge data frame for pedigree visualization.
 }

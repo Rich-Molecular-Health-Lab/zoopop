@@ -1,3 +1,5 @@
+# new_studbook.R
+
 #' Estimate the Midpoint Date Between Two Dates
 #'
 #' Computes an estimated date that is approximately halfway between \code{date1} and \code{date2}.

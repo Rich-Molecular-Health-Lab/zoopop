@@ -73,7 +73,7 @@ subnuc_metadata <- function(studbook, pedigree) {
 subnucs_nested <- function(pedigree) {
   connectors <- tibble(
     type = "hub",
-    id   = c(1, 2)
+    id   = c(1000, 2000)
   )
   subnucs(pedigree) %>%
     map_depth(., 1, \(x) unclass(x)) %>%
@@ -90,21 +90,27 @@ subnucs_nested <- function(pedigree) {
 
 subnucs_edges <- function(subnuc) {
   parents <- filter(subnuc, type %in% c("mom", "dad")) %>%
-    mutate(to   = 1) %>%
-    rename(from = id)
+    mutate(to   = 1000) %>%
+    rename(from = id, rel = type)
   children <- filter(subnuc, type == "kid") %>%
-    mutate(from = 2) %>%
-    rename(to = id)
+    mutate(from = 2000) %>%
+    rename(to = id, rel = type)
   connectors <- tibble(
-    from = 1,
-    to   = 2,
-    type = "hub"
+    from = 1000,
+    to   = 2000,
+    rel  = "hub"
   )
   edges <- bind_rows(
     parents,
     children,
     connectors
-  )
+  ) %>%
+    select(
+      from,
+      to,
+      rel
+    ) %>%
+    arrange(from, to)
   return(edges)
 }
 
@@ -117,36 +123,79 @@ subnucs_nodes <- function(subnuc, studbook, pedigree) {
                         label,
                         group,
                         color = color_subj,
-                        shape = shape_subj,
                         starts_with("tip_")) %>%
     mutate(title = as.character(str_glue(
       "<h4>{tip_id}</h4><p>{tip_breed}</p><p>{tip_birth}</p><p>{tip_status}</p>"
     ))) %>%
     select(-starts_with("tip_")) %>%
-    right_join(subnuc, by = "id")
+    right_join(filter(subnuc, type != "hub"), by = "id") %>%
+    mutate(level = if_else(type == "kid", 3, 1))
 
   nodes_hubs <- filter(subnuc, type == "kid") %>%
     select(id) %>%
     left_join(metadata, by = "id") %>%
+    arrange(id) %>%
+    slice_tail(n = 1) %>%
     select(title = tip_subnuc,
-           color = color_subnuc,
            label = label_subnuc) %>%
-    mutate(shape = "circle",
-           type  = "hub",
+    mutate(type  = "hub",
            group = "connector") %>%
     distinct()
 
   nodes <- nodes_hubs %>%
-    mutate(id = 1) %>%
+    mutate(id = 1000, level = 1) %>%
     bind_rows(nodes_hubs) %>%
-    mutate(id = replace_na(id, 2)) %>%
+    mutate(id = replace_na(id, 2000), level = replace_na(level, 2)) %>%
     bind_rows(nodes_subjects) %>%
     arrange(id) %>%
+    select(id,
+           level,
+           label,
+           type,
+           group,
+           title
+           ) %>%
     distinct()
   return(nodes)
 }
 
-subnucs_net_data <- function(studbook, pedigree) {
+map_subnucs_edges <- function(pedigree) {
   subnucs <- subnucs_nested(pedigree = pedigree)
 
+  edges <- map_depth(subnucs, 1, \(x) subnucs_edges(x))
+  return(edges)
+}
+
+map_subnucs_nodes <- function(studbook, pedigree) {
+  subnucs <- subnucs_nested(pedigree = pedigree)
+
+  nodes <- map_depth(subnucs, 1, \(x) subnucs_nodes(x, studbook = studbook, pedigree = pedigree))
+  return(nodes)
+
+}
+
+subnucs_net_data <- function(studbook, pedigree) {
+  nodes <- map_subnucs_nodes(studbook = studbook, pedigree = pedigree)
+  edges <- map_subnucs_edges(pedigree = pedigree)
+
+  merged <- map2(nodes, edges, \(x, y) list(nodes = x, edges = y))
+  return(merged)
+}
+
+visSubnucs_base <- function(nodes, edges) {
+  graph <- visNetwork(nodes  = nodes,
+                      edges  = edges,
+                      width  = "100%") %>%
+    visEdges(width = 1.5, color = "inherit") %>%
+    ped_visIcons() %>%
+    visInteraction(tooltipDelay = 10,
+                   tooltipStyle = "visibility:hidden") %>%
+    visHierarchicalLayout()
+  return(graph)
+}
+
+visSubnucs <- function(studbook, pedigree) {
+  data    <- subnucs_net_data(studbook = studbook, pedigree = pedigree)
+  graph   <- map_depth(data, 1, \(x) as.list(visSubnucs_base(nodes = x[["nodes"]], edges = x[["edges"]])))
+  return(graph)
 }

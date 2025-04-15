@@ -1,3 +1,14 @@
+# pedigrees.R
+#' Create Numeric Versions of Sex Variables for Pedigree Analysis
+#'
+#' This function converts the character values in the \code{Sex} column of a studbook
+#' into numeric representations used by pedigree tools. It creates two new variables,
+#' \code{sex_ped} and \code{sex_kin}, using different conventions.
+#'
+#' @param studbook A data frame containing studbook data with a \code{Sex} column.
+#' @return A data frame with additional numeric columns \code{sex_ped} and \code{sex_kin}.
+#' @export
+#' @importFrom dplyr mutate across case_match
 pedigree_studbook <- function(studbook) {
   studbook_short(studbook) %>%
     mutate(sex_ped = case_match(Sex,
@@ -11,6 +22,16 @@ pedigree_studbook <- function(studbook) {
     mutate(across(c(sex_ped, sex_kin), ~as.numeric(.)))
 }
 
+#' Build a Series of Pedigree Objects from a Studbook
+#'
+#' This function converts a studbook into a list of pedigree objects using
+#' \code{pedtools::ped()} and discards any singletons (pedigrees with size one or less).
+#'
+#' @param studbook A data frame containing studbook data.
+#' @return A list of pedigree objects.
+#' @export
+#' @importFrom pedtools ped pedsize
+#' @importFrom purrr discard
 build_ped_series <- function(studbook) {
   studbook <- pedigree_studbook(studbook)
   pedigree <- ped(
@@ -23,13 +44,33 @@ build_ped_series <- function(studbook) {
   return(pedigree)
 }
 
-
+#' Choose a Pedigree Based on Maximum Depth
+#'
+#' This function selects the pedigree name corresponding to the highest computed depth
+#' from a series of pedigrees.
+#'
+#' @param pedigree_series A list of pedigree objects.
+#' @return A character string representing the selected pedigree name.
+#' @export
+#' @importFrom pedtools generations
 choose_pedigree <- function(pedigree_series) {
   depth <- as.list(generations(pedigree_series, what = "compMax"))
   name  <- names(which.max(unlist(depth)))
   return(name)
 }
 
+#' Extract a Specific Pedigree from a Pedigree Series
+#'
+#' This function extracts a pedigree object from a list of pedigrees based on a provided name.
+#' If no name is supplied, the pedigree with maximum depth is chosen.
+#'
+#' @param pedigree_series A list of pedigree objects.
+#' @param name Optional. The name of the pedigree object to extract.
+#' @param title Optional. A new title to assign to the extracted pedigree.
+#' @return A single pedigree object.
+#' @export
+#' @importFrom purrr keep_at
+#' @importFrom pedtools famid
 extract_pedigree <- function(pedigree_series, name = NULL, title = NULL) {
   if (is.null(name)) {
     name <- choose_pedigree(pedigree_series = pedigree_series)
@@ -42,12 +83,32 @@ extract_pedigree <- function(pedigree_series, name = NULL, title = NULL) {
   return(pedigree)
 }
 
+#' Get the Featured Pedigree from a Studook
+#'
+#' This function builds the pedigree series from the studbook and extracts the featured pedigree.
+#'
+#' @param studbook A data frame containing studbook data.
+#' @return A pedigree object representing the featured pedigree.
+#' @export
 featured_pedigree <- function(studbook) {
   series   <- build_ped_series(studbook = studbook)
   pedigree <- extract_pedigree(pedigree_series = series)
   return(pedigree)
 }
 
+#' Generate Internal IDs for Pedigree Members
+#'
+#' This function creates a data frame containing internal numeric IDs and corresponding labels for the members of a pedigree.
+#'
+#' @param pedigree A pedigree object.
+#' @return A data frame with columns \code{id_subject} and \code{label_subject}.
+#' @export
+#' @importFrom dplyr mutate across select
+#' @importFrom pedtools internalID
+#' @importFrom purrr map
+#' @importFrom rlang set_names
+#' @importFrom tibble enframe
+#' @importFrom tidyselect everything
 ped_ids <- function(pedigree) {
   ped_members  <- as.list(pedigree[["ID"]])
   internal_ids <- map(ped_members, \(x) internalID(pedigree, x)) %>%
@@ -59,6 +120,18 @@ ped_ids <- function(pedigree) {
   return(internal_ids)
 }
 
+#' Extract Subnuclear Structures from a Pedigree
+#'
+#' This function extracts subnuclei (nuclear family units) from a pedigree and computes their levels and generation information.
+#'
+#' @param pedigree A pedigree object.
+#' @return A data frame with subnuclei information including parents, children, and level data.
+#' @export
+#' @importFrom dplyr mutate select arrange relocate left_join join_by
+#' @importFrom pedtools subnucs
+#' @importFrom purrr map_depth
+#' @importFrom tibble enframe
+#' @importFrom tidyr unnest_longer hoist
 ped_subnucs <- function(pedigree) {
   subnucs <- subnucs(pedigree) %>% map_depth(., 1, \(x) unclass(x)) %>%
     enframe(name = "id_subnuc") %>%
@@ -103,6 +176,18 @@ ped_subnucs <- function(pedigree) {
   return(subnucs)
 }
 
+#' Compute Generation and Level Information for a Pedigree
+#'
+#' This function computes and returns the generation numbers and corresponding levels for each individual
+#' in a pedigree.
+#'
+#' @param pedigree A pedigree object.
+#' @return A data frame with subject IDs, labels, levels, and generation numbers.
+#' @export
+#' @importFrom dplyr mutate select arrange left_join across
+#' @importFrom pedtools generations
+#' @importFrom tibble enframe
+#' @importFrom tidyselect everything
 ped_levels <- function(pedigree) {
   as.list(generations(pedigree, what = "indiv")) %>%
     enframe("label_subject", "generation") %>%
@@ -117,6 +202,17 @@ ped_levels <- function(pedigree) {
     arrange(level_subject, id_subject)
 }
 
+#' Create Pedigree Metadata for Visualization
+#'
+#' This function combines pedigree level data with studbook information to produce metadata
+#' required for pedigree visualization.
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A data frame with metadata including IDs, labels, groups, and tooltips.
+#' @export
+#' @importFrom dplyr mutate select right_join left_join across case_when if_else join_by filter
+#' @importFrom stringr str_glue
 ped_metadata <- function(studbook, pedigree) {
   metadata  <- ped_levels(pedigree = pedigree) %>%
     left_join(ped_subnucs(pedigree = pedigree),
@@ -186,7 +282,15 @@ ped_metadata <- function(studbook, pedigree) {
   return(metadata)
 }
 
-
+#' Summarize Subnuclear Units in a Pedigree
+#'
+#' This function groups the subnuclei (nuclear family units) and counts the number
+#' of offspring within each.
+#'
+#' @param pedigree A pedigree object.
+#' @return A data frame summarizing each subnucleus with the number of children.
+#' @export
+#' @importFrom dplyr group_by summarize ungroup n
 summarize_subnucs <- function(pedigree) {
   ped_subnucs(pedigree = pedigree) %>%
     group_by(id_subnuc,
@@ -202,6 +306,17 @@ summarize_subnucs <- function(pedigree) {
     ungroup()
 }
 
+#' Create Edges for Subnuclear Connections
+#'
+#' This function creates an edge data frame linking subnuclei nodes in the pedigree,
+#' and then merges these with child connection data.
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A data frame of edges for subnuclei connections.
+#' @export
+#' @importFrom dplyr select left_join join_by mutate
+#' @importFrom tidyr pivot_wider
 edges_subnucs <- function(studbook, pedigree) {
   nodes_subnucs(pedigree = pedigree) %>%
     select(
@@ -230,6 +345,16 @@ edges_subnucs <- function(studbook, pedigree) {
     mutate(rel = "subnucs")
 }
 
+#' Create Edges Connecting Parents to Children
+#'
+#' This function builds an edge data frame linking parents to children in the pedigree,
+#' with associated connector colors.
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A data frame of edges linking parents with their children.
+#' @export
+#' @importFrom dplyr filter select left_join join_by mutate
 edges_children <- function(studbook, pedigree) {
   nodes_subnucs(pedigree) %>%
     filter(group == "offspring") %>%
@@ -245,6 +370,15 @@ edges_children <- function(studbook, pedigree) {
     mutate(rel = "children")
 }
 
+#' Create Edges for Maternal Connections
+#'
+#' This function extracts the edge data that connects mothers in the pedigree.
+#'
+#' @param pedigree A pedigree object.
+#' @return A data frame of edges representing maternal connections.
+#' @export
+#' @importFrom dplyr filter select mutate
+#' @importFrom purrr pluck
 edges_moms <- function(pedigree) {
   color <- pluck(set_colors(), "f")
   nodes_subnucs(pedigree = pedigree) %>%
@@ -258,6 +392,15 @@ edges_moms <- function(pedigree) {
            color = color)
 }
 
+#' Create Edges for Paternal Connections
+#'
+#' This function extracts the edge data that connects fathers in the pedigree.
+#'
+#' @param pedigree A pedigree object.
+#' @return A data frame of edges representing paternal connections.
+#' @export
+#' @importFrom dplyr filter select mutate
+#' @importFrom purrr pluck
 edges_dads <- function(pedigree) {
   color <- pluck(set_colors(), "m")
   nodes_subnucs(pedigree = pedigree) %>%
@@ -271,6 +414,16 @@ edges_dads <- function(pedigree) {
            color = color)
 }
 
+#' Combine Pedigree Edge Data
+#'
+#' This function combines the edges for children, subnuclei, maternal, and paternal connections
+#' into a single edge data frame for pedigree visualization.
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A data frame of combined edges.
+#' @export
+#' @importFrom dplyr bind_rows arrange distinct mutate relocate row_number
 ped_edges <- function(studbook, pedigree) {
   bind_rows(
     edges_children(studbook = studbook,
@@ -286,6 +439,17 @@ ped_edges <- function(studbook, pedigree) {
     relocate(id)
 }
 
+#' Create Node Data for Pedigree Subjects
+#'
+#' This function builds a node data frame for the pedigree subjects based on metadata,
+#' which can be used for interactive plotting.
+#'
+#' @param studbook A data frame with studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A data frame of nodes for pedigree subjects.
+#' @export
+#' @importFrom dplyr mutate select
+#' @importFrom stringr str_glue
 nodes_subjects <- function(studbook, pedigree) {
   ped_metadata(studbook = studbook,
                pedigree = pedigree)  %>%
@@ -301,6 +465,17 @@ nodes_subjects <- function(studbook, pedigree) {
            title)
 }
 
+#' Create Node Data for Pedigree Subnuclei
+#'
+#' This function constructs a node data frame for subnuclei, which serve as connectors
+#' for nuclear family units in the pedigree visualization.
+#'
+#' @param pedigree A pedigree object.
+#' @return A data frame of nodes for subnuclei.
+#' @export
+#' @importFrom dplyr pull mutate consecutive_id arrange if_else select
+#' @importFrom tidyr pivot_longer
+#' @importFrom tidyselect starts_with
 nodes_subnucs <- function(pedigree) {
   max_id <- max(pull(ped_ids(pedigree = pedigree), id_subject))
   summarize_subnucs(pedigree = pedigree) %>%

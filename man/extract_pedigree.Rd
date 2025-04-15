@@ -2,20 +2,21 @@
 % Please edit documentation in R/pedigrees.R
 \name{extract_pedigree}
 \alias{extract_pedigree}
-\title{Extract a pedigree of interest as its own object}
+\title{Extract a Specific Pedigree from a Pedigree Series}
 \usage{
-extract_pedigree(pedigree_series, name, title = NULL)
+extract_pedigree(pedigree_series, name = NULL, title = NULL)
 }
 \arguments{
 \item{pedigree_series}{A list of pedigree objects.}
 
-\item{name}{The name of the pedigree object to extract}
+\item{name}{Optional. The name of the pedigree object to extract.}
 
-\item{title}{The new name to apply to the extracted pedigree (optional)}
+\item{title}{Optional. A new title to assign to the extracted pedigree.}
 }
 \value{
-A single pedigree object representing the living population
+A single pedigree object.
 }
 \description{
-For many of our operations, it will be easier to work with one pedigree object of interest and ignore the pedigrees not currently represented in the breeding population. The function below helps you extract the pedigree of interest as its own object with a new name.
+This function extracts a pedigree object from a list of pedigrees based on a provided name.
+If no name is supplied, the pedigree with maximum depth is chosen.
 }

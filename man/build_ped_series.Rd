@@ -2,17 +2,17 @@
 % Please edit documentation in R/pedigrees.R
 \name{build_ped_series}
 \alias{build_ped_series}
-\title{Create a List of Pedigree Objects from the Studbook}
+\title{Build a Series of Pedigree Objects from a Studbook}
 \usage{
 build_ped_series(studbook)
 }
 \arguments{
-\item{studbook}{A data frame of studbook data produced by \code{\link[=read_studbook]{read_studbook()}}.}
+\item{studbook}{A data frame containing studbook data.}
 }
 \value{
-A list of pedigree objects excluding any singletons.
+A list of pedigree objects.
 }
 \description{
-This function converts a studbook into a list of pedigree objects (using
-\code{pedtools::ped()}) and excludes any singletons (pedigrees with a size of 1 or less).
+This function converts a studbook into a list of pedigree objects using
+\code{pedtools::ped()} and discards any singletons (pedigrees with size one or less).
 }

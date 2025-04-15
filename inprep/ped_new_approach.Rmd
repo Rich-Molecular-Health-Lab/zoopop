@@ -35,50 +35,28 @@ pedigree <- featured_pedigree(studbook)
 ```
 
 ```{r}
-subnucs <- ped_subnucs(pedigree)
+subnucs <- subnucs_nested(pedigree)
 ```
 
 ```{r}
-subnuc_test <- subnucs(pedigree) %>% 
-  map_depth(., 1, \(x) unclass(x)) %>%
-  map(\(x) enframe(x, name = "type", value = "id")) %>%
-  map_depth(1, \(x) unnest_longer(x, id)) %>%
-  map_depth(1, \(x) mutate(x, 
-                           type = case_match(type, 
-                             "mother" ~"mom", 
-                             "father" ~"dad",
-                             .default = type)))
+nodes_test <- map_subnucs_nodes(studbook, pedigree)
 ```
 
 ```{r}
-nodes_test <- subnucs_nodes(subnuc_test, studbook, pedigree)
+edges_test <- map_subnucs_edges(pedigree)
 ```
 
 ```{r}
-subnucs_test <- subnucs_nested(pedigree = pedigree)
+data <- subnucs_net_data(studbook, pedigree)
 ```
 
 ```{r}
-edges <- map_depth(subnucs_test, 1, \(x) subnucs_edges(x))
+graphs <- visSubnucs(studbook, pedigree)
 ```
 
 ```{r}
-nodes <- map_depth(subnucs_test, 1, \(x) subnucs_nodes(x, studbook, pedigree))
+map_depth(graphs, 1, \(x) print(x))
 ```
 
-
-```{r}
-subnuc_nodes <- subnuc_test %>%
-  mutate(connect_parents  = 1,
-         connect_children = 2) %>%
-  pivot_longer(
-    everything(),
-    names_to  = "type",
-    values_to = "id"
-  ) %>%
-  mutate(id = as.numeric(id)) %>%
-  distinct() %>%
-  arrange(id)
-```
 
 
