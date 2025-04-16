@@ -7,6 +7,18 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+library(devtools)
+library(roxygen2)
+```
+
+
+```{r include=FALSE}
+document()
+install()
+```
+
+
+```{r include=FALSE}
 library(conflicted)
 library(devtools)
 library(DiagrammeR)

@@ -125,7 +125,7 @@ ped_groupIcons <- function() {
     female_excluded     = list(code  = "f056",
                                size  = big.f,
                                color = colors[["f"]]),
-    female_deceased     = list(code  = "f057",
+    female_deceased     = list(code  = "f023",
                                size  = med.f,
                                color = colors[["f"]]),
     female_hypothetical = list(code  = "f47e",

@@ -122,14 +122,13 @@ subnucs_nodes <- function(subnuc, studbook, pedigree) {
                         id,
                         label,
                         group,
-                        color = color_subj,
                         starts_with("tip_")) %>%
     mutate(title = as.character(str_glue(
       "<h4>{tip_id}</h4><p>{tip_breed}</p><p>{tip_birth}</p><p>{tip_status}</p>"
     ))) %>%
     select(-starts_with("tip_")) %>%
     right_join(filter(subnuc, type != "hub"), by = "id") %>%
-    mutate(level = if_else(type == "kid", 3, 1))
+    mutate(level = if_else(type == "kid", 4, 1))
 
   nodes_hubs <- filter(subnuc, type == "kid") %>%
     select(id) %>%
@@ -143,9 +142,9 @@ subnucs_nodes <- function(subnuc, studbook, pedigree) {
     distinct()
 
   nodes <- nodes_hubs %>%
-    mutate(id = 1000, level = 1) %>%
+    mutate(id = 1000, level = 2) %>%
     bind_rows(nodes_hubs) %>%
-    mutate(id = replace_na(id, 2000), level = replace_na(level, 2)) %>%
+    mutate(id = replace_na(id, 2000), level = replace_na(level, 3)) %>%
     bind_rows(nodes_subjects) %>%
     arrange(id) %>%
     select(id,
@@ -187,10 +186,10 @@ visSubnucs_base <- function(nodes, edges) {
                       edges  = edges,
                       width  = "100%") %>%
     visEdges(width = 1.5, color = "inherit") %>%
-    ped_visIcons() %>%
+    ped_visGroups() %>%
     visInteraction(tooltipDelay = 10,
                    tooltipStyle = "visibility:hidden") %>%
-    visHierarchicalLayout()
+    visHierarchicalLayout(sortMethod = "directed", shakeTowards = "leaves")
   return(graph)
 }
 
