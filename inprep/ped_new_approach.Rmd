@@ -51,7 +51,7 @@ subnucs <- subnucs_nested(pedigree)
 ```
 
 ```{r}
-nodes_test <- map_subnucs_nodes(studbook, pedigree)
+nodes <- map_nodes_2dgm(studbook, pedigree)
 ```
 
 ```{r}
@@ -59,16 +59,65 @@ edges_test <- map_subnucs_edges(pedigree)
 ```
 
 ```{r}
-data <- subnucs_net_data(studbook, pedigree)
+data <- subnucs_dgm_data(studbook, pedigree)
 ```
 
 ```{r}
-graphs <- visSubnucs(studbook, pedigree)
+graphs <- diagrammeSubnucs(studbook, pedigree)
 ```
 
 ```{r}
 map_depth(graphs, 1, \(x) print(x))
 ```
 
+```{r}
+merged <- merge_subnucs(studbook, pedigree)
+```
 
+```{r}
+render_graph(merged, layout = "tree")
+```
+
+
+```{r}
+edges <- map_subnucs_edges(pedigree)
+```
+
+```{r}
+edges <- map_subnucs_edges(pedigree)
+
+```
+
+
+```{r}
+peels <-  peelingOrder(pedigree) %>%
+    map_depth(., 1, \(x) unclass(x)) %>%
+    map(\(x) enframe(x, name = "type", value = "id")) %>%
+    map_depth(1, \(x) unnest_longer(x, id)) %>%
+    map_depth(1, \(x) mutate(x,
+                             type = case_match(type,
+                                               "mother"   ~"mom",
+                                               "father"   ~"dad",
+                                               "children" ~"kid",
+                                               .default = type)))
+
+```
+
+```{r}
+links <- peelingOrder(pedigree) %>%
+ map_depth(., 1, \(x) keep_at(x, "link")) %>%
+  list_flatten() %>%
+  set_names() %>%
+  map(., \(x) children(pedigree, x, internal = TRUE)) %>%
+  enframe(name = "parent", value = "kid") %>%
+  unnest_longer(kid)
+```
+
+```{r}
+subnucD3 <- subnucs_D3(studbook, pedigree)
+```
+
+```{r}
+map_depth(subnucD3, 1, \(x) print(x))
+```
 

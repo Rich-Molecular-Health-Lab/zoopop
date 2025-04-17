@@ -12,21 +12,17 @@
 #' @importFrom dplyr mutate case_match case_when select bind_rows arrange
 #' @importFrom stringr str_starts str_ends
 ped_verts <- function(studbook, pedigree) {
-  colors   <- set_colors()
+  colors     <- set_colors()
+  cols.light <- lighten_palette(colors, "CC")
   subjects <- nodes_subjects(studbook = studbook,
                              pedigree = pedigree) %>%
     mutate(
-      color = case_match(
-        group,
-        "male_included"       ~colors[["m"]],
-        "female_included"     ~colors[["f"]],
-        "male_deceased"       ~colors[["sire"]],
-        "female_deceased"     ~colors[["dam"]],
-        "male_excluded"       ~colors[["m"]],
-        "female_excluded"     ~colors[["f"]],
-        "male_hypothetical"   ~colors[["sire"]],
-        "female_hypothetical" ~colors[["dam"]],
-        "undetermined"        ~colors[["u"]]
+      color = case_when(
+        group %in% c("female_excluded"    , "female_included") ~ colors[["f"]],
+        group %in% c("male_excluded"      , "male_included"  ) ~ colors[["m"]],
+        group %in% c("female_hypothetical", "female_deceased") ~ cols.light[["f"]],
+        group %in% c("male_hypothetical"  , "male_deceased"  ) ~ cols.light[["m"]],
+        group == "undetermined"                                ~ colors[["u"]]
       ),
       shape = case_when(
         str_starts(group, "male")         ~"square",
