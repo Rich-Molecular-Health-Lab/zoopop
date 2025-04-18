@@ -147,7 +147,8 @@ nodes_indiv <- function(studbook, pedigree) {
       color_connector,
       label_connector,
       title,
-      starts_with("tip_")
+      starts_with("tip_"),
+      exclude
     ) %>%
     filter(!is.na(id_ped)) %>%
     arrange(fam_year, id_stud) %>%
@@ -255,7 +256,8 @@ nodes_ped <- function(studbook, pedigree) {
       frame.color,
       size,
       label.cex,
-      title
+      title,
+      exclude
     ) %>%
     bind_rows(nodes_connectors(studbook = studbook, pedigree = pedigree)) %>%
     mutate(type = factor(type, levels = c("mom", "dad", "parents", "children", "kid"), ordered = TRUE)) %>%
@@ -295,6 +297,7 @@ edges_links <- function(studbook, pedigree) {
       width      = 0.8,
       lty        = 3,
       curved     = TRUE,
+      smooth     = TRUE,
       dashes     = TRUE,
       shadow     = FALSE,
       arrows     = "to",
@@ -327,6 +330,7 @@ edges_hubs <- function(studbook, pedigree) {
       width      = 2,
       lty        = 1,
       curved     = FALSE,
+      smooth     = FALSE,
       dashes     = FALSE,
       shadow     = TRUE,
       color      = "#5b5b5bFF",
@@ -361,6 +365,7 @@ edges_moms <- function(studbook, pedigree) {
       width      = 2,
       lty        = 1,
       curved     = FALSE,
+      smooth     = FALSE,
       dashes     = FALSE,
       shadow     = TRUE,
       color      = colors[["f"]],
@@ -396,6 +401,7 @@ edges_dads <- function(studbook, pedigree) {
       width      = 2,
       lty        = 1,
       curved     = FALSE,
+      smooth     = FALSE,
       dashes     = FALSE,
       shadow     = TRUE,
       color      = colors[["m"]],
@@ -431,6 +437,7 @@ edges_kids <- function(studbook, pedigree) {
       width      = 2,
       lty        = 1,
       curved     = FALSE,
+      smooth     = FALSE,
       dashes     = FALSE,
       shadow     = TRUE,
       color      = "#5b5b5bFF",
@@ -461,6 +468,7 @@ edges_ped <- function(studbook, pedigree) {
       length,
       width,
       curved,
+      smooth,
       dashes,
       color,
       shadow,
@@ -522,7 +530,8 @@ visPed <- function(studbook, pedigree) {
       level,
       group,
       title,
-      famid
+      famid,
+      exclude
     ) %>%
     mutate(n = max(id))
   edges <- edges_ped(studbook = studbook, pedigree = pedigree) %>%
@@ -534,21 +543,158 @@ visPed <- function(studbook, pedigree) {
            dashes,
            color,
            shadow,
-           arrows
+           arrows,
+           smooth
            )
-  graph <- visNetwork(nodes = nodes, edges = edges, width = "100%") %>%
+  graph <- visNetwork(nodes = nodes, edges = edges) %>%
     ped_visGroups() %>%
-    visInteraction(tooltipDelay = 10,
-                   tooltipStyle = "visibility:hidden") %>%
+    visInteraction(tooltipDelay         = 900,
+                   zoomSpeed            = 0.8,
+                   tooltipStyle         = "visibility:hidden",
+                   hoverConnectedEdges  = TRUE,
+                   multiselect          = TRUE,
+                   navigationButtons    = TRUE,
+                   selectable           = TRUE,
+                   selectConnectedEdges = TRUE) %>%
+    visPhysics(enabled = FALSE) %>%
+    visOptions(highlightNearest = list(enabled   = TRUE,
+                                       degree    = 2,
+                                       hover     = TRUE),
+               nodesIdSelection = list(enabled   = TRUE,
+                                       values    = unique(pull(nodes, label)),
+                                       useLabels = TRUE),
+               selectedBy       = list(variable  = "exclude",
+                                       multiple  = TRUE,
+                                       main      = "Select by breeding inclusion")
+               )
+  return(graph)
+}
+
+visPed_tree <- function(graph) {
+  graph  %>%
     visHierarchicalLayout(
       nodeSpacing     = 175,
       levelSeparation = 200,
       sortMethod      = "directed",
       shakeTowards    = "roots"
-    ) %>%
-    visPhysics(enabled = FALSE) %>%
-    visOptions(highlightNearest = list(enabled =TRUE, degree = 2, hover = T),
-               selectedBy       = list(variable = "label", multiple = T))
-  return(graph)
+    )
+}
+#' Define Icon Settings for Pedigree Groups
+#'
+#' This function returns a list of FontAwesome icon settings for various pedigree groups.
+#'
+#' @return A list of icon settings.
+#' @export
+ped_groupIcons <- function() {
+  colors <- set_colors()
+  big    <- 75
+  med    <- 60
+  sml    <- 5
+
+  big.f    <- big + 10
+  med.f    <- med + 10
+  sml.f    <- sml + 10
+
+  icons <- list(
+    undetermined        = list(code  = "f219",
+                               size  = big,
+                               color = colors[["u"]]),
+    female_included     = list(code  = "f111",
+                               size  = big.f,
+                               color = colors[["f"]]),
+    female_excluded     = list(code  = "f056",
+                               size  = big.f,
+                               color = colors[["f"]]),
+    female_deceased     = list(code  = "f023",
+                               size  = med.f,
+                               color = colors[["f"]]),
+    female_hypothetical = list(code  = "f47e",
+                               size  = med.f,
+                               color = colors[["f"]]),
+    male_included     = list(code  = "f0c8",
+                             size  = big,
+                             color = colors[["m"]]),
+    male_excluded     = list(code  = "f146",
+                             size  = big,
+                             color = colors[["m"]]),
+    male_deceased     = list(code  = "f2d3",
+                             size  = med,
+                             color = colors[["m"]]),
+    male_hypothetical = list(code  = "f0fd",
+                             size  = med,
+                             color = colors[["m"]]),
+    offspring = list(code  = "f22d",
+                     size  = sml,
+                     color = colors[["u"]]),
+    parents   = list(code  = "f22d",
+                     size  = sml,
+                     color = colors[["emp"]]),
+    connector   = list(code  = "f22d",
+                       size  = sml,
+                       color = colors[["emp"]]),
+    hub   = list(code  = "f22d",
+                 size  = sml,
+                 color = colors[["emp"]])
+  )
+}
+
+#' Apply Custom Icon Settings to a visNetwork Pedigree Graph
+#'
+#' This function applies custom FontAwesome icon settings for various pedigree groups to a visNetwork object.
+#'
+#' @param graph A visNetwork object.
+#' @return A modified visNetwork object with custom icon groups applied.
+#' @export
+#' @importFrom fontawesome fa
+#' @importFrom visNetwork visGroups addFontAwesome
+ped_visIcons <- function(graph) {
+  icons  <- ped_groupIcons()
+  dimmed <- 0.8
+  visGroups(graph     = graph,
+            groupname = "female_included",
+            shape     = "icon",
+            icon      = icons[["female_included"]],
+            shadow    = TRUE) %>%
+    visGroups(groupname = "female_excluded",
+              shape     = "icon",
+              icon      = icons[["female_excluded"]],
+              opacity   = dimmed) %>%
+    visGroups(groupname = "female_deceased",
+              shape     = "icon",
+              icon      = icons[["female_deceased"]],
+              opacity   = dimmed) %>%
+    visGroups(groupname = "female_hypothetical",
+              shape     = "icon",
+              icon      = icons[["female_hypothetical"]],
+              opacity   = dimmed) %>%
+    visGroups(groupname = "male_included",
+              shape     = "icon",
+              icon      = icons[["male_included"]],
+              shadow    = TRUE) %>%
+    visGroups(groupname = "male_excluded",
+              shape     = "icon",
+              icon      = icons[["male_excluded"]],
+              opacity   = dimmed) %>%
+    visGroups(groupname = "male_deceased",
+              shape     = "icon",
+              icon      = icons[["male_deceased"]],
+              opacity   = dimmed) %>%
+    visGroups(groupname = "male_hypothetical",
+              shape     = "icon",
+              icon      = icons[["male_hypothetical"]],
+              opacity   = dimmed) %>%
+    visGroups(groupname = "offspring",
+              shape     = "icon",
+              icon      = icons[["offspring"]]) %>%
+    visGroups(groupname = "parents",
+              shape     = "icon",
+              icon      = icons[["parents"]]) %>%
+    visGroups(groupname = "hub",
+              shape     = "icon",
+              icon      = icons[["parents"]]) %>%
+    visGroups(groupname = "undetermined",
+              shape     = "icon",
+              icon      = icons[["undetermined"]]) %>%
+    addFontAwesome()
 }
 

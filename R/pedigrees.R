@@ -113,70 +113,14 @@ ped_ids <- function(pedigree) {
   ped_members  <- as.list(pedigree[["ID"]])
   internal_ids <- map(ped_members, \(x) internalID(pedigree, x)) %>%
     set_names(ped_members) %>%
-    enframe("label", "id") %>%
+    enframe("label", "id_ped") %>%
     mutate(across(everything(), ~as.numeric(.))) %>%
-    select(id_subject    = id,
-           label_subject = label)
+    select(id_ped,
+           label)
   return(internal_ids)
 }
 
-#' Extract Subnuclear Structures from a Pedigree
-#'
-#' This function extracts subnuclei (nuclear family units) from a pedigree and computes their levels and generation information.
-#'
-#' @param pedigree A pedigree object.
-#' @return A data frame with subnuclei information including parents, children, and level data.
-#' @export
-#' @importFrom dplyr mutate select arrange relocate left_join join_by
-#' @importFrom pedtools subnucs
-#' @importFrom purrr map_depth
-#' @importFrom tibble enframe
-#' @importFrom tidyr unnest_longer hoist
-ped_subnucs <- function(pedigree) {
-  subnucs <- subnucs(pedigree) %>% map_depth(., 1, \(x) unclass(x)) %>%
-    enframe(name = "id_subnuc") %>%
-    mutate(id_subnuc = as.numeric(id_subnuc)) %>%
-    hoist(value, dad = c("father")) %>%
-    hoist(value, mom = c("mother")) %>%
-    hoist(value, kid = c("children")) %>%
-    unnest_longer(kid) %>%
-    left_join(ped_levels(pedigree = pedigree),
-              by = join_by(kid == id_subject)) %>%
-    select(id_subnuc,
-           dad,
-           mom,
-           kid,
-           kid_generation = generation_subject,
-           kid_level      = level_subject) %>%
-    left_join(ped_levels(pedigree = pedigree),
-              by = join_by(mom == id_subject)) %>%
-    select(id_subnuc,
-           dad,
-           mom,
-           kid,
-           mom_generation = generation_subject,
-           kid_generation,
-           mom_level      = level_subject,
-           kid_level) %>%
-    left_join(ped_levels(pedigree = pedigree),
-              by = join_by(dad == id_subject)) %>%
-    select(id_subnuc,
-           dad,
-           mom,
-           kid,
-           dad_generation = generation_subject,
-           mom_generation,
-           kid_generation,
-           dad_level      = level_subject,
-           mom_level,
-           kid_level) %>%
-    arrange(kid_generation, dad_generation, mom_generation, dad, mom) %>%
-    mutate(id_subnuc = consecutive_id(dad, mom)) %>%
-    relocate(id_subnuc)
-  return(subnucs)
-}
-
-#' Compute Generation and Level Information for a Pedigree
+#' Compute Generation Information for a Pedigree
 #'
 #' This function computes and returns the generation numbers and corresponding levels for each individual
 #' in a pedigree.
@@ -188,21 +132,55 @@ ped_subnucs <- function(pedigree) {
 #' @importFrom pedtools generations
 #' @importFrom tibble enframe
 #' @importFrom tidyselect everything
-ped_levels <- function(pedigree) {
+ped_generations <- function(pedigree) {
   as.list(generations(pedigree, what = "indiv")) %>%
-    enframe("label_subject", "generation") %>%
+    enframe("label", "generation") %>%
     mutate(across(everything(), ~as.numeric(.))) %>%
     arrange(generation) %>%
-    mutate(level_subject = 1 + (generation - 1) * 3) %>%
     left_join(ped_ids(pedigree = pedigree)) %>%
-    select(id_subject,
-           label_subject,
-           level_subject,
-           generation_subject = generation) %>%
-    arrange(level_subject, id_subject)
+    select(id_ped,
+           label,
+           generation) %>%
+    arrange(generation, id_ped)
 }
 
-#' Create Pedigree Metadata for Visualization
+#' Extract Subnuclear Structures from a Pedigree
+#'
+#' This function extracts subnuclei (nuclear family units) from a pedigree and computes their levels and generation information.
+#'
+#' @param pedigree A pedigree object.
+#' @return A data frame with subnuclei information including parents, children, and level data.
+#' @export
+#' @importFrom dplyr mutate case_match n
+#' @importFrom pedtools peelingOrder
+#' @importFrom purrr map_depth keep_at modify_in assign_in
+#' @importFrom rlang set_names
+#' @importFrom tibble enframe
+#' @importFrom tidyr unnest hoist
+ped_subnucs <- function(pedigree) {
+  peelingOrder(pedigree) %>%
+    map_depth(1, \(x) unclass(x)) %>%
+    set_names(seq_along(.)) %>%
+    map_depth(1, \(x) assign_in(x, "subnuc", list(father = x$father, mother = x$mother, children = x$children))) %>%
+    map_depth(1, \(x) keep_at(x, c("link", "subnuc"))) %>%
+    map_depth(1, \(x) modify_in(x, "subnuc", \(y) enframe(y, name = "type", value = "id_ped"))) %>%
+    map_depth(1, \(x) modify_in(x, "subnuc", \(y) unnest(y, id_ped))) %>%
+    map_depth(1, \(x) modify_in(x, "subnuc", \(y) mutate(y,
+                                                         type = case_match(type,
+                                                                           "mother"   ~"mom",
+                                                                           "father"   ~"dad",
+                                                                           "children" ~"kid",
+                                                                           .default = type)))) %>%
+    enframe(name = "famid") %>%
+    mutate(famid = as.integer(famid)) %>%
+    hoist(value, link = c("link")) %>%
+    unnest(value) %>%
+    unnest(value) %>%
+    mutate(id_count = n(), .by = id_ped)
+}
+
+
+#' Create Pedigree Node Metadata for Visualization
 #'
 #' This function combines pedigree level data with studbook information to produce metadata
 #' required for pedigree visualization.
@@ -211,23 +189,19 @@ ped_levels <- function(pedigree) {
 #' @param pedigree A pedigree object.
 #' @return A data frame with metadata including IDs, labels, groups, and tooltips.
 #' @export
-#' @importFrom dplyr mutate select right_join left_join across case_when if_else join_by filter
-#' @importFrom stringr str_glue
+#' @importFrom dplyr mutate select rename left_join case_when if_else join_by filter dense_rank arrange
+#' @importFrom forcats fct_inorder fct_relabel
+#' @importFrom tidyselect starts_with
+#' @importFrom stringr str_glue str_starts str_ends
 ped_metadata <- function(studbook, pedigree) {
-  metadata  <- ped_levels(pedigree = pedigree) %>%
-    left_join(ped_subnucs(pedigree = pedigree),
-              by = join_by(id_subject == kid)) %>%
-    select(id_subject,
-           label_subject,
-           id_subnuc,
-           level_subject,
-           generation_subject
-    ) %>%
-    right_join(studbook_short(studbook = studbook),
-               by = join_by(label_subject == ID)) %>%
+  colors     <- set_colors()
+  cols.light <- lighten_palette(colors, "CC")
+  nodes <-  ped_subnucs(pedigree = pedigree) %>%
+    left_join(ped_generations(pedigree = pedigree), by = "id_ped") %>%
+    left_join(studbook_short(studbook = studbook), by = join_by(label == ID))  %>%
     mutate(label_spec = if_else(
-      is.na(name_spec), as.character(label_subject),
-      as.character(str_glue("{name_spec} ({as.character(label_subject)})"))),
+      is.na(name_spec), as.character(label),
+      as.character(str_glue("{name_spec} ({as.character(label)})"))),
       group = case_when(
         Sex == "M" & exclude == "n"                    ~"male_included"      ,
         Sex == "F" & exclude == "n"                    ~"female_included"    ,
@@ -267,235 +241,482 @@ ped_metadata <- function(studbook, pedigree) {
         as.character(str_glue("Currently {tip_last}"))
       )
     ) %>%
+    mutate(
+      color = case_when(
+        group %in% c("female_excluded"    , "female_included") ~ colors[["f"]],
+        group %in% c("male_excluded"      , "male_included"  ) ~ colors[["m"]],
+        group %in% c("female_hypothetical", "female_deceased") ~ cols.light[["f"]],
+        group %in% c("male_hypothetical"  , "male_deceased"  ) ~ cols.light[["m"]],
+        group == "undetermined"                                ~ colors[["u"]]
+      ),
+      shape = case_when(
+        str_starts(group, "male")         ~"square",
+        str_starts(group, "female")       ~"circle",
+        str_starts(group, "undetermined") ~"vrectangle"
+      ),
+      frame.color = case_when(
+        str_ends(group, "included") ~"black",
+        str_ends(group, "excluded") ~colors[["emp"]],
+        str_ends(group, "deceased") | str_ends(group, "hypothetical") ~"gray"
+      ),
+      size      = 7,
+      label.cex = 0.25,
+      value     = 2,
+      title = as.character(str_glue(
+        "<h4>{tip_id}</h4><p>{tip_breed}</p><p>{tip_birth}</p><p>{tip_status}</p>"
+      ))
+    ) %>%
+    mutate(fam_year = max(Year_birth), .by = famid) %>%
+    arrange(fam_year) %>%
+    rename(id_stud = label) %>%
+    mutate(level = if_else(
+      type == "kid",
+      dense_rank(fam_year) + 1,
+      dense_rank(fam_year) - 2
+    )) %>%
+    mutate(level = level + 2) %>%
     select(
-      id_subject,
-      id_subnuc,
+      famid,
+      link,
+      id_count,
+      id_ped,
+      id_stud,
       label = label_spec,
-      level_subject,
-      generation_subject,
+      generation,
+      fam_year,
+      level,
       group,
+      type,
+      value,
+      color,
+      shape,
+      frame.color,
+      size,
+      label.cex,
       color_connector,
       label_connector,
-      starts_with("tip_")
+      title,
+      starts_with("tip_"),
+      exclude
     ) %>%
-    filter(!is.na(id_subject))
-  return(metadata)
+    mutate(exclude = case_match(
+      exclude,
+      "deceased"     ~"Excluded - Deceased",
+      "n"            ~"Currently Included",
+      "hypothetical" ~"Excluded - Hypothetical ID",
+      "age"          ~"Excluded - Old Age",
+      "behavior"     ~"Excluded - Behavioral Reasons"
+    )) %>%
+    filter(!is.na(id_ped)) %>%
+    arrange(fam_year, id_stud) %>%
+    mutate(famid = as.character(famid)) %>%
+    mutate(subnuc_id = fct_inorder(famid)) %>%
+    mutate(subnuc_id = fct_relabel(subnuc_id, ~as.character(seq_along(.)))) %>%
+    mutate(famid = as.integer(subnuc_id), .keep = "unused") %>%
+    arrange(famid, id_ped)
+  return(nodes)
 }
 
-#' Summarize Subnuclear Units in a Pedigree
+#' Create Nodes for Subnuclear Connections
 #'
-#' This function groups the subnuclei (nuclear family units) and counts the number
-#' of offspring within each.
+#' This function creates a template node data frame linking subnuclei nodes in the pedigree.
+#' (variables can be selected or removed later depending on which visualization tool you use)
 #'
+#' @param studbook A data frame containing studbook metadata.
 #' @param pedigree A pedigree object.
-#' @return A data frame summarizing each subnucleus with the number of children.
+#' @return A data frame of nodes for subnuclei connections.
 #' @export
-#' @importFrom dplyr group_by summarize ungroup n
-summarize_subnucs <- function(pedigree) {
-  ped_subnucs(pedigree = pedigree) %>%
-    group_by(id_subnuc,
-             dad,
-             mom,
-             dad_generation,
-             mom_generation,
-             kid_generation,
-             dad_level,
-             mom_level,
-             kid_level) %>%
-    summarize(n_kids = n()) %>%
+#' @importFrom dplyr filter slice_tail mutate select bind_rows arrange group_by ungroup
+#' @importFrom tidyr fill
+nodes_connectors <- function(studbook, pedigree) {
+  individuals <- ped_metadata(studbook = studbook, pedigree = pedigree)
+  connectors_children <- individuals %>%
+    filter(type == "kid") %>%
+    slice_tail(n = 1, by = famid) %>%
+    mutate(type        = "children",
+           group       = "hub",
+           level       = level - 1,
+           value       = 3,
+           label       = label_connector,
+           id_count    = 1,
+           id_stud     = NA,
+           id_ped      = NA,
+           size        = 1,
+           shape       = "circle",
+           fillcolor   = "#5b5b5bFF",
+           frame.color = "#5b5b5bFF",
+           title       = tip_connector) %>%
+    select(
+      famid,
+      link,
+      id_ped,
+      id_stud,
+      label,
+      level,
+      group,
+      type,
+      value,
+      color,
+      shape,
+      frame.color,
+      size,
+      label.cex,
+      title
+    )
+
+  connectors <- individuals %>%
+    filter(type == "mom") %>%
+    mutate(type = "parents",
+           group       = "hub",
+           value       = 1,
+           level       = level + 0.5,
+           label       = NA,
+           id_count    = 1,
+           id_stud     = NA,
+           id_ped      = NA,
+           size        = 1,
+           shape       = "circle",
+           fillcolor   = "#5b5b5bFF",
+           frame.color = "#5b5b5bFF",
+           title       = NA) %>%
+    select(
+      famid,
+      link,
+      id_count,
+      id_ped,
+      id_stud,
+      label,
+      level,
+      group,
+      type,
+      value,
+      color,
+      shape,
+      frame.color,
+      size,
+      label.cex,
+      title
+    ) %>%
+    bind_rows(connectors_children) %>%
+    arrange(famid) %>%
+    group_by(famid) %>%
+    fill(label, title, .direction = "downup") %>%
     ungroup()
+  return(connectors)
 }
 
-#' Create Edges for Subnuclear Connections
+#' Create a complete node data frame that includes connector nodes and original nodes representing individuals
 #'
-#' This function creates an edge data frame linking subnuclei nodes in the pedigree,
-#' and then merges these with child connection data.
+#' This function creates a template node data frame linking all nodes in the network visualization.
+#' (variables can be selected or removed later depending on which visualization tool you use)
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A data frame of nodes for different visualization tools.
+#' @export
+#' @importFrom dplyr select bind_rows mutate arrange distinct row_number relocate
+ped_nodes <- function(studbook, pedigree) {
+  ped_metadata(studbook = studbook, pedigree = pedigree) %>%
+    select(
+      famid,
+      link,
+      id_count,
+      id_ped,
+      id_stud,
+      label,
+      level,
+      generation,
+      group,
+      type,
+      value,
+      color,
+      shape,
+      frame.color,
+      size,
+      label.cex,
+      title,
+      exclude
+    ) %>%
+    bind_rows(nodes_connectors(studbook = studbook, pedigree = pedigree)) %>%
+    mutate(type = factor(type, levels = c("mom", "dad", "parents", "children", "kid"), ordered = TRUE)) %>%
+    arrange(famid, type, id_ped) %>%
+    distinct() %>%
+    mutate(id_node = row_number()) %>%
+    relocate(id_node)
+}
+
+#' Create Edges connecting an individual across subnuclei/transfers
+#'
+#' This function creates an edge data frame linking any individual across multiple node representations
+#' (Some individuals are a part of multiple subnuclear units based on transfers over time)
 #'
 #' @param studbook A data frame containing studbook metadata.
 #' @param pedigree A pedigree object.
 #' @return A data frame of edges for subnuclei connections.
 #' @export
-#' @importFrom dplyr select left_join join_by mutate
-#' @importFrom tidyr pivot_wider
-edges_subnucs <- function(studbook, pedigree) {
-  nodes_subnucs(pedigree = pedigree) %>%
-    select(
-      subnuc,
-      group,
-      id
-    ) %>%
-    pivot_wider(
-      names_from = "group",
-      values_from = "id"
-    ) %>%
-    select(
-      from = parents,
-      to   = offspring
-    ) %>%
-    left_join(
-      edges_children(studbook = studbook,
-                     pedigree = pedigree),
-      by = join_by(to == from)
-    ) %>%
-    select(
-      from,
-      to,
-      color
-    ) %>%
-    mutate(rel = "subnucs")
+#' @importFrom dplyr filter select left_join if_else arrange distinct mutate
+#' @importFrom stringr str_ends str_replace_all
+edges_links <- function(studbook, pedigree) {
+  nodes <- ped_nodes(studbook = studbook,
+                     pedigree = pedigree)
+
+  kids    <- nodes %>% filter(type == "kid")
+  parents <- nodes %>%
+    filter(type %in% c("mom", "dad")) %>%
+    select(to_node = id_node, id_ped, label, famid)
+  edges <- kids %>%
+    filter(id_count > 1) %>%
+    select(from_node  = id_node,
+           id_ped,
+           color) %>%
+    left_join(parents, by = "id_ped") %>%
+    select(from = from_node,
+           to   = to_node,
+           color,
+           label,
+           famid) %>%
+    mutate(color = if_else(str_ends(color, "CC"),
+                           str_replace_all(color, "CC", "80"),
+                           str_replace_all(color, "FF", "99"))) %>%
+    arrange(from, to) %>%
+    filter(from != to) %>%
+    distinct() %>%
+    mutate(
+      arrow.size = 0.7,
+      width      = 0.8,
+      lty        = 3,
+      curved     = TRUE,
+      smooth     = TRUE,
+      dashes     = TRUE,
+      shadow     = FALSE,
+      arrows     = "to",
+      value      = 10
+    )
+  return(edges)
 }
+
 
 #' Create Edges Connecting Parents to Children
 #'
-#' This function builds an edge data frame linking parents to children in the pedigree,
-#' with associated connector colors.
+#' This function creates an edge data frame linking parent connector nodes to offspring connector nodes in the pedigree
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A data frame of edges for subnuclei connections.
+#' @export
+#' @importFrom dplyr filter arrange select distinct mutate
+#' @importFrom tidyr pivot_wider
+edges_hubs <- function(studbook, pedigree) {
+  ped_nodes(studbook = studbook,
+            pedigree = pedigree) %>%
+    filter(group == "hub") %>%
+    arrange(famid, generation) %>%
+    select(famid,
+           id_node,
+           type
+    ) %>%
+    pivot_wider(
+      names_from = "type",
+      values_from = "id_node"
+    ) %>%
+    select(from = parents,
+           to   = children,
+           famid)  %>%
+    distinct() %>%
+    mutate(
+      from       = as.integer(from),
+      to         = as.integer(to),
+      arrow.size = 0,
+      width      = 2,
+      lty        = 1,
+      curved     = FALSE,
+      smooth     = FALSE,
+      dashes     = FALSE,
+      shadow     = TRUE,
+      color      = "#5b5b5bFF",
+      value      = 2
+    ) %>%
+    arrange(from, to)
+}
+
+#' Create Edges Connecting Moms to Parent Connector Node
+#'
+#' This function creates an edge data frame linking mom nodes to connector nodes in the pedigree
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A data frame of edges for mom connections.
+#' @export
+#' @importFrom dplyr filter arrange select distinct mutate
+#' @importFrom tidyr pivot_wider
+edges_moms <- function(studbook, pedigree) {
+  colors     <- set_colors()
+  cols.light <- lighten_palette(colors, "CC")
+  edges <- ped_nodes(studbook = studbook,
+                     pedigree = pedigree) %>%
+    filter(type %in% c("mom", "parents")) %>%
+    arrange(famid, type) %>%
+    select(famid,
+           id_node,
+           type
+    ) %>%
+    pivot_wider(
+      names_from = "type",
+      values_from = "id_node"
+    ) %>%
+    select(from = mom,
+           to   = parents,
+           famid)  %>%
+    distinct() %>%
+    mutate(
+      from       = as.integer(from),
+      to         = as.integer(to),
+      arrow.size = 0,
+      width      = 2,
+      lty        = 1,
+      curved     = FALSE,
+      smooth     = FALSE,
+      dashes     = FALSE,
+      shadow     = TRUE,
+      color      = colors[["f"]],
+      value      = 1
+    ) %>%
+    arrange(from, to)
+  return(edges)
+}
+
+#' Create Edges Connecting Dads to Parent Connector Node
+#'
+#' This function creates an edge data frame linking dad nodes to connector nodes in the pedigree
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A data frame of edges for mom connections.
+#' @export
+#' @importFrom dplyr filter arrange select distinct mutate
+#' @importFrom tidyr pivot_wider
+edges_dads <- function(studbook, pedigree) {
+  colors     <- set_colors()
+  cols.light <- lighten_palette(colors, "CC")
+  edges <- ped_nodes(studbook = studbook,
+                     pedigree = pedigree) %>%
+    filter(type %in% c("dad", "parents")) %>%
+    arrange(famid, type) %>%
+    select(famid,
+           id_node,
+           type
+    ) %>%
+    pivot_wider(
+      names_from = "type",
+      values_from = "id_node"
+    ) %>%
+    select(from = dad,
+           to   = parents,
+           famid)  %>%
+    distinct() %>%
+    mutate(
+      from       = as.integer(from),
+      to         = as.integer(to),
+      arrow.size = 0,
+      width      = 2,
+      lty        = 1,
+      curved     = FALSE,
+      smooth     = FALSE,
+      dashes     = FALSE,
+      shadow     = TRUE,
+      color      = colors[["m"]],
+      value      = 1
+    ) %>%
+    arrange(from, to)
+  return(edges)
+}
+
+#' Create Edges Connecting terminal child nodes in pedigree
+#'
+#' This function creates an edge data frame linking offspring connector nodes to each child node
+#'
+#' @param studbook A data frame containing studbook metadata.
+#' @param pedigree A pedigree object.
+#' @return A data frame of edges for mom connections.
+#' @export
+#' @importFrom dplyr filter arrange select distinct mutate
+#' @importFrom tidyr pivot_wider
+edges_kids <- function(studbook, pedigree) {
+  ped_nodes(studbook = studbook,
+            pedigree = pedigree) %>%
+    filter(type %in% c("children", "kid")) %>%
+    arrange(famid, type) %>%
+    select(famid,
+           id_node,
+           type
+    ) %>%
+    pivot_wider(
+      names_from  = "type",
+      values_from = "id_node",
+      values_fn   = list
+    ) %>%
+    select(from = children,
+           to   = kid,
+           famid)  %>%
+    distinct() %>%
+    unnest(to) %>%
+    mutate(
+      from       = as.integer(from),
+      to         = as.integer(to),
+      arrow.size = 0,
+      width      = 2,
+      lty        = 1,
+      curved     = FALSE,
+      smooth     = FALSE,
+      dashes     = FALSE,
+      shadow     = TRUE,
+      color      = "#5b5b5bFF",
+      value      = 3
+    ) %>%
+    arrange(from, to)
+}
+
+
+#' Create Edges to connect all nodes for multiple visualization tools
+#'
+#' This function builds an edge data frame linking all nodes with visualization variables that can be selected
+#' or deselected based on the tool in use.
 #'
 #' @param studbook A data frame containing studbook metadata.
 #' @param pedigree A pedigree object.
 #' @return A data frame of edges linking parents with their children.
 #' @export
-#' @importFrom dplyr filter select left_join join_by mutate
-edges_children <- function(studbook, pedigree) {
-  nodes_subnucs(pedigree) %>%
-    filter(group == "offspring") %>%
-    select(-group) %>%
-    left_join(ped_metadata(studbook = studbook,
-                           pedigree = pedigree),
-              by = join_by(subnuc == id_subnuc)) %>%
-    select(
-      from  = id,
-      to    = id_subject,
-      color = color_connector
-    ) %>%
-    mutate(rel = "children")
-}
-
-#' Create Edges for Maternal Connections
-#'
-#' This function extracts the edge data that connects mothers in the pedigree.
-#'
-#' @param pedigree A pedigree object.
-#' @return A data frame of edges representing maternal connections.
-#' @export
-#' @importFrom dplyr filter select mutate
-#' @importFrom purrr pluck
-edges_moms <- function(pedigree) {
-  color <- pluck(set_colors(), "f")
-  nodes_subnucs(pedigree = pedigree) %>%
-    filter(group == "parents") %>%
-    select(-group) %>%
-    select(
-      from  = mom,
-      to    = id
-    ) %>%
-    mutate(rel   = "mom",
-           color = color)
-}
-
-#' Create Edges for Paternal Connections
-#'
-#' This function extracts the edge data that connects fathers in the pedigree.
-#'
-#' @param pedigree A pedigree object.
-#' @return A data frame of edges representing paternal connections.
-#' @export
-#' @importFrom dplyr filter select mutate
-#' @importFrom purrr pluck
-edges_dads <- function(pedigree) {
-  color <- pluck(set_colors(), "m")
-  nodes_subnucs(pedigree = pedigree) %>%
-    filter(group == "parents") %>%
-    select(-group) %>%
-    select(
-      from  = dad,
-      to    = id
-    ) %>%
-    mutate(rel   = "dad",
-           color = color)
-}
-
-#' Combine Pedigree Edge Data
-#'
-#' This function combines the edges for children, subnuclei, maternal, and paternal connections
-#' into a single edge data frame for pedigree visualization.
-#'
-#' @param studbook A data frame containing studbook metadata.
-#' @param pedigree A pedigree object.
-#' @return A data frame of combined edges.
-#' @export
-#' @importFrom dplyr bind_rows arrange distinct mutate relocate row_number
+#' @importFrom dplyr bind_rows arrange mutate select
 ped_edges <- function(studbook, pedigree) {
-  bind_rows(
-    edges_children(studbook = studbook,
-                   pedigree = pedigree),
-     edges_subnucs(studbook = studbook,
-                   pedigree = pedigree),
-    edges_moms(pedigree = pedigree),
-    edges_dads(pedigree = pedigree)
+  links <- edges_links(studbook = studbook, pedigree = pedigree)
+  hubs  <- edges_hubs(studbook = studbook, pedigree = pedigree)
+  moms  <- edges_moms(studbook = studbook, pedigree = pedigree)
+  dads  <- edges_dads(studbook = studbook, pedigree = pedigree)
+  kids  <- edges_kids(studbook = studbook, pedigree = pedigree)
+  edges <- bind_rows(
+    links,
+    hubs,
+    moms,
+    dads,
+    kids
   ) %>%
-    arrange(from, to) %>%
-    distinct() %>%
-    mutate(id    = row_number()) %>%
-    relocate(id)
+    arrange(famid, from, to) %>%
+    mutate(length = value) %>%
+    select(
+      from,
+      to,
+      value,
+      length,
+      width,
+      curved,
+      smooth,
+      dashes,
+      color,
+      shadow,
+      lty,
+      arrow.size,
+      arrows,
+      label
+    )
+  return(edges)
 }
-
-#' Create Node Data for Pedigree Subjects
-#'
-#' This function builds a node data frame for the pedigree subjects based on metadata,
-#' which can be used for interactive plotting.
-#'
-#' @param studbook A data frame with studbook metadata.
-#' @param pedigree A pedigree object.
-#' @return A data frame of nodes for pedigree subjects.
-#' @export
-#' @importFrom dplyr mutate select
-#' @importFrom stringr str_glue
-nodes_subjects <- function(studbook, pedigree) {
-  ped_metadata(studbook = studbook,
-               pedigree = pedigree)  %>%
-    mutate(title = as.character(str_glue(
-      "<h4>{tip_id}</h4><p>{tip_breed}</p><p>{tip_birth}</p><p>{tip_status}</p>"
-    ))) %>%
-    select(id = id_subject,
-           group,
-           generation = generation_subject,
-           subnuc = id_subnuc,
-           label,
-           level = level_subject,
-           title)
-}
-
-#' Create Node Data for Pedigree Subnuclei
-#'
-#' This function constructs a node data frame for subnuclei, which serve as connectors
-#' for nuclear family units in the pedigree visualization.
-#'
-#' @param pedigree A pedigree object.
-#' @return A data frame of nodes for subnuclei.
-#' @export
-#' @importFrom dplyr pull mutate consecutive_id arrange if_else select
-#' @importFrom tidyr pivot_longer
-#' @importFrom tidyselect starts_with
-nodes_subnucs <- function(pedigree) {
-  max_id <- max(pull(ped_ids(pedigree = pedigree), id_subject))
-  summarize_subnucs(pedigree = pedigree) %>%
-    mutate(connect_parents   = id_subnuc,
-           connect_offspring = consecutive_id(id_subnuc) + max(id_subnuc)) %>%
-    pivot_longer(starts_with("connect_"),
-                 names_to     = "group",
-                 names_prefix = "connect_",
-                 values_to    = "id") %>%
-    arrange(id_subnuc, id) %>%
-    mutate(id = row_number() + max_id) %>%
-    mutate(generation = if_else(
-      group == "offspring", kid_generation - 0.25, kid_generation - 0.5
-    )) %>%
-    select(subnuc = id_subnuc,
-           group,
-           id,
-           generation,
-           dad,
-           mom,
-           n_kids)
-}
-

@@ -2,7 +2,7 @@
 % Please edit documentation in R/pedigrees.R
 \name{ped_metadata}
 \alias{ped_metadata}
-\title{Create Pedigree Metadata for Visualization}
+\title{Create Pedigree Node Metadata for Visualization}
 \usage{
 ped_metadata(studbook, pedigree)
 }

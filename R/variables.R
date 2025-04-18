@@ -7,7 +7,16 @@ utils::globalVariables(c(
     "Date_birth", "Date_last", "Institution_birth", "State_Province_birth",
     "Country_birth", "iconLoc_birth", "colorLoc_birth", "Institution_last",
     "State_Province_last", "Country_last", "iconLoc_last", "colorLoc_last",
-    "pedigree", "consecutive_id", "nonfounders", "parents",
+    "pedigree", "consecutive_id", "nonfounders", "parents", "series", "name", "depth",
+
+    # Variables used in network visualization functions
+    "colors", "cols.light", "nodes", "edges", "links",
+    "hubs", "moms", "dads", "kids", "internal_ids",
+    "from", "to", "length", "width", "curved", "smooth", "dashes",
+    "shadow", "lty", "arrow.size", "arrows", "famid", "link",
+    "id_count", "id_ped", "id_stud", "label", "level", "generation", "group",
+    "type", "value", "color", "shape", "frame.color", "size", "label.cex",
+    "title", "exclude", "label_spec", "fam_year", "color_connector", "label_connector",
 
     # Variables used in location processing
     "Location", "Mnemonic", "code1", "code2", "code", "country", "code_country",

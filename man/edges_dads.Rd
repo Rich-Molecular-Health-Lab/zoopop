@@ -2,16 +2,18 @@
 % Please edit documentation in R/pedigrees.R
 \name{edges_dads}
 \alias{edges_dads}
-\title{Create Edges for Paternal Connections}
+\title{Create Edges Connecting Dads to Parent Connector Node}
 \usage{
 edges_dads(studbook, pedigree)
 }
 \arguments{
+\item{studbook}{A data frame containing studbook metadata.}
+
 \item{pedigree}{A pedigree object.}
 }
 \value{
-A data frame of edges representing paternal connections.
+A data frame of edges for mom connections.
 }
 \description{
-This function extracts the edge data that connects fathers in the pedigree.
+This function creates an edge data frame linking dad nodes to connector nodes in the pedigree
 }

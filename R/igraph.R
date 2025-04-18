@@ -1,82 +1,5 @@
 # igraph.R
 
-#' Create Vertices Data for an igraph Pedigree Graph
-#'
-#' This function builds a vertices data frame for constructing an igraph object from pedigree data,
-#' applying custom colors, shapes, and sizes.
-#'
-#' @param studbook A data frame containing studbook metadata.
-#' @param pedigree A pedigree object.
-#' @return A data frame of vertices with plotting attributes.
-#' @export
-#' @importFrom dplyr mutate case_match case_when select bind_rows arrange
-#' @importFrom stringr str_starts str_ends
-ped_verts <- function(studbook, pedigree) {
-  colors     <- set_colors()
-  cols.light <- lighten_palette(colors, "CC")
-  subjects <- nodes_subjects(studbook = studbook,
-                             pedigree = pedigree) %>%
-    mutate(
-      color = case_when(
-        group %in% c("female_excluded"    , "female_included") ~ colors[["f"]],
-        group %in% c("male_excluded"      , "male_included"  ) ~ colors[["m"]],
-        group %in% c("female_hypothetical", "female_deceased") ~ cols.light[["f"]],
-        group %in% c("male_hypothetical"  , "male_deceased"  ) ~ cols.light[["m"]],
-        group == "undetermined"                                ~ colors[["u"]]
-      ),
-      shape = case_when(
-        str_starts(group, "male")         ~"square",
-        str_starts(group, "female")       ~"circle",
-        str_starts(group, "undetermined") ~"vrectangle"
-      ),
-      frame.color = case_when(
-        str_ends(group, "included") ~"black",
-        str_ends(group, "excluded") ~colors[["emp"]],
-        str_ends(group, "deceased") | str_ends(group, "hypothetical") ~"gray"
-      ),
-      size      = 7,
-      label.cex = 0.25
-    ) %>%
-    select(
-      id,
-      label,
-      label.cex,
-      color,
-      frame.color,
-      shape,
-      size,
-      generation
-    )
-  subnucs <- nodes_subnucs(pedigree = pedigree) %>%
-    select(id,
-           generation) %>%
-    mutate(shape = "circle",
-           color = "gray",
-           size  = 1)
-
-  vertices <- bind_rows(subjects, subnucs) %>%
-    arrange(id)
-  return(vertices)
-}
-
-#' Create Edge Data for an igraph Pedigree Graph
-#'
-#' This function constructs an edge data frame for building an igraph object using pedigree data.
-#'
-#' @param studbook A data frame containing studbook metadata.
-#' @param pedigree A pedigree object.
-#' @return A data frame of edges with attributes for igraph rendering.
-#' @export
-#' @importFrom dplyr select mutate
-edges_igraph <- function(studbook, pedigree) {
-  ped_edges(studbook = studbook,
-            pedigree = pedigree) %>%
-    select(from, to, color, rel) %>%
-    mutate(arrow.size = .1,
-           curved     = 0,
-           width      = 1)
-}
-
 #' Build an igraph Object from Pedigree Data
 #'
 #' This function creates an igraph object from pedigree edge and vertex data.
@@ -86,12 +9,31 @@ edges_igraph <- function(studbook, pedigree) {
 #' @return An igraph object representing the pedigree.
 #' @export
 #' @importFrom igraph graph_from_data_frame
+#' @importFrom dplyr select
 ped_igraph <- function(studbook, pedigree) {
-  edges <- edges_igraph(studbook = studbook,
-                       pedigree = pedigree)
-  vertices <- ped_verts(studbook = studbook,
-                       pedigree = pedigree)
-  graph <- graph_from_data_frame(edges, vertices = vertices)
+  vertices <- ped_nodes(studbook = studbook, pedigree = pedigree) %>%
+    select(
+      id = id_node,
+      label,
+      level,
+      color,
+      shape,
+      frame.color,
+      size,
+      label.cex
+    )
+  edges <- ped_edges(studbook = studbook, pedigree = pedigree) %>%
+    select(
+      from,
+      to,
+      value,
+      curved,
+      color,
+      lty,
+      arrow.size,
+      label
+    )
+  graph <- graph_from_data_frame(edges, directed = FALSE, vertices = vertices)
   return(graph)
 }
 

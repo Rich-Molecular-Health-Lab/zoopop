@@ -45,24 +45,12 @@ pedigree <- featured_pedigree(studbook)
 ```
 
 ```{r}
-fams <- fams_ped(pedigree)
-
-nodes <- nodes_ped(studbook, pedigree)
-edges <- edges_ped(studbook, pedigree)
+visnet <- visPed(studbook, pedigree) %>%
+  visPed_interaction() %>%
+  visPed_options()
 ```
 
 ```{r}
-connectors_children <- individuals %>%
-    filter(type == "kid") %>%
-    slice_tail(n = 1, by = famid) %>%
-    arrange(fam_year) %>%
-    mutate(level = dense_rank(fam_year)) %>%
-  relocate(level, .after = fam_year)
+tree <- visPed_tree(studbook, pedigree)
 ```
-
-
-```{r}
-visnet <- visPed(studbook, pedigree)
-```
-
 

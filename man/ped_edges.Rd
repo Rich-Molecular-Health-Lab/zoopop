@@ -2,7 +2,7 @@
 % Please edit documentation in R/pedigrees.R
 \name{ped_edges}
 \alias{ped_edges}
-\title{Combine Pedigree Edge Data}
+\title{Create Edges to connect all nodes for multiple visualization tools}
 \usage{
 ped_edges(studbook, pedigree)
 }
@@ -12,9 +12,9 @@ ped_edges(studbook, pedigree)
 \item{pedigree}{A pedigree object.}
 }
 \value{
-A data frame of combined edges.
+A data frame of edges linking parents with their children.
 }
 \description{
-This function combines the edges for children, subnuclei, maternal, and paternal connections
-into a single edge data frame for pedigree visualization.
+This function builds an edge data frame linking all nodes with visualization variables that can be selected
+or deselected based on the tool in use.
 }
