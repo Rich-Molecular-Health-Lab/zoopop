@@ -65,7 +65,7 @@ ped_visEdges <- function(studbook, pedigree) {
 pedNode_visGroup <- function(graph, groupname) {
   path <- "https://rich-molecular-health-lab.github.io/zoopop/inst/icons/"
   file <- paste0(path, groupname, ".png")
-  if (groupname %in% c("connector", "offspring", "parents")) {
+  if (groupname %in% c("hub", "connector", "offspring", "parents")) {
     size <- 5
     } else { size <- 40 }
   visGroups(graph     = graph,
@@ -207,6 +207,9 @@ ped_visIcons <- function(graph) {
                 shape     = "icon",
                 icon      = icons[["offspring"]]) %>%
       visGroups(groupname = "parents",
+                shape     = "icon",
+                icon      = icons[["parents"]]) %>%
+      visGroups(groupname = "hub",
                 shape     = "icon",
                 icon      = icons[["parents"]]) %>%
       visGroups(groupname = "undetermined",

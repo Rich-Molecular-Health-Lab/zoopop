@@ -4,7 +4,7 @@
 \alias{edges_dads}
 \title{Create Edges for Paternal Connections}
 \usage{
-edges_dads(pedigree)
+edges_dads(studbook, pedigree)
 }
 \arguments{
 \item{pedigree}{A pedigree object.}
