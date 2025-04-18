@@ -45,9 +45,11 @@ pedigree <- featured_pedigree(studbook)
 ```
 
 ```{r}
-visnet <- visPed(studbook, pedigree) %>%
-  visPed_interaction() %>%
-  visPed_options()
+tree <- visPed(studbook, pedigree) %>%
+    visHierarchicalLayout(
+      sortMethod      = "directed",
+      shakeTowards    = "roots"
+    )
 ```
 
 ```{r}

@@ -82,7 +82,7 @@ ped_visGroups <- function(graph) {
 #' @importFrom visNetwork visOptions
 #' @importFrom dplyr select arrange
 visPed_options <- function(graph) {
-  graph <-  visOptions(
+  graph_out <-  visOptions(
                graph            = graph,
                highlightNearest = list(enabled   = TRUE,
                                        degree    = 4,
@@ -91,7 +91,7 @@ visPed_options <- function(graph) {
                                        multiple  = TRUE,
                                        main      = "Select by breeding inclusion")
     )
-  return(graph)
+  return(graph_out)
 }
 
 #' Apply Custom Interaction Options to a visNetwork Pedigree Graph
@@ -103,7 +103,7 @@ visPed_options <- function(graph) {
 #' @export
 #' @importFrom visNetwork visInteraction
 visPed_interaction <- function(graph) {
-    visInteraction(graph                = graph,
+  graph_out <-   visInteraction(graph                = graph,
                    tooltipDelay         = 900,
                    zoomSpeed            = 0.8,
                    tooltipStyle         = "visibility:hidden",
@@ -113,6 +113,7 @@ visPed_interaction <- function(graph) {
                    selectable           = TRUE,
                    selectConnectedEdges = TRUE,
                    hideEdgesOnDrag      = TRUE)
+  return(graph_out)
 }
 
 
@@ -125,7 +126,7 @@ visPed_interaction <- function(graph) {
 #' @param pedigree A pedigree object.
 #' @return A visNetwork object representing the pedigree graph.
 #' @export
-#' @importFrom visNetwork visNetwork
+#' @importFrom visNetwork visNetwork visPhysics
 #' @importFrom dplyr select
 visPed <- function(studbook, pedigree) {
   nodes <- ped_nodes(studbook = studbook, pedigree = pedigree) %>%
@@ -152,7 +153,8 @@ visPed <- function(studbook, pedigree) {
            smooth
     )
   graph <- visNetwork(nodes = nodes, edges = edges) %>%
-    ped_visGroups()
+    ped_visGroups() %>%
+    visPhysics(enabled = FALSE)
   return(graph)
 }
 
@@ -164,12 +166,11 @@ visPed <- function(studbook, pedigree) {
 #' @param pedigree A pedigree object.
 #' @return A visNetwork object with a hierarchical layout applied.
 #' @export
-#' @importFrom visNetwork visHierarchicalLayout visPhysics
+#' @importFrom visNetwork visHierarchicalLayout
 visPed_tree <- function(studbook, pedigree) {
   graph <- visPed(studbook = studbook, pedigree = pedigree)
   tree  <-  visPed_options(graph = graph) %>%
     visPed_interaction() %>%
-    visPhysics(enabled = FALSE)  %>%
     visHierarchicalLayout(
       nodeSpacing     = 200,
       levelSeparation = 500,
