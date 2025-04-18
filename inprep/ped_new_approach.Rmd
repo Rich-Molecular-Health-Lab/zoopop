@@ -44,16 +44,25 @@ studbook <- read_csv(here("inst/extdata/studbook.csv"))
 pedigree <- featured_pedigree(studbook)
 ```
 
+```{r}
+fams <- fams_ped(pedigree)
+
+nodes <- nodes_ped(studbook, pedigree)
+edges <- edges_ped(studbook, pedigree)
+```
 
 ```{r}
-network <- visPed(studbook, pedigree)
+connectors_children <- individuals %>%
+    filter(type == "kid") %>%
+    slice_tail(n = 1, by = famid) %>%
+    arrange(fam_year) %>%
+    mutate(level = dense_rank(fam_year)) %>%
+  relocate(level, .after = fam_year)
 ```
 
 
-
-
-
-
-
+```{r}
+visnet <- visPed(studbook, pedigree)
+```
 
 

@@ -2,37 +2,34 @@ ids_ped <- function(pedigree) {
   ped_members  <- as.list(pedigree[["ID"]])
   internal_ids <- map(ped_members, \(x) internalID(pedigree, x)) %>%
     set_names(ped_members) %>%
-    enframe("label", "id") %>%
+    enframe("label", "id_ped") %>%
     mutate(across(everything(), ~as.numeric(.))) %>%
-    select(id,
+    select(id_ped,
            label)
   return(internal_ids)
 }
 
 
-levels_ped <- function(pedigree) {
+generations_ped <- function(pedigree) {
   as.list(generations(pedigree, what = "indiv")) %>%
     enframe("label", "generation") %>%
     mutate(across(everything(), ~as.numeric(.))) %>%
     arrange(generation) %>%
     left_join(ids_ped(pedigree = pedigree)) %>%
-    select(id,
+    select(id_ped,
            label,
            generation) %>%
-    arrange(generation, id)
+    arrange(generation, id_ped)
 }
 
-nodes_ped <- function(studbook, pedigree) {
-  colors     <- set_colors()
-  cols.light <- lighten_palette(colors, "CC")
-  levels     <- levels_ped(pedigree = pedigree)
-  peels <-  peelingOrder(pedigree) %>%
+fams_ped <- function(pedigree) {
+  peelingOrder(pedigree) %>%
     map_depth(1, \(x) unclass(x)) %>%
     set_names(seq_along(.)) %>%
     map_depth(1, \(x) assign_in(x, "subnuc", list(father = x$father, mother = x$mother, children = x$children))) %>%
     map_depth(1, \(x) keep_at(x, c("link", "subnuc"))) %>%
-    map_depth(1, \(x) modify_in(x, "subnuc", \(y) enframe(y, name = "type", value = "id"))) %>%
-    map_depth(1, \(x) modify_in(x, "subnuc", \(y) unnest(y, id))) %>%
+    map_depth(1, \(x) modify_in(x, "subnuc", \(y) enframe(y, name = "type", value = "id_ped"))) %>%
+    map_depth(1, \(x) modify_in(x, "subnuc", \(y) unnest(y, id_ped))) %>%
     map_depth(1, \(x) modify_in(x, "subnuc", \(y) mutate(y,
                                                          type = case_match(type,
                                                                            "mother"   ~"mom",
@@ -44,7 +41,14 @@ nodes_ped <- function(studbook, pedigree) {
     hoist(value, link = c("link")) %>%
     unnest(value) %>%
     unnest(value) %>%
-    left_join(levels, by = "id") %>%
+    mutate(id_count = n(), .by = id_ped)
+}
+
+nodes_indiv <- function(studbook, pedigree) {
+  colors     <- set_colors()
+  cols.light <- lighten_palette(colors, "CC")
+  nodes <-  fams_ped(pedigree = pedigree) %>%
+    left_join(generations_ped(pedigree = pedigree), by = "id_ped") %>%
     left_join(studbook_short(studbook = studbook), by = join_by(label == ID))  %>%
     mutate(label_spec = if_else(
       is.na(name_spec), as.character(label),
@@ -113,14 +117,25 @@ nodes_ped <- function(studbook, pedigree) {
         "<h4>{tip_id}</h4><p>{tip_breed}</p><p>{tip_birth}</p><p>{tip_status}</p>"
       ))
     ) %>%
+    mutate(fam_year = max(Year_birth), .by = famid) %>%
+    arrange(fam_year) %>%
     rename(id_stud = label) %>%
+    mutate(level = if_else(
+      type == "kid",
+      dense_rank(fam_year) + 1,
+      dense_rank(fam_year) - 2
+    )) %>%
+    mutate(level = level + 2) %>%
     select(
       famid,
       link,
-      id,
+      id_count,
+      id_ped,
       id_stud,
       label = label_spec,
       generation,
+      fam_year,
+      level,
       group,
       type,
       value,
@@ -134,23 +149,29 @@ nodes_ped <- function(studbook, pedigree) {
       title,
       starts_with("tip_")
     ) %>%
-    filter(!is.na(id)) %>%
-    arrange(generation, id_stud) %>%
+    filter(!is.na(id_ped)) %>%
+    arrange(fam_year, id_stud) %>%
     mutate(famid = as.character(famid)) %>%
     mutate(subnuc_id = fct_inorder(famid)) %>%
     mutate(subnuc_id = fct_relabel(subnuc_id, ~as.character(seq_along(.)))) %>%
     mutate(famid = as.integer(subnuc_id), .keep = "unused") %>%
-    arrange(famid, id)
+    arrange(famid, id_ped)
+  return(nodes)
+}
 
-  connectors_children <- peels %>%
+nodes_connectors <- function(studbook, pedigree) {
+  individuals <- nodes_indiv(studbook = studbook, pedigree = pedigree)
+  connectors_children <- individuals %>%
     filter(type == "kid") %>%
     slice_tail(n = 1, by = famid) %>%
     mutate(type        = "children",
            group       = "hub",
+           level       = level - 1,
            value       = 3,
            label       = label_connector,
+           id_count    = 1,
            id_stud     = NA,
-           id          = NA,
+           id_ped      = NA,
            size        = 1,
            shape       = "circle",
            fillcolor   = "gray",
@@ -159,10 +180,10 @@ nodes_ped <- function(studbook, pedigree) {
     select(
       famid,
       link,
-      id,
+      id_ped,
       id_stud,
       label,
-      generation,
+      level,
       group,
       type,
       value,
@@ -174,14 +195,16 @@ nodes_ped <- function(studbook, pedigree) {
       title
     )
 
-  connectors <- peels %>%
+  connectors <- individuals %>%
     filter(type == "mom") %>%
     mutate(type = "parents",
            group       = "hub",
            value       = 1,
+           level       = level + 0.5,
            label       = NA,
+           id_count    = 1,
            id_stud     = NA,
-           id          = NA,
+           id_ped      = NA,
            size        = 1,
            shape       = "circle",
            fillcolor   = "gray",
@@ -190,10 +213,11 @@ nodes_ped <- function(studbook, pedigree) {
     select(
       famid,
       link,
-      id,
+      id_count,
+      id_ped,
       id_stud,
       label,
-      generation,
+      level,
       group,
       type,
       value,
@@ -209,15 +233,19 @@ nodes_ped <- function(studbook, pedigree) {
     group_by(famid) %>%
     fill(label, title, .direction = "downup") %>%
     ungroup()
+  return(connectors)
+}
 
-
-  nodes <- peels %>%
+nodes_ped <- function(studbook, pedigree) {
+  nodes_indiv(studbook = studbook, pedigree = pedigree) %>%
     select(
       famid,
       link,
-      id,
+      id_count,
+      id_ped,
       id_stud,
       label,
+      level,
       generation,
       group,
       type,
@@ -229,54 +257,46 @@ nodes_ped <- function(studbook, pedigree) {
       label.cex,
       title
     ) %>%
-    bind_rows(connectors) %>%
-    mutate(type = factor(type, levels = c("mom", "dad", "parents", "children", "kid"), ordered = TRUE),
-           level = case_when(
-             type == "parents"  ~ generation + 0.5,
-             type == "children" ~ generation - 0.5,
-             type == "kid"      ~ generation + 1,
-             .default = generation
-           )) %>%
-    arrange(famid, type, id) %>%
+    bind_rows(nodes_connectors(studbook = studbook, pedigree = pedigree)) %>%
+    mutate(type = factor(type, levels = c("mom", "dad", "parents", "children", "kid"), ordered = TRUE)) %>%
+    arrange(famid, type, id_ped) %>%
     distinct() %>%
     mutate(id_node = row_number()) %>%
     relocate(id_node)
-
-  return(nodes)
 }
 
 edges_links <- function(studbook, pedigree) {
   nodes <- nodes_ped(studbook = studbook,
                      pedigree = pedigree)
+
+  kids    <- nodes %>% filter(type == "kid")
   parents <- nodes %>%
     filter(type %in% c("mom", "dad")) %>%
-    select(to_node  = id_node,
-           famid,
-           label,
-           id)
-  edges_links <- nodes %>%
-    filter(link == id) %>%
+    select(to_node = id_node, id_ped)
+  edges <- kids %>%
+    filter(id_count > 1) %>%
     select(from_node  = id_node,
-           id) %>%
-    left_join(parents, by = "id") %>%
+           id_ped,
+           color) %>%
+    left_join(parents, by = "id_ped") %>%
     select(from = from_node,
            to   = to_node,
+           color,
            label,
            famid) %>%
     arrange(from, to) %>%
     filter(from != to) %>%
     distinct() %>%
     mutate(
-      arrow.size = 1,
+      arrow.size = 0.7,
       lty        = 3,
       curved     = TRUE,
       dashes     = TRUE,
       shadow     = FALSE,
       arrows     = "to",
-      color      = "#00000080",
       value      = 10
     )
-  return(edges_links)
+  return(edges)
 }
 
 edges_hubs <- function(studbook, pedigree) {
@@ -311,7 +331,9 @@ edges_hubs <- function(studbook, pedigree) {
 }
 
 edges_moms <- function(studbook, pedigree) {
-  nodes_ped(studbook = studbook,
+  colors     <- set_colors()
+  cols.light <- lighten_palette(colors, "CC")
+  edges <- nodes_ped(studbook = studbook,
             pedigree = pedigree) %>%
     filter(type %in% c("mom", "parents")) %>%
     arrange(famid, type) %>%
@@ -335,14 +357,17 @@ edges_moms <- function(studbook, pedigree) {
       curved     = FALSE,
       dashes     = FALSE,
       shadow     = TRUE,
-      color      = "#5b5b5bFF",
+      color      = colors[["f"]],
       value      = 1
     ) %>%
     arrange(from, to)
+  return(edges)
 }
 
 edges_dads <- function(studbook, pedigree) {
-  nodes_ped(studbook = studbook,
+  colors     <- set_colors()
+  cols.light <- lighten_palette(colors, "CC")
+  edges <- nodes_ped(studbook = studbook,
             pedigree = pedigree) %>%
     filter(type %in% c("dad", "parents")) %>%
     arrange(famid, type) %>%
@@ -366,10 +391,11 @@ edges_dads <- function(studbook, pedigree) {
       curved     = FALSE,
       dashes     = FALSE,
       shadow     = TRUE,
-      color      = "#5b5b5bFF",
+      color      = colors[["m"]],
       value      = 1
     ) %>%
     arrange(from, to)
+  return(edges)
 }
 
 edges_kids <- function(studbook, pedigree) {
@@ -493,7 +519,6 @@ visPed <- function(studbook, pedigree) {
   edges <- edges_ped(studbook = studbook, pedigree = pedigree) %>%
     select(from,
            to,
-           value,
            title = label,
            length,
            dashes,
@@ -504,7 +529,14 @@ visPed <- function(studbook, pedigree) {
   graph <- visNetwork(nodes = nodes, edges = edges, width = "100%") %>%
     ped_visGroups() %>%
     visInteraction(tooltipDelay = 10,
-                   tooltipStyle = "visibility:hidden")
+                   tooltipStyle = "visibility:hidden") %>%
+    visHierarchicalLayout(
+      nodeSpacing     = 175,
+      levelSeparation = 200,
+      sortMethod      = "directed",
+      shakeTowards    = "roots"
+    ) %>%
+    visPhysics(enabled = FALSE)
   return(graph)
 }
 
