@@ -63,16 +63,32 @@ ped_visEdges <- function(studbook, pedigree) {
 #' @export
 #' @importFrom visNetwork visGroups
 pedNode_visGroup <- function(graph, groupname) {
+  colors     <- set_colors()
+  cols.light <- lighten_palette(colors, "40")
   path <- "https://rich-molecular-health-lab.github.io/zoopop/inst/icons/"
   file <- paste0(path, groupname, ".png")
   if (groupname %in% c("hub", "connector", "offspring", "parents")) {
-    size <- 5
-    } else { size <- 40 }
+    size <- 10
+  } else { size <- 40 }
+  if (str_starts(groupname, "female")) {
+    background <- cols.light[["f"]]
+  } else if (str_starts(groupname, "male")) {
+    background <- cols.light[["m"]]
+  } else if (str_starts(groupname, "undetermined")) {
+    background <- cols.light[["u"]]
+  } else {
+    background <- "white"
+  }
+
   visGroups(graph     = graph,
             groupname = groupname,
             shape     = "image",
             image     = file,
-            size      = size)
+            size      = size,
+            shadow    = TRUE,
+            font      = list(
+              background = background
+            ))
 }
 
 #' Apply Custom Group Settings to a visNetwork Pedigree Graph

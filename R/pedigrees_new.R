@@ -272,7 +272,7 @@ edges_links <- function(studbook, pedigree) {
   kids    <- nodes %>% filter(type == "kid")
   parents <- nodes %>%
     filter(type %in% c("mom", "dad")) %>%
-    select(to_node = id_node, id_ped)
+    select(to_node = id_node, id_ped, label, famid)
   edges <- kids %>%
     filter(id_count > 1) %>%
     select(from_node  = id_node,
@@ -284,11 +284,15 @@ edges_links <- function(studbook, pedigree) {
            color,
            label,
            famid) %>%
+    mutate(color = if_else(str_ends(color, "CC"),
+                           str_replace_all(color, "CC", "80"),
+                           str_replace_all(color, "FF", "99"))) %>%
     arrange(from, to) %>%
     filter(from != to) %>%
     distinct() %>%
     mutate(
       arrow.size = 0.7,
+      width      = 0.8,
       lty        = 3,
       curved     = TRUE,
       dashes     = TRUE,
@@ -320,6 +324,7 @@ edges_hubs <- function(studbook, pedigree) {
       from       = as.integer(from),
       to         = as.integer(to),
       arrow.size = 0,
+      width      = 2,
       lty        = 1,
       curved     = FALSE,
       dashes     = FALSE,
@@ -353,6 +358,7 @@ edges_moms <- function(studbook, pedigree) {
       from       = as.integer(from),
       to         = as.integer(to),
       arrow.size = 0,
+      width      = 2,
       lty        = 1,
       curved     = FALSE,
       dashes     = FALSE,
@@ -387,6 +393,7 @@ edges_dads <- function(studbook, pedigree) {
       from       = as.integer(from),
       to         = as.integer(to),
       arrow.size = 0,
+      width      = 2,
       lty        = 1,
       curved     = FALSE,
       dashes     = FALSE,
@@ -421,6 +428,7 @@ edges_kids <- function(studbook, pedigree) {
       from       = as.integer(from),
       to         = as.integer(to),
       arrow.size = 0,
+      width      = 2,
       lty        = 1,
       curved     = FALSE,
       dashes     = FALSE,
@@ -451,6 +459,7 @@ edges_ped <- function(studbook, pedigree) {
       to,
       value,
       length,
+      width,
       curved,
       dashes,
       color,
@@ -521,6 +530,7 @@ visPed <- function(studbook, pedigree) {
            to,
            title = label,
            length,
+           width,
            dashes,
            color,
            shadow,
@@ -536,7 +546,9 @@ visPed <- function(studbook, pedigree) {
       sortMethod      = "directed",
       shakeTowards    = "roots"
     ) %>%
-    visPhysics(enabled = FALSE)
+    visPhysics(enabled = FALSE) %>%
+    visOptions(highlightNearest = list(enabled =TRUE, degree = 2, hover = T),
+               selectedBy       = list(variable = "label", multiple = T))
   return(graph)
 }
 
