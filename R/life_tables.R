@@ -11,11 +11,10 @@
 #' @return A joined and restructured tibble
 #' @export
 #'
-#' @importFrom dplyr across arrange case_when filter full_join join_by mutate relocate right_join select
+#' @importFrom dplyr across arrange filter full_join mutate select pull bind_rows
 #' @importFrom lubridate year today
 #' @importFrom tibble tibble
-#' @importFrom tidyr expand_grid replace_na
-#' @importFrom tidyselect where
+#' @importFrom tidyr expand_grid
 #' @importFrom magrittr %>%
 make_cohorts <- function(studbook,
                         Year_min    = NULL,
@@ -81,11 +80,9 @@ make_cohorts <- function(studbook,
 #' @return A joined and restructured tibble
 #' @export
 #'
-#' @importFrom dplyr across arrange case_when filter full_join join_by mutate relocate right_join select
+#' @importFrom dplyr pull select left_join filter join_by mutate if_else
 #' @importFrom lubridate year today
-#' @importFrom tibble tibble
-#' @importFrom tidyr expand_grid replace_na
-#' @importFrom tidyselect where
+#' @importFrom stringr str_glue
 #' @importFrom magrittr %>%
 
 studbook_cohorts <- function(studbook,
@@ -144,11 +141,9 @@ studbook_cohorts <- function(studbook,
 #' @return A joined and restructured tibble
 #' @export
 #'
-#' @importFrom dplyr across arrange case_when filter full_join join_by mutate relocate right_join select
+#' @importFrom dplyr pull select distinct left_join filter join_by mutate bind_rows
 #' @importFrom lubridate year today
-#' @importFrom tibble tibble
-#' @importFrom tidyr expand_grid replace_na
-#' @importFrom tidyselect where
+#' @importFrom stringr str_glue
 #' @importFrom magrittr %>%
 
 special_cohorts <- function(studbook,
@@ -208,14 +203,10 @@ special_cohorts <- function(studbook,
 #' @return A joined and restructured tibble
 #' @export
 #'
-#' @importFrom dplyr across arrange case_when filter full_join join_by mutate relocate right_join select
-#' @importFrom lubridate year today
-#' @importFrom tibble tibble
-#' @importFrom tidyr expand_grid replace_na
-#' @importFrom tidyselect where
+#' @importFrom dplyr pull left_join mutate if_else distinct
+#' @importFrom lubridate year  today
 #' @importFrom magrittr %>%
-
-
+#'
 annotated_cohorts <- function(studbook,
                              Year_min    = NULL,
                              Year_max    = NULL,
@@ -270,7 +261,10 @@ annotated_cohorts <- function(studbook,
 #' @return A tibble with cohort life table summary
 #' @export
 #'
-#' @importFrom dplyr arrange bind_rows count group_by n summarise
+#' @importFrom dplyr pull filter between mutate bind_rows arrange group_by summarize ungroup left_join join_by n
+#' @importFrom lubridate year today
+#' @importFrom tidyr replace_na
+#'
 cohort_lifeTab <- function(studbook, Year_min = NULL, Year_max = NULL, span = 10, age_max = NULL) {
   if (is.null(age_max)) {
     studbook_ages <- c(pull(studbook, age_event), pull(studbook, age_last))
@@ -326,8 +320,7 @@ cohort_lifeTab <- function(studbook, Year_min = NULL, Year_max = NULL, span = 10
 #' @return A life table with survivorship, mortality, and reproductive values
 #' @export
 #'
-#' @importFrom dplyr arrange group_by join_by if_else lead mutate relocate select ungroup
-#' @importFrom tidyr fill replace_na
+#' @importFrom dplyr mutate if_else first nth lead ungroup rowwise select
 lifeTab <- function(df) {
   df %>%
     mutate(Qx_risk = Nx,
@@ -395,7 +388,7 @@ lifeTab <- function(df) {
 #' @return Condensed summary table with lambda and vital rates
 #' @export
 #'
-#' @importFrom dplyr arrange distinct filter mutate select
+#' @importFrom dplyr select mutate across filter distinct arrange
 lifeTab_static <- function(df) {
   df %>%
     select(

@@ -671,8 +671,10 @@ add_hypotheticals <- function(studbook, parent, ids, loc_key) {
 #' @param loc_key A data frame containing location key mappings produced by \code{read_locations}.
 #' @param hyp_defs A list containing definitions for individuals that remain missing a parental assignment after manual matching using \code{find_parent}.
 #' @return A data frame with all hypothetical parent entries added as new rows and assigned to the relevant offspring.
-#' @importFrom purrr map_depth list_rbind
+#' @importFrom purrr map_depth list_rbind list_c list_flatten
 #' @importFrom dplyr bind_rows distinct arrange
+#' @importFrom lubridate ymd
+#' @importFrom tidyr unnest_wider
 #' @export
 #'
 add_all_hypotheticals <- function(studbook, hyp_defs, loc_key) {

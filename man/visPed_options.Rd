@@ -4,7 +4,7 @@
 \alias{visPed_options}
 \title{Apply Custom Visualization Options to a visNetwork Pedigree Graph}
 \usage{
-visPed_options(graph)
+visPed_options(graph, variable = NULL)
 }
 \arguments{
 \item{graph}{A visNetwork object.}

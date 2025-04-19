@@ -13,6 +13,10 @@ library(roxygen2)
 
 ```{r include=FALSE}
 document()
+```
+
+
+```{r include=FALSE}
 install()
 ```
 
@@ -45,14 +49,13 @@ pedigree <- featured_pedigree(studbook)
 ```
 
 ```{r}
-tree <- visPed(studbook, pedigree) %>%
-    visHierarchicalLayout(
-      sortMethod      = "directed",
-      shakeTowards    = "roots"
-    )
+subnucs <- subnucs(pedigree)
+births <- count_births(studbook)
 ```
 
 ```{r}
 tree <- visPed_tree(studbook, pedigree)
 ```
+
+
 

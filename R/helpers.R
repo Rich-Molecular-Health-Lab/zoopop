@@ -19,7 +19,6 @@ living <- function(studbook, include = "all") {
   } else if (include == "undetermined") {
     filter(studbook, Status %in% c("Alive", "A") & Sex %in% c("Undetermined", "U")) %>% pull(ID) %>% unique()
   }
-
 }
 
 #' Gather IDs of all deceased individuals
@@ -41,20 +40,6 @@ deceased <- function(studbook, include = "all") {
   } else if (include == "undetermined") {
     filter(studbook, Status %in% c("Deceased", "D", "H", "Hypothetical") & Sex %in% c("Undetermined", "U")) %>% pull(ID) %>% unique()
   }
-}
-
-annotate_cohorts <- function(studbook, Year_min = NULL, Year_max = NULL, span = 10) {
-  if (is.null(Year_min)) { Year_min <- min(studbook$Year_birth) } else { Year_min <- Year_min }
-  if (is.null(Year_max)) { Year_max <- year(today()) } else { Year_max <- Year_max }
-  cohort_map <- function(x) {
-    list(start = x, end = x + (span - 1))
-  }
-  cohorts  <- map(as.list(seq(from = Year_min, to = (Year_max - span + 1), by = span)), \(x) cohort_map(x))
-  specials <- filter(studbook, !is.na(name_spec)) %>% distinct(ID, Year_birth)
-
-
-
-
 }
 
 
@@ -183,34 +168,6 @@ mle <- function(lx, age) {
   return(mle)
 }
 
-#' Return number of generations for individuals
-#'
-#' @param pedigree A pedigree object from `pedtools::ped()`
-#' @return Named vector of generation numbers
-#' @export
-#'
-#' @importFrom pedtools generations
-gen_numbers <- function(pedigree) {
-  gens <- generations(pedigree, what = "indiv")
-  if (length(gens) == 0) {
-    warning("No generation numbers returned using 'indiv'. Trying 'depth'.")
-    gens <- generations(pedigree, what = "depth")
-  }
-  return(gens)
-}
-#' Get generation numbers for living individuals
-#'
-#' @param pedigree A pedigree object from `pedtools::ped()`
-#' @param studbook Studbook tibble
-#' @return Named vector of generations for living IDs
-#' @export
-#'
-#' @importFrom tibble tibble
-gen_numbers_living <- function(pedigree, studbook) {
-  gens <- gen_numbers(pedigree)
-  gens[names(gens) %in% living(studbook)]
-}
-
 #' Annotate lambda growth values with human-readable hover text
 #'
 #' @param df A data frame with a column `lambda`
@@ -231,150 +188,3 @@ annotate_lambda <- function(df) {
       )
     )
 }
-
-#' Create a character vector from a studbook dataframe to represent location data in a tooltip
-#'
-#' @param df A data frame with rowwise location data containing the columns `iconLoc_birth`, `Loc_birth`, `Institution_birth`, and `State_Province_birth`
-#' @return The same data frame with a new string column
-#' @export
-#'
-#' @importFrom dplyr mutate
-#' @importFrom stringr str_glue
-loc_tooltip <- function(df) {
-  df %>%
-    mutate(tooltip_loc = as.character(str_glue("{iconLoc_birth}{Loc_birth}: {Institution_birth}, {State_Province_birth}")))
-}
-
-#' Create a character vector from a studbook dataframe to represent subject's status in the breeding population as a tooltip
-#'
-#' @param df A data frame with rowwise location data containing the following columns:
-#' `exclude`, `ID`, `Sex`, `age_last`, and `Institution_last`, `State_Province_last`, `iconLoc_last`, `Loc_last`, `Date_birth`, `Institution_birth`, `State_Province_birth`, `iconLoc_birth`, `Loc_birth`
-#' @return The same data frame with a new string column
-#' @export
-#'
-#' @importFrom dplyr mutate case_when
-#' @importFrom stringr str_glue
-subj_tooltip <- function(df) {
-  df %>%
-    mutate(
-      tooltip    = case_when(
-        exclude  == "n" ~ as.character(str_glue("{ID} {Sex}: Included in breeding population<br>Currently age {age_last} at {Institution_last}, {State_Province_last} ({iconLoc_last}{Loc_last}<br>Born {Date_birth} at {Institution_birth}, {State_Province_birth} ({iconLoc_birth}{Loc_birth})")),
-        exclude  == "age" ~ as.character(str_glue("{ID} {Sex}: Excluded from breeding population due to age<br>Currently age {age_last} at {Institution_last}, {State_Province_last} ({iconLoc_last}{Loc_last}<br>Born {Date_birth} at {Institution_birth}, {State_Province_birth} ({iconLoc_birth}{Loc_birth})")),
-        exclude  == "behavior" ~ as.character(str_glue("{ID} {Sex}: Excluded from breeding population for behavioral reasons<br>Currently age {age_last} at {Institution_last}, {State_Province_last} ({iconLoc_last}{Loc_last}<br>Born {Date_birth} at {Institution_birth}, {State_Province_birth} ({iconLoc_birth}{Loc_birth})")),
-        exclude  == "deceased" ~ as.character(str_glue("{ID} {Sex}: Deceased (age {age_last}) at {Institution_last}, {State_Province_last} ({iconLoc_last}{Loc_last}<br>Born {Date_birth} at {Institution_birth}, {State_Province_birth} ({iconLoc_birth}{Loc_birth})")),
-        exclude  == "hypothetical" ~ as.character(str_glue("{ID} {Sex}: Hypothetical ID created to represent missing parent at {Institution_last}, {State_Province_last} ({iconLoc_last}{Loc_last}"))
-      ))
-}
-
-#' Create a character vector from a studbook dataframe that matches some attribute vector to an individual's sex and status
-#'
-#' @param df A data frame with rowwise location data containing the following columns:
-#' `Sex`, `exclude`
-#' @param u A character vector to assign to the column where `Sex` is undetermined
-#' @param m_i A character vector to assign to the column where `Sex` is male and individual is included in the breeding population and therefore alive
-#' @param f_i A character vector to assign to the column where `Sex` is female and individual is included in the breeding population and therefore alive
-#' @param m_e A character vector to assign to the column where `Sex` is male and individual is alive but excluded from the breeding population
-#' @param f_e A character vector to assign to the column where `Sex` is female and individual is alive but excluded from the breeding population
-#' @param m_d A character vector to assign to the column where `Sex` is male and individual is deceased
-#' @param f_d A character vector to assign to the column where `Sex` is female and individual is deceased
-#' @return The same data frame with a new character vector column
-#' @export
-#'
-#' @importFrom dplyr mutate
-#' @importFrom stringr str_glue
-ped_attribute <- function(df, u, m_i, f_i, m_e, f_e, m_d, f_d) {
-    df %>% mutate(
-    attribute = case_when(
-      Sex %in% c("M", "m", "male", "Male")     & exclude == "n"                    ~ m_i,
-      Sex %in% c("M", "m", "male", "Male")     & exclude %in% c("deceased", "hypothetical") ~ m_d,
-      Sex %in% c("M", "m", "male", "Male")     & exclude %in% c("behavior", "age") ~ m_e,
-      Sex %in% c("F", "f", "female", "Female") & exclude == "n"                    ~ f_i,
-      Sex %in% c("F", "f", "female", "Female") & exclude %in% c("deceased", "hypothetical") ~ f_d,
-      Sex %in% c("F", "f", "female", "Female") & exclude %in% c("behavior", "age") ~ f_e,
-      Sex %in% c("U", "u", "undetermined", "Undetermined")                         ~u
-    )
-  )
-}
-#' Add group labels based on a series of metadata attributes to a node dataframe
-#'
-#' @param df A working dataframe with one row per node of a pedigree graph
-#' @return The same data frame with two new `group` columns (`subject_group` and `edge_group`)
-#' @export
-#'
-#' @importFrom dplyr mutate case_when
-ped_group <- function(df) {
-  df %>% mutate(
-    subject_group = case_when(
-      Sex %in% c("M", "m", "male", "Male")     & exclude == "n"                             ~ "male_included",
-      Sex %in% c("M", "m", "male", "Male")     & exclude %in% c("deceased", "hypothetical") ~ "male_deceased",
-      Sex %in% c("M", "m", "male", "Male")     & exclude %in% c("behavior", "age")          ~ "male_excluded",
-      Sex %in% c("F", "f", "female", "Female") & exclude == "n"                             ~ "female_included",
-      Sex %in% c("F", "f", "female", "Female") & exclude %in% c("deceased", "hypothetical") ~ "female_deceased",
-      Sex %in% c("F", "f", "female", "Female") & exclude %in% c("behavior", "age")          ~ "female_excluded",
-      Sex %in% c("U", "u", "undetermined", "Undetermined")                                  ~ "undetermined"
-    ),
-    edge_group = Loc_birth
-  )
-}
-
-#' Assign generation levels to individuals in a pedigree
-#'
-#' @param pedigree A pedigree object from `pedtools::ped()`
-#' @return A tibble of individual IDs and generation levels
-#' @export
-#'
-#' @importFrom dplyr across distinct if_else mutate
-#' @importFrom pedtools founders leaves
-#' @importFrom purrr set_names
-#' @importFrom tibble enframe
-pedigree_levels <- function(pedigree) {
-  levels <- gen_numbers(pedigree) %>%
-    as.list() %>%
-    set_names(pedigree$ID) %>%
-    enframe(name = "id", value = "level") %>%
-    mutate(
-      level = as.integer(level),
-      level = if_else(id %in% founders(pedigree), level, level + 2),
-      level = if_else(id %in% leaves(pedigree), level + 1, level)
-    ) %>% distinct()
-  return(levels)
-}
-
-#' Extract and organize tibble of birth events from pedigree object
-#'
-#' @param pedigree A pedigree object
-#' @param studbook A studbook tibble
-#' @return A tibble of unique mating pairs with location info and ids to create nodes for a network
-#' @export
-#'
-#' @importFrom dplyr across distinct left_join join_by mutate row_number transmute
-#' @importFrom pedtools nonfounders parents
-#' @importFrom purrr map set_names
-#' @importFrom tidyr unnest_wider
-#' @importFrom tibble enframe
-#' @importFrom tidyselect ends_with
-pedigree_births <- function(pedigree, studbook) {
-  nonfounders <- as.list(nonfounders(pedigree))
-  birth_info <- studbook_short(studbook) %>%
-    mutate(offspring = as.character(ID)) %>%
-    select(
-      offspring,
-      name_spec,
-      Sex,
-      ends_with("_birth")
-    ) %>% distinct()
-  trios <- map(nonfounders, \(x) as.list(parents(pedigree, x))) %>%
-    set_names(., nonfounders) %>%
-    enframe(name = "offspring", value = "parent") %>%
-    unnest_wider(parent, names_sep = "_") %>%
-    arrange(parent_1, parent_2, offspring) %>%
-    left_join(birth_info, by = "offspring") %>%
-    rename(dad = parent_1, mom = parent_2) %>%
-    rename_with(~str_remove_all(.x, "_birth"), ends_with("_birth")) %>%
-    arrange(Date) %>%
-    mutate(pair = consecutive_id(dad, mom)) %>%
-    select(-Type) %>%
-    mutate(sibs = max(pair) + consecutive_id(pair))
-  return(trios)
-}
-

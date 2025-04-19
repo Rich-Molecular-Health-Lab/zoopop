@@ -10,7 +10,7 @@
 #' @importFrom plotly add_trace layout plot_ly
 #'
 plot_census <- function(census_df, colors = set_colors(), title = NULL) {
-fill.col <- lighten_plotly_pal(colors, 26)
+fill.col <- lighten_plotly_pal(colors, "26")
 plot <- plot_ly(census_df,
                 x          = ~Date,
                 y          = ~Unidentified,

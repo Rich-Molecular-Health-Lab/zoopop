@@ -4,7 +4,7 @@
 \alias{visPed_tree}
 \title{Create a Hierarchical visNetwork Pedigree Tree}
 \usage{
-visPed_tree(studbook, pedigree)
+visPed_tree(studbook, pedigree, variable = NULL)
 }
 \arguments{
 \item{studbook}{A data frame containing studbook metadata.}

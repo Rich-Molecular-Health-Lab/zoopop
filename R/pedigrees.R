@@ -284,6 +284,8 @@ ped_metadata <- function(studbook, pedigree) {
       label = label_spec,
       generation,
       fam_year,
+      Year_birth,
+      Institution_birth,
       level,
       group,
       type,
@@ -313,7 +315,8 @@ ped_metadata <- function(studbook, pedigree) {
     mutate(subnuc_id = fct_inorder(famid)) %>%
     mutate(subnuc_id = fct_relabel(subnuc_id, ~as.character(seq_along(.)))) %>%
     mutate(famid = as.integer(subnuc_id), .keep = "unused") %>%
-    arrange(famid, id_ped)
+    arrange(famid, id_ped) %>%
+    mutate(color_connector = last(color_connector), .by = famid)
   return(nodes)
 }
 
@@ -343,6 +346,7 @@ nodes_connectors <- function(studbook, pedigree) {
            id_ped      = NA,
            size        = 1,
            shape       = "circle",
+           color       = color_connector,
            fillcolor   = "#5b5b5bFF",
            frame.color = "#5b5b5bFF",
            title       = tip_connector) %>%
@@ -357,6 +361,7 @@ nodes_connectors <- function(studbook, pedigree) {
       type,
       value,
       color,
+      color_connector,
       shape,
       frame.color,
       size,
@@ -366,7 +371,7 @@ nodes_connectors <- function(studbook, pedigree) {
 
   connectors <- individuals %>%
     filter(type == "mom") %>%
-    mutate(type = "parents",
+    mutate(type        = "parents",
            group       = "hub",
            value       = 1,
            level       = level + 0.5,
@@ -376,6 +381,7 @@ nodes_connectors <- function(studbook, pedigree) {
            id_ped      = NA,
            size        = 1,
            shape       = "circle",
+           color       = color_connector,
            fillcolor   = "#5b5b5bFF",
            frame.color = "#5b5b5bFF",
            title       = NA) %>%
@@ -391,6 +397,7 @@ nodes_connectors <- function(studbook, pedigree) {
       type,
       value,
       color,
+      color_connector,
       shape,
       frame.color,
       size,
@@ -426,10 +433,13 @@ ped_nodes <- function(studbook, pedigree) {
       label,
       level,
       generation,
+      Year_birth,
+      Institution_birth,
       group,
       type,
       value,
       color,
+      color_connector,
       shape,
       frame.color,
       size,
@@ -509,9 +519,13 @@ edges_links <- function(studbook, pedigree) {
 edges_hubs <- function(studbook, pedigree) {
   ped_nodes(studbook = studbook,
             pedigree = pedigree) %>%
+    group_by(famid) %>%
+    fill(color_connector) %>%
+    ungroup() %>%
     filter(group == "hub") %>%
     arrange(famid, generation) %>%
     select(famid,
+           color_connector,
            id_node,
            type
     ) %>%
@@ -519,21 +533,21 @@ edges_hubs <- function(studbook, pedigree) {
       names_from = "type",
       values_from = "id_node"
     ) %>%
-    select(from = parents,
-           to   = children,
-           famid)  %>%
+    select(from  = parents,
+           to    = children,
+           famid,
+           color = color_connector)  %>%
     distinct() %>%
     mutate(
       from       = as.integer(from),
       to         = as.integer(to),
       arrow.size = 0,
-      width      = 2,
+      width      = 2.5,
       lty        = 1,
       curved     = FALSE,
       smooth     = FALSE,
       dashes     = FALSE,
       shadow     = TRUE,
-      color      = "#5b5b5bFF",
       value      = 2
     ) %>%
     arrange(from, to)
@@ -551,7 +565,7 @@ edges_hubs <- function(studbook, pedigree) {
 #' @importFrom tidyr pivot_wider
 edges_moms <- function(studbook, pedigree) {
   colors     <- set_colors()
-  cols.light <- lighten_palette(colors, "CC")
+  cols.light <- lighten_palette(colors, "E6")
   edges <- ped_nodes(studbook = studbook,
                      pedigree = pedigree) %>%
     filter(type %in% c("mom", "parents")) %>%
@@ -572,13 +586,13 @@ edges_moms <- function(studbook, pedigree) {
       from       = as.integer(from),
       to         = as.integer(to),
       arrow.size = 0,
-      width      = 2,
+      width      = 2.5,
+      color      = cols.light[["f"]],
       lty        = 1,
       curved     = FALSE,
       smooth     = FALSE,
       dashes     = FALSE,
       shadow     = TRUE,
-      color      = colors[["f"]],
       value      = 1
     ) %>%
     arrange(from, to)
@@ -597,7 +611,7 @@ edges_moms <- function(studbook, pedigree) {
 #' @importFrom tidyr pivot_wider
 edges_dads <- function(studbook, pedigree) {
   colors     <- set_colors()
-  cols.light <- lighten_palette(colors, "CC")
+  cols.light <- lighten_palette(colors, "E6")
   edges <- ped_nodes(studbook = studbook,
                      pedigree = pedigree) %>%
     filter(type %in% c("dad", "parents")) %>%
@@ -618,13 +632,13 @@ edges_dads <- function(studbook, pedigree) {
       from       = as.integer(from),
       to         = as.integer(to),
       arrow.size = 0,
-      width      = 2,
+      width      = 2.5,
+      color      = cols.light[["m"]],
       lty        = 1,
       curved     = FALSE,
       smooth     = FALSE,
       dashes     = FALSE,
       shadow     = TRUE,
-      color      = colors[["m"]],
       value      = 1
     ) %>%
     arrange(from, to)
@@ -644,9 +658,13 @@ edges_dads <- function(studbook, pedigree) {
 edges_kids <- function(studbook, pedigree) {
   ped_nodes(studbook = studbook,
             pedigree = pedigree) %>%
+    group_by(famid) %>%
+    fill(color_connector) %>%
+    ungroup() %>%
     filter(type %in% c("children", "kid")) %>%
     arrange(famid, type) %>%
     select(famid,
+           color_connector,
            id_node,
            type
     ) %>%
@@ -655,22 +673,22 @@ edges_kids <- function(studbook, pedigree) {
       values_from = "id_node",
       values_fn   = list
     ) %>%
-    select(from = children,
-           to   = kid,
-           famid)  %>%
+    select(from  = children,
+           to    = kid,
+           famid,
+           color = color_connector)  %>%
     distinct() %>%
     unnest(to) %>%
     mutate(
       from       = as.integer(from),
       to         = as.integer(to),
       arrow.size = 0,
-      width      = 2,
+      width      = 2.5,
       lty        = 1,
       curved     = FALSE,
       smooth     = FALSE,
       dashes     = FALSE,
       shadow     = TRUE,
-      color      = "#5b5b5bFF",
       value      = 3
     ) %>%
     arrange(from, to)

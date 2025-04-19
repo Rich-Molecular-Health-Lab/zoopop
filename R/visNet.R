@@ -35,10 +35,9 @@ pedNode_visGroup <- function(graph, groupname) {
             size      = size,
             shadow    = TRUE,
             font      = list(
-              size       = 16,
+              size       = 18,
               background = background
             ),
-            borderWidthSelected = 3,
             color     = list(
               highlight = list(
                 background = background,
@@ -81,15 +80,26 @@ ped_visGroups <- function(graph) {
 #' @export
 #' @importFrom visNetwork visOptions
 #' @importFrom dplyr select arrange
-visPed_options <- function(graph) {
+visPed_options <- function(graph, variable = NULL) {
+  if (is.null(variable)) {
+    variable <- "breeding"
+  }
+  if (variable == "breeding") {
+    main <- "Select by breeding inclusion"
+  } else if (variable == "Year_birth") {
+    main <- "Select by Birth Year"
+  } else if (variable == "Institution_birth") {
+    main <- "Select by Birth Location"
+  }
   graph_out <-  visOptions(
                graph            = graph,
                highlightNearest = list(enabled   = TRUE,
                                        degree    = 4,
-                                       hover     = TRUE),
-               selectedBy       = list(variable  = "exclude",
+                                       hover     = FALSE),
+               selectedBy       = list(variable  = variable,
                                        multiple  = TRUE,
-                                       main      = "Select by breeding inclusion")
+                                       main      = main),
+               collapse         = list(enabled   = TRUE)
     )
   return(graph_out)
 }
@@ -103,10 +113,11 @@ visPed_options <- function(graph) {
 #' @export
 #' @importFrom visNetwork visInteraction
 visPed_interaction <- function(graph) {
-  graph_out <-   visInteraction(graph                = graph,
-                   tooltipDelay         = 900,
+  graph_out <-   visInteraction(
+                   graph                = graph,
+                   keyboard             = TRUE,
                    zoomSpeed            = 0.8,
-                   tooltipStyle         = "visibility:hidden",
+                   tooltipStyle         = "position: fixed;visibility:hidden;padding: 5px;font-family: verdana; font-size:14px;font-color:#000000;background-color: #f5f4ed;-moz-border-radius: 3px;*-webkit-border-radius: 3px;border-radius: 3px; border: 1px solid #808074;box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);max-width:400px;word-break: break-all",
                    hoverConnectedEdges  = TRUE,
                    multiselect          = TRUE,
                    navigationButtons    = TRUE,
@@ -126,7 +137,7 @@ visPed_interaction <- function(graph) {
 #' @param pedigree A pedigree object.
 #' @return A visNetwork object representing the pedigree graph.
 #' @export
-#' @importFrom visNetwork visNetwork visPhysics
+#' @importFrom visNetwork visNetwork
 #' @importFrom dplyr select
 visPed <- function(studbook, pedigree) {
   nodes <- ped_nodes(studbook = studbook, pedigree = pedigree) %>%
@@ -137,7 +148,9 @@ visPed <- function(studbook, pedigree) {
       group,
       title,
       famid,
-      exclude
+      breeding = exclude,
+      Year_birth,
+      Institution_birth
     ) %>%
     mutate(n = max(id))
   edges <- ped_edges(studbook = studbook, pedigree = pedigree) %>%
@@ -149,12 +162,12 @@ visPed <- function(studbook, pedigree) {
            dashes,
            color,
            shadow,
-           arrows,
-           smooth
+           arrows
     )
-  graph <- visNetwork(nodes = nodes, edges = edges) %>%
-    ped_visGroups() %>%
-    visPhysics(enabled = FALSE)
+  graph <- visNetwork(nodes  = nodes,
+                      edges  = edges,
+                      height = "800px") %>%
+    ped_visGroups()
   return(graph)
 }
 
@@ -166,14 +179,18 @@ visPed <- function(studbook, pedigree) {
 #' @param pedigree A pedigree object.
 #' @return A visNetwork object with a hierarchical layout applied.
 #' @export
-#' @importFrom visNetwork visHierarchicalLayout
-visPed_tree <- function(studbook, pedigree) {
+#' @importFrom visNetwork visHierarchicalLayout visPhysics
+visPed_tree <- function(studbook, pedigree, variable = NULL) {
+  if (is.null(variable)) {
+    variable <- "breeding"
+  }
   graph <- visPed(studbook = studbook, pedigree = pedigree)
-  tree  <-  visPed_options(graph = graph) %>%
+  tree  <-  visPed_options(graph = graph, variable = variable) %>%
+    visPhysics(enabled = FALSE) %>%
     visPed_interaction() %>%
     visHierarchicalLayout(
       nodeSpacing     = 200,
-      levelSeparation = 500,
+      levelSeparation = 300,
       sortMethod      = "directed",
       shakeTowards    = "roots"
     )
