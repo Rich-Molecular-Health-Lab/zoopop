@@ -1,15 +1,21 @@
 #' Plot population trends using census data
 #'
-#' @param census_df A tibble with columns Date, Females, Males, Unidentified
+#' @param studbook A data frame containing studbook metadata.
 #' @param colors A named list of colors for "f", "m", and "u" (optional)
 #' @param title The title for the plot (optional)
 #'
 #' @return A plotly plot object
 #' @export
 #'
+#' @importFrom dplyr rowwise mutate
 #' @importFrom plotly add_trace layout plot_ly
 #'
-plot_census <- function(census_df, colors = set_colors(), title = NULL) {
+plot_census <- function(studbook, colors = NULL, title = NULL) {
+  if (is.null(colors)) { colors <- set_colors() }
+  census_df <- census(studbook, "years") %>%
+    rowwise() %>%
+    mutate(Total = sum(Males, Females, Unidentified))
+  if (is.null(title)) { title <- "Population Census by Year" }
 fill.col <- lighten_plotly_pal(colors, "26")
 plot <- plot_ly(census_df,
                 x          = ~Date,
@@ -36,6 +42,7 @@ plot <- plot_ly(census_df,
             fillcolor = fill.col[["f"]]) %>%
   add_trace(y         = ~Males,
             name      = "Males",
+            yaxis     = "y2",
             line      = list(
               color     = colors[["m"]],
               shape     = "spline",
@@ -44,10 +51,17 @@ plot <- plot_ly(census_df,
             fillcolor = fill.col[["m"]]) %>%
   layout(title        = title,
          plot_bgcolor = "#ffffff",
+         yaxis2       = list(
+           overlaying = "y",
+           side       = "right",
+           title      = "N Males"
+         ),
          yaxis        = list(
-           title    = "Individuals Alive",
-           showline = TRUE,
-           showgrid = FALSE
+           type      = "linear",
+           autorange = TRUE,
+           title     = "N Total, Females, & Unidentified",
+           showline  = TRUE,
+           showgrid  = FALSE
          ),
          xaxis         = list(
            title       = "Date",

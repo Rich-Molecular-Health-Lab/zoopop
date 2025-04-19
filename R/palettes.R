@@ -21,12 +21,11 @@
 set_colors <- function(seq  = NULL,
                        div  = NULL,
                        rnd  = NULL,
-                       emp  = "#DC8045FF",
-                       f    = "#D53288FF",
-                       m    = "#3F459BFF",
-                       u    = "#21B14BFF",
-                       sire = "#3F459B33",
-                       dam  = "#D5328833") {
+                       emp  = "#B24422FF",
+                       f    = "#C44D76FF",
+                       m    = "#4457A5FF",
+                       u    = "#7CAF5CFF",
+                       t    = "#59386CFF") {
   if (is.null(seq)) {
    seq.pal  <- function() { paletteer_d("rcartocolor::Sunset") }
   } else {
@@ -49,8 +48,9 @@ set_colors <- function(seq  = NULL,
                   f    = f   ,
                   m    = m   ,
                   u    = u   ,
-                  sire = sire,
-                  dam  = dam )
+                  t    = t   ,
+                  sire = gsub("FF", "33", m),
+                  dam  = gsub("FF", "33", f) )
   return(palette)
 }
 
@@ -73,7 +73,13 @@ set_ped_fills <- function(palette, studbook) {
   undet.d      <- deceased(studbook, "undetermined")
   fills        <- list(female, male, undet)
   names(fills) <- keep_at(palette, c("f", "m", "u"))
-  ped.fills    <- list("#D5328870" = female.d, "#3F459B70" = male.d, "#21B14B70" = undet.d)
+  light.f      <- gsub("FF", "70", fills[["f"]])
+  light.m      <- gsub("FF", "70", fills[["m"]])
+  light.u      <- gsub("FF", "70", fills[["u"]])
+  ped.fills    <- list(female.d,
+                       male.d,
+                       undet.d)
+  names(ped.fills) <- c(light.f, light.m, light.u)
   fills        <- list_assign(fills, !!!ped.fills)
   return(fills)
 }
@@ -87,7 +93,7 @@ set_ped_fills <- function(palette, studbook) {
 #' @importFrom purrr keep_at
 #' @importFrom stats setNames
 set_plotly_pal <- function(palette) {
-  col.pal <- keep_at(palette, c("f", "m", "u")) %>% unlist()
+  col.pal <- keep_at(palette, c("f", "m", "t")) %>% unlist()
   col.pal <- setNames(col.pal, c("F", "M", "Total"))
   return(col.pal)
 }

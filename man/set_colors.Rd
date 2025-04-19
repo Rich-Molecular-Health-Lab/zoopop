@@ -8,12 +8,11 @@ set_colors(
   seq = NULL,
   div = NULL,
   rnd = NULL,
-  emp = "#DC8045FF",
-  f = "#D53288FF",
-  m = "#3F459BFF",
-  u = "#21B14BFF",
-  sire = "#3F459B33",
-  dam = "#D5328833"
+  emp = "#B24422FF",
+  f = "#C44D76FF",
+  m = "#4457A5FF",
+  u = "#7CAF5CFF",
+  t = "#59386CFF"
 )
 }
 \arguments{

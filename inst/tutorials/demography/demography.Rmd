@@ -66,8 +66,9 @@ knitr::opts_chunk$set(
 )
 conflicts_prefer(lubridate::interval)
 conflicts_prefer(dplyr::filter)
-loc_key  <- read_csv(here("inst/extdata/locations.csv"))
+conflicts_prefer(purrr::set_names)
 studbook <- read_csv(here("inst/extdata/studbook.csv"))
+pedigree <- featured_pedigree(studbook)
 ```
 
 
@@ -98,7 +99,8 @@ cols_default <- c(
 Let's create a graphical table to summarize our studbook data.
 
 ```{r studbook-view, exercise=TRUE}
-studbook.tbl <- studbook %>% studbook_react(., df_cols = c(cols_default), groupBy = "Status")
+studbook.tbl <- studbook %>% 
+  studbook_react(., df_cols = c(cols_default), groupBy = "Status")
 
 studbook.tbl
 ```
@@ -108,7 +110,9 @@ studbook.tbl
 Let's look at the basic population size over time to begin quantifying growth rate and assessing overall population viability.
 
 ```{r census, exercise=TRUE}
-population.plot <- plot_census(census(studbook, "years"), title = "Pygmy Loris Population Trends 1966-2025")
+population.plot <- plot_census(
+  census(studbook, "years"), 
+  title = "Pygmy Loris Population Trends 1966-2025")
 population.plot
 ```
 

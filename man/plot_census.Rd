@@ -4,10 +4,10 @@
 \alias{plot_census}
 \title{Plot population trends using census data}
 \usage{
-plot_census(census_df, colors = set_colors(), title = NULL)
+plot_census(studbook, colors = NULL, title = NULL)
 }
 \arguments{
-\item{census_df}{A tibble with columns Date, Females, Males, Unidentified}
+\item{studbook}{A data frame containing studbook metadata.}
 
 \item{colors}{A named list of colors for "f", "m", and "u" (optional)}
 
