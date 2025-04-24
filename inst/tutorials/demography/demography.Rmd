@@ -131,9 +131,9 @@ Some of the stats in this table are broken down by age (dynamic values), while o
 #### Summary Table
 
 ```{r}
-lifetime <- lifetime_tab(studbook, 
-                         cohort_params = list(span = 5)) %>%
-  arrange(Cohort_period, Sex)
+lifetime <- rct_lifetime(studbook, 
+                         cohort_params = list(span = 5))
+lifetime
 ```
 
 

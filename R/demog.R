@@ -1,5 +1,5 @@
-# life_tables.R
-# Functions for calculating and formatting life tables
+# demog.R
+# Functions for calculating and formatting demographic variables
 #' Generate a list of default parameters for setting up cohort tibbles
 #'
 #' @param studbook A data frame of studbook data produced by \code{read_studbook}.

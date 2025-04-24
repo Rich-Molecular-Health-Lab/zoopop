@@ -22,14 +22,14 @@ install()
 
 ```{r include=FALSE}
 library(conflicted)
-library(devtools)
-library(DiagrammeR)
 library(here)
-library(igraph)
 library(knitr)
 library(magrittr)
 library(pedtools)
-library(roxygen2)
+library(reactable)
+library(reactablefmtr)
+library(htmlwidgets)
+library(htmltools)
 library(tidyverse)
 library(visNetwork)
 knitr::opts_chunk$set(
@@ -78,19 +78,21 @@ lifetime <- lifetime_tab(studbook,
 
 ```{r}
 table <- reactable(
-  lifetime,
-  borderless = TRUE,
-  rowStyle   = rows_bySex(),
-  columns    = list(
-    Cohort_years = Cohort_years(),
-    r            = intrins_rate(),
-    T            = gen_T(lifetime),
-    MLE          = MLE(lifetime),
-    repro_first  = age_ranges(lifetime),
-    repro_last   = colDef(show = FALSE),
-    age_max      = colDef(show = FALSE)
+    lifetime,
+    borderless = TRUE,
+    rowStyle   = rows_bySex(),
+    columns    = list(
+      Cohort_years = Cohort_years(),
+      r            = intrins_rate(),
+      N1           = n1(lifetime),
+      T            = gen_T(lifetime),
+      MLE          = MLE(lifetime),
+      repro_first  = age_ranges(lifetime),
+      repro_last   = colDef(show = FALSE),
+      age_max      = colDef(show = FALSE),
+      R0           = r0(lifetime)
+    )
   )
-)
 table
 ```
 
