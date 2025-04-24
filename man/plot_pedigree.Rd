@@ -4,27 +4,20 @@
 \alias{plot_pedigree}
 \title{Plot a Pedigree with Custom Formatting}
 \usage{
-plot_pedigree(
-  pedigree,
-  studbook,
-  name = NULL,
-  palette = NULL,
-  labs_spec = FALSE,
-  ...
-)
+plot_pedigree(pedigree, studbook, palette = NULL, labs_spec = FALSE, ...)
 }
 \arguments{
 \item{pedigree}{A pedigree object created with \code{pedtools::ped()}.}
 
 \item{studbook}{A data frame containing studbook metadata.}
 
-\item{name}{Optional. A title for the plot. Defaults to the pedigree family ID.}
-
 \item{palette}{Optional. A named list mapping individuals to colors; defaults to \code{set_colors()}.}
 
 \item{labs_spec}{Logical. If \code{TRUE}, special labels defined in \code{name_spec} are emphasized.}
 
 \item{...}{Additional arguments passed to \code{pedtools::plot()}.}
+
+\item{name}{Optional. A title for the plot. Defaults to the pedigree family ID.}
 }
 \value{
 A \code{plotTag} object containing the pedigree plot.

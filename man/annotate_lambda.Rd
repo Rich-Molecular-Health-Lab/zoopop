@@ -7,7 +7,7 @@
 annotate_lambda(df)
 }
 \arguments{
-\item{df}{A data frame with a column \code{lambda}}
+\item{df}{A data frame with a column \code{r}}
 }
 \value{
 The same data frame with a new \code{hover_lambda} column

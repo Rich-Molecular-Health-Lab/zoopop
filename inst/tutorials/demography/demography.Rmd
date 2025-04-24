@@ -54,6 +54,7 @@ library(knitr)
 library(learnr)
 library(shiny)
 library(tidyverse)
+library(visNetwork)
 library(zoopop)
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -110,28 +111,39 @@ studbook.tbl
 Let's look at the basic population size over time to begin quantifying growth rate and assessing overall population viability.
 
 ```{r census, exercise=TRUE}
-population.plot <- plot_census(
-  census(studbook, "years"), 
-  title = "Pygmy Loris Population Trends 1966-2025")
+population.plot <- plot_census(studbook)
 population.plot
 ```
 
 ## Life Table Calculations 
 
-Now we will use annual birth counts to follow the standard method for computing a normalized rate of growth over the past 5 years compared to all years.
+Now we will use annual birth counts to follow the standard method for computing a normalized rate of growth over the past 5 years compared to all years (\u03BB), along with a series of other common life history variables.
 
 ```{r lifetab, exercise = TRUE}
-lifeTab      <- cohort_lifeTab(studbook, 
-                               Year_min = 1985, 
-                               Year_max = 2024, 
-                               span     = 5)
+demog <- cohort_demog(studbook, 
+                      cohort_params = list(span = 5))
 ```
 
-And then we will plot trends in this growth rate based on birth year.
+Some of the stats in this table are broken down by age (dynamic values), while others are averaged across each cohort's lifetime (static values). Let's first summarize the static values that are averaged across the lifetime and compared between birth year cohorts.
+
+### Static Variables
+
+#### Summary Table
+
+```{r}
+lifetime <- lifetime_tab(studbook, 
+                         cohort_params = list(span = 5)) %>%
+  arrange(Cohort_period, Sex)
+```
+
+
+#### Plots
+
+Now, let's plot population growth rate or \u03BB.
 
 ```{r lambda, exercise = TRUE, exercise.setup = "lifetab"}
-lambda.plot  <- plot_lambda(lifeTab, 
-                            title = "Population Growth Rates by Cohort")
+lambda.plot  <- plot_lambda(studbook, 
+                            cohort_params = list(span = 5))
 lambda.plot
 ```
 
@@ -156,17 +168,18 @@ ped_series_plots <- plot_ped_series(ped_series,
 ped_series_plots
 ```
 
-We can download this entire series to a local directory as html files using the function below.
-
-```{r}
-pedsave_series(ped_series, studbook, labs_spec = TRUE)
-```
-
 For many of our operations, it will be easier to work with one pedigree object of interest and ignore the pedigrees not currently represented in the breeding population. The function below helps you extract the pedigree of interest as its own object with a new name.
 
 ```{r}
 pedigree <- extract_pedigree(ped_series, "_comp1", "Contemporary")
 ```
+
+You could also take out the guesswork and cut some of the steps above by using the function below. This function starts with your studbook, builds a pedigree series, and then automatically extracts the pedigree with the deepest multi-generational representation. This is convenient for creating a single pedigree object without leaving unnecessary objects lingering in your environment.
+
+```{r}
+pedigree <- featured_pedigree(studbook)
+```
+
 
 Now we can plot just this pedigree on its own.
 
@@ -186,7 +199,23 @@ pedsave(pedigree, studbook, labs_spec = TRUE)
 We can also adapt `visNetwork` functions to render javascript-based graphics to represent the pedigree relationships built by `pedtools.`
 
 ```{r}
-nodes <- ped_ndf(pedigree, studbook)
+vis_pedigree <- visPed_tree(studbook, pedigree)
+vis_pedigree
+```
+
+You can use the optional parameter `variable` in that function to change the filtering options in the dropdown menu to highlight a subset of the nodes.
+
+```{r}
+vis_pedigree_year <- visPed_tree(studbook, pedigree, variable = "Year_birth")
+vis_pedigree_year
+```
+
+The best way to save interactive graphics like this is as an html file. `visNetwork` already has a function to make this easy.
+
+```{r}
+visSave(vis_pedigree,
+        "zoopop_plots/visPed_tree_tutorial.html", 
+        selfcontained = TRUE)
 ```
 
 

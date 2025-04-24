@@ -4,14 +4,16 @@
 \alias{plot_lambda}
 \title{Plot lambda growth rates by cohort}
 \usage{
-plot_lambda(life_table, colors = NULL, title = NULL)
+plot_lambda(studbook, cohort_params = NULL, caption = NULL, number = NULL)
 }
 \arguments{
-\item{life_table}{A tibble with lambda values and Sex, Cohort_label columns}
+\item{studbook}{Studbook tibble}
 
-\item{title}{Plot title}
+\item{cohort_params}{A named list of the parameter values to use for cohorts (\code{Year_min}, \code{Year_max}, \code{span}, \code{age_max}) (optional)}
 
-\item{palette}{A color palette in list format}
+\item{caption}{The caption text for the plot (optional)}
+
+\item{number}{The optional number to add to the plot caption (e.g., Figure 1.)}
 }
 \value{
 A plotly object

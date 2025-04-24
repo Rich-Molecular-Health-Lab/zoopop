@@ -18,16 +18,13 @@
 #' @importFrom pedtools famid
 #' @importFrom rlang set_names
 #' @importFrom tibble deframe
-plot_pedigree <- function(pedigree, studbook, name = NULL, palette = NULL, labs_spec = FALSE, ...) {
+plot_pedigree <- function(pedigree, studbook, palette = NULL, labs_spec = FALSE, ...) {
   ped_ids <- c(pedigree[["ID"]])
   if (is.null(palette)) {
     palette <- set_colors()
   }
-  if (is.null(name)) {
-    name <- pedtools::famid(pedigree)
-  }
   if (labs_spec == TRUE) {
-    labs <- studbook_short(studbook) %>% filter(!is.na(name_spec)) %>%
+    labs <- studbook_short(studbook = studbook) %>% filter(!is.na(name_spec)) %>%
       select(name_spec, ID) %>%
       deframe()
     starred  <- labs
@@ -39,9 +36,10 @@ plot_pedigree <- function(pedigree, studbook, name = NULL, palette = NULL, labs_
     starred <- NULL
     lwd     <- 0.3
   }
-  ped.palette  <- set_ped_fills(palette, studbook)
-  deceased_ids <- deceased(studbook)
-  plotTag(
+  ped.palette  <- set_ped_fills(palette = palette, studbook = studbook)
+  deceased_ids <- deceased(studbook = studbook)
+  name <- pedtools::famid(pedigree)
+  plot <- plotTag(
     expr = plot(
       pedigree,
       title    = name,
@@ -59,6 +57,7 @@ plot_pedigree <- function(pedigree, studbook, name = NULL, palette = NULL, labs_
     width  = 900,
     height = 900
   )
+  return(plot)
 }
 
 #' Plot a Series of Pedigree Objects
@@ -72,14 +71,10 @@ plot_pedigree <- function(pedigree, studbook, name = NULL, palette = NULL, labs_
 #' @export
 #' @importFrom purrr imap
 plot_ped_series <- function(pedigree_series, studbook, palette = NULL, labs_spec = FALSE) {
-  if (is.null(palette)) {
-    palette <- set_colors()
-  }
-  imap(pedigree_series, \(x, idx) plot_pedigree(pedigree = x,
-                                                studbook = studbook,
-                                                name     = idx,
-                                                palette  = palette,
-                                                labs_spec= labs_spec)
+  map(pedigree_series, \(x) plot_pedigree(x,
+                                          studbook = studbook,
+                                          palette  = palette,
+                                          labs_spec= labs_spec)
   )
 }
 
@@ -96,15 +91,15 @@ plot_ped_series <- function(pedigree_series, studbook, palette = NULL, labs_spec
 #' @export
 #' @importFrom htmltools save_html
 #' @importFrom pedtools famid
-pedsave <- function(pedigree, studbook, name = NULL, palette = NULL, labs_spec = FALSE) {
+pedsave <- function(pedigree, studbook, palette = NULL, labs_spec = FALSE) {
   if (is.null(palette)) {palette <- set_colors()}
-  if (is.null(name)) {name <- pedtools::famid(pedigree)}
   ped.palette  <- set_ped_fills(palette, studbook)
   deceased_ids <- deceased(studbook)
   out_dir <- file.path("zoopop_plots")
   if (!dir.exists(out_dir)) {
     dir.create(out_dir)
   }
-  plot <- plot_pedigree(pedigree, studbook, name = name, palette = palette, labs_spec = labs_spec)
+  plot <- plot_pedigree(pedigree, studbook, palette = palette, labs_spec = labs_spec)
+  name <- pedtools::famid(pedigree)
   htmltools::save_html(plot, paste0(out_dir, "/ped_plot_", name, ".html"))
 }

@@ -49,73 +49,49 @@ pedigree <- featured_pedigree(studbook)
 ```
 
 ```{r}
-subnucs <- subnucs(pedigree)
-births <- count_births(studbook)
+demog <- cohort_demog(studbook, cohort_params = list(span = 5))
 ```
 
-```{r}
-tree <- visPed_tree(studbook, pedigree)
-```
 
 ```{r}
-popline <- function(type) {
-  list(
-      color     = colors[[type]],
-      shape     = "spline",
-      smoothing = 0.8,
-      width     = 1.5
+lifetime <- lifetime_tab(studbook, 
+                         cohort_params = list(span = 5)) %>%
+  distinct() %>%
+  mutate(Sex = fct_recode(Sex, Overall = "Total", Males = "M", Females = "F")) %>%
+  mutate(Sex = fct_relevel(Sex, "Males", "Females", "Overall")) %>%
+  arrange(Cohort_period, Sex) %>% 
+  select(
+    Cohort_years,
+    Sex,
+    r,
+    N1,
+    T,
+    MLE,
+    repro_first,
+    repro_last,
+    age_max,
+    R0
+  ) %>%
+  group_by(Cohort_years)
+```
+
+
+```{r}
+table <- reactable(
+  lifetime,
+  borderless = TRUE,
+  rowStyle   = rows_bySex(),
+  columns    = list(
+    Cohort_years = Cohort_years(),
+    r            = intrins_rate(),
+    T            = gen_T(lifetime),
+    MLE          = MLE(lifetime),
+    repro_first  = age_ranges(lifetime),
+    repro_last   = colDef(show = FALSE),
+    age_max      = colDef(show = FALSE)
   )
-}
+)
+table
 ```
-
-
-```{r}
-census_df <- census(studbook, "years") %>%
-    rowwise() %>%
-    mutate(Total = sum(Males, Females, Unidentified))
-plot <- plot_ly(census_df,
-                x          = ~Date,
-                y          = ~Unidentified,
-                name       = "Sex Unidentified",
-                type       = "scatter",
-                mode       = "lines",
-                stackgroup = "one",
-                hoveron    = "points+fills",
-                opacity    = 0.5,
-                line       = popline("u"),
-                fillcolor  = fill.col[["u"]]) %>%
-  add_trace(y         = ~Females,
-            name      = "Females",
-            line      = popline("f"),
-            fillcolor = fill.col[["f"]]) %>%
-  add_trace(y         = ~Males,
-            name      = "Males",
-            yaxis     = "y2",
-            line      = popline("m"),
-            fillcolor = fill.col[["m"]]) %>%
-  layout(title        = title,
-         plot_bgcolor = "#ffffff",
-         yaxis2       = list(
-           overlaying = "y",
-           side       = "right",
-           title      = "N Males"
-         ),
-         yaxis        = list(
-           type      = "linear",
-           autorange = TRUE,
-           title     = "N Total, Females, & Unidentified",
-           showline  = TRUE,
-           showgrid  = FALSE
-         ),
-         xaxis         = list(
-           title       = "Date",
-           showline    = FALSE,
-           showgrid    = TRUE,
-           rangeslider = list(visible = TRUE)
-         )
-  )
-
-```
-
 
 

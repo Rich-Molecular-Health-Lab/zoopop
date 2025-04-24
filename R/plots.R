@@ -1,74 +1,102 @@
-#' Plot population trends using census data
+#' Plot population trends based on census data calculated from studbook
 #'
 #' @param studbook A data frame containing studbook metadata.
-#' @param colors A named list of colors for "f", "m", and "u" (optional)
-#' @param title The title for the plot (optional)
+#' @param caption The caption text for the plot (optional)
+#' @param number The optional number to add to the plot caption (e.g., Figure 1.)
 #'
 #' @return A plotly plot object
 #' @export
 #'
 #' @importFrom dplyr rowwise mutate
-#' @importFrom plotly add_trace layout plot_ly
+#' @importFrom plotly add_trace layout plot_ly config
 #'
-plot_census <- function(studbook, colors = NULL, title = NULL) {
-  if (is.null(colors)) { colors <- set_colors() }
+plot_census <- function(studbook, caption = NULL, number = NULL) {
+  colors    <- set_colors()
+  fill.col <- lighten_palette(colors, "26")
+  symbols  <- set_markers()
   census_df <- census(studbook, "years") %>%
     rowwise() %>%
     mutate(Total = sum(Males, Females, Unidentified))
-  if (is.null(title)) { title <- "Population Census by Year" }
-fill.col <- lighten_plotly_pal(colors, "26")
+popline <- function(col) {
+  list(
+    color     = colors[[col]],
+    shape     = "spline",
+    smoothing = 0.8,
+    width     = 1.7
+  )
+}
+popmark <- function(col) {
+  list(
+    color  = colors[[col]],
+    symbol = symbols[[col]],
+    size   = 4
+  )
+}
+trace_census <- function(p, col, ...) {
+  fillcolor <- fill.col[[col]]
+  if (col == "t") {
+    fill <- "tonexty"
+  } else {
+    fill <- "tozeroy"
+  }
+  if (col == "u") {
+    y    <- census_df$Unidentified
+    name <- "Unidentified"
+  } else if (col == "f") {
+    y    <- census_df$Females
+    name <- "Females"
+  } else if (col == "m") {
+    y    <- census_df$Males
+    name <- "Males"
+  } else if (col == "t") {
+    y    <- census_df$Total
+    name <- "Total"
+  }
+  add_trace(p          = p,
+            data       = census_df,
+            y          = y,
+            x          = ~Date,
+            name       = name,
+            fill       = fill,
+            type       = "scatter",
+            mode       = "markers+lines",
+            marker     = popmark(col = col),
+            hoveron    = "points+fills",
+            opacity    = 0.5,
+            line       = popline(col = col),
+            fillcolor  = fillcolor,
+            ...)
+}
+if (is.null(caption)) { caption <- "Population Census by Year" }
+if (is.null(number)) { number <- "" }
+title <- caption_plotly(caption = caption, number = number)
 plot <- plot_ly(census_df,
-                x          = ~Date,
-                y          = ~Unidentified,
-                name       = "Sex Unidentified",
                 type       = "scatter",
                 mode       = "lines",
-                stackgroup = "one",
-                hoveron    = "points+fills",
-                opacity    = 0.5,
-                line       = list(
-                  color     = colors[["u"]],
-                  shape     = "spline",
-                  smoothing = 0.8,
-                  width     = 1.5),
-                fillcolor   = fill.col[["u"]]) %>%
-  add_trace(y         = ~Females,
-            name      = "Females",
-            line      = list(
-              color     = colors[["f"]],
-              shape     = "spline",
-              smoothing = 0.8,
-              width     = 1.5),
-            fillcolor = fill.col[["f"]]) %>%
-  add_trace(y         = ~Males,
-            name      = "Males",
-            yaxis     = "y2",
-            line      = list(
-              color     = colors[["m"]],
-              shape     = "spline",
-              smoothing = 0.8,
-              width     = 1.5),
-            fillcolor = fill.col[["m"]]) %>%
-  layout(title        = title,
-         plot_bgcolor = "#ffffff",
-         yaxis2       = list(
-           overlaying = "y",
-           side       = "right",
-           title      = "N Males"
-         ),
-         yaxis        = list(
-           type      = "linear",
-           autorange = TRUE,
-           title     = "N Total, Females, & Unidentified",
-           showline  = TRUE,
-           showgrid  = FALSE
-         ),
-         xaxis         = list(
-           title       = "Date",
-           showline    = FALSE,
-           showgrid    = TRUE,
-           rangeslider = list(visible = TRUE)
-         )
+                hoveron    = "points+fills") %>%
+  trace_census("u") %>%
+  trace_census("f") %>%
+  trace_census("m") %>%
+  trace_census("t") %>%
+  config(displaylogo = FALSE) %>%
+  plotly::layout(
+    plot_bgcolor = "#ffffff",
+    title        = title,
+    yaxis        = list(
+      title      = "Count",
+      showgrid   = FALSE,
+      showline   = TRUE,
+      showlegend = FALSE,
+      rangemode  = "tozero"),
+    xaxis        = list(
+       title       = "Year",
+       nticks      = 8,
+       showgrid    = TRUE,
+       gridcolor   = "#2323231A",
+       showlegend  = FALSE,
+       rangemode   = "tozero",
+       rangeslider = list(visible = TRUE)
+      )
   )
 return(plot)
 }
@@ -93,24 +121,16 @@ hline <- function(y = 0, color = "#444444") {
 
 #' Plot lambda growth rates by cohort
 #'
-#' @param life_table A tibble with lambda values and Sex, Cohort_label columns
-#' @param title Plot title
-#' @param palette A color palette in list format
+#' @param studbook Studbook tibble
+#' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
+#' @param caption The caption text for the plot (optional)
+#' @param number The optional number to add to the plot caption (e.g., Figure 1.)
 #'
 #' @return A plotly object
 #' @export
 #'
-#' @importFrom plotly layout
-#' @importFrom plotly plot_ly
-plot_lambda <- function(life_table, colors = NULL, title = NULL) {
-  if (is.null(colors)) {
-    colors <- set_colors()
-  } else {
-    colors <- colors
-  }
-  col.pal    <- set_plotly_pal(colors)
-  fills      <- lighten_plotly_pal(col.pal, 33)
-  static     <- lifeTab_static(life_table)
+#' @importFrom plotly layout plot_ly add_trace
+plot_lambda <- function(studbook, cohort_params = NULL, caption = NULL, number = NULL) {
   annotation <- list(
     x          = 0.9,
     xref       = "paper",
@@ -130,41 +150,92 @@ plot_lambda <- function(life_table, colors = NULL, title = NULL) {
       style = "italic"
     )
   )
+  data <- lifetime_tab(studbook      = studbook,
+                       cohort_params = cohort_params) %>%
+    demog_wide("Sex",
+              c("Cohort_period",
+                "Cohort_years"),
+              c("lambda", "hover_lambda")
+              )
+  trace_lambda <- function(p, col, ...) {
+    colors    <- set_colors()
+    fill.col  <- lighten_palette(colors, "26")
+    symbols   <- set_markers()
+    fillcolor <- fill.col[[paste0(col)]]
+    color     <- colors[[paste0(col)]]
+    symbol    <- symbols[[paste0(col)]]
+    line      <- list(
+      shape     = "spline",
+      smoothing = 0.8,
+      width     = 1.5,
+      color     = color
+    )
+    marker    <- list(
+      size    = 7,
+      opacity = 0.7,
+      line    = list(width = 1, color = color),
+      color   = fill.col,
+      symbol  = symbol
+    )
+    if (col == "f") {
+      y    <- data$lambda_F
+      text <- data$hover_lambda_F
+      name <- "Females"
+    } else if (col == "m") {
+      y    <- data$lambda_M
+      text <- data$hover_lambda_M
+      name <- "Males"
+    } else if (col == "t") {
+      y    <- data$lambda_Total
+      text <- data$hover_lambda_Total
+      name <- "Overall"
+    }
+    add_trace(p           = p,
+              data        = data,
+              y           = y,
+              x           = ~Cohort_years,
+              name        = name,
+              type        = "scatter",
+              mode        = "lines+markers",
+              marker      = marker,
+              line        = line,
+              text        = text,
+              connectgaps = TRUE,
+              ...)
+
+  }
+
+  if (is.null(caption)) { caption <- "Population Lambda by Birth Year Cohort" }
+  if (is.null(number)) { number <- "" }
+  title <- caption_plotly(caption = caption, number = number)
   plot <- plot_ly(
-                  data        = filter(static, Sex != "Total"),
-                  x           = ~Cohort_label,
-                  y           = ~lambda,
-                  color       = ~Sex,
+                  data        = data,
                   type        = "scatter",
-                  mode        = "lines+markers",
-                  colors      = c(col.pal),
-                  text        = ~hover_lambda,
-                  connectgaps = TRUE,
-                  line        = list(
-                    shape     = "spline",
-                    smoothing = 0.8,
-                    width     = 1.5
-                  ),
-                  marker      = list(
-                    size    = 6,
-                    opacity = 0.7,
-                    line    = list(width = 1)
-                  )
-  ) %>%
-  plotly::layout(title        = title,
+                  mode        = "lines+markers"
+                  ) %>%
+    trace_lambda("t") %>%
+    trace_lambda("f") %>%
+    trace_lambda("m") %>%
+    config(displaylogo = FALSE) %>%
+  plotly::layout(
+           title        = title,
            plot_bgcolor = "#ffffff",
            shapes       = list(hline(1.0)),
            annotations  = annotation,
            yaxis        = list(
-             title    = "Lambda (\u03BB)",
-             showline = TRUE,
-             showgrid = FALSE
-           ),
+             title     = "Lambda (\u03BB)",
+             rangemode  = "normal",
+             showgrid   = FALSE,
+             showline   = TRUE,
+             showlegend = FALSE
+             ),
            xaxis        = list(
-             title    = "Birth Cohort",
-             showline = FALSE,
-             showgrid = TRUE
-           )
+             title      = "Birth Year Cohort",
+             showgrid   = TRUE,
+             gridcolor  = "#2323231A",
+             showline   = TRUE,
+             showlegend = FALSE
+             )
     )
   return(plot)
 }

@@ -4,18 +4,18 @@
 \alias{pedsave}
 \title{Save a Pedigree Plot to HTML}
 \usage{
-pedsave(pedigree, studbook, name = NULL, palette = NULL, labs_spec = FALSE)
+pedsave(pedigree, studbook, palette = NULL, labs_spec = FALSE)
 }
 \arguments{
 \item{pedigree}{A pedigree object.}
 
 \item{studbook}{A data frame containing studbook metadata.}
 
-\item{name}{Optional. The title for the plot; defaults to the pedigree family ID.}
-
 \item{palette}{Optional. A named list mapping individuals to colors.}
 
 \item{labs_spec}{Logical. If \code{TRUE}, emphasizes individuals with special labels.}
+
+\item{name}{Optional. The title for the plot; defaults to the pedigree family ID.}
 }
 \value{
 None. The function saves an HTML file.

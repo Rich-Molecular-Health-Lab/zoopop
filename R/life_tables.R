@@ -1,12 +1,33 @@
 # life_tables.R
 # Functions for calculating and formatting life tables
+#' Generate a list of default parameters for setting up cohort tibbles
+#'
+#' @param studbook A data frame of studbook data produced by \code{read_studbook}.
+#' @return A list of named values to use for cohort defaults in other functions
+#' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
+#' @export
+#'
+#' @importFrom dplyr filter pull
+#' @importFrom lubridate year today
+#' @importFrom magrittr %>%
+
+cohort_defaults <- function(studbook, cohort_params = list(NULL, ...)) {
+  captive_births <- filter(studbook, Type_birth == "Captive")
+  studbook_ages  <- c(pull(studbook, age_event), pull(studbook, age_last))
+  defaults <- list(Year_min = min(captive_births$Year_birth) - 1,
+                   Year_max = year(today()) - 1,
+                   span     = 10,
+                   age_max  = max(studbook_ages)
+                   )
+  params <- modifyList(defaults, cohort_params)
+
+  return(params)
+}
+
 #' Generate cohort-structured data
 #'
 #' @param studbook A data frame of studbook data produced by \code{read_studbook}.
-#' @param Year_min Start year of cohorts (optional)
-#' @param Year_max End year (optional)
-#' @param span Years per cohort (optional)
-#' @param age_max Max age to include (optional)
+#' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
 #' @param include_sex Whether to include sex as a grouping var (optional)
 #' @return A joined and restructured tibble
 #' @export
@@ -16,36 +37,17 @@
 #' @importFrom tibble tibble
 #' @importFrom tidyr expand_grid
 #' @importFrom magrittr %>%
-make_cohorts <- function(studbook,
-                        Year_min    = NULL,
-                        Year_max    = NULL,
-                        span        = 10,
-                        age_max     = NULL) {
-  if (is.null(age_max)) {
-    studbook_ages <- c(pull(studbook, age_event), pull(studbook, age_last))
-    age_max <- max(studbook_ages)
-  } else {
-    age_max <- age_max
-  }
-  if (is.null(Year_min)) {
-    Year_min <- min(studbook$Year_birth)
-  } else {
-    Year_min <- Year_min
-  }
-  if (is.null(Year_max)) {
-    Year_max <- year(today())
-  } else {
-    Year_max <- Year_max
-  }
-  N_letters <- ceiling((Year_max - Year_min + 1) / span)
+make_cohorts <- function(studbook, cohort_params = NULL) {
+  params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
+  N_letters <- ceiling((params$Year_max - params$Year_min + 1) / params$span)
   tbl_join <- tibble(
-    Year_birth   = Year_min:Year_max,
-    Cohort_birth = rep(LETTERS[1:N_letters], each = span, length.out = length(Year_min:Year_max))
+    Year_birth   = params$Year_min:params$Year_max,
+    Cohort_birth = rep(LETTERS[1:N_letters], each = params$span, length.out = length(params$Year_min:params$Year_max))
   )
   cohorts_bysex <- expand_grid(
-    Age        = 0:age_max,
+    Age        = 0:params$age_max,
     Sex        = c("M", "F"),
-    Year_birth = Year_min:Year_max
+    Year_birth = params$Year_min:params$Year_max
   ) %>%
     full_join(tbl_join, by = "Year_birth") %>%
     mutate(Cohort_min   = min(Year_birth),
@@ -54,16 +56,16 @@ make_cohorts <- function(studbook,
     select(Cohort_min, Cohort_max, Cohort_birth, Year_birth, Sex, Age) %>%
     arrange(Cohort_birth, Year_birth, Sex, Age) %>%
     filter(Year_birth + Age <= year(today())) %>%
-    mutate(Cohort = str_glue("{Sex}{Cohort_birth}"))
+    mutate(Cohort = as.character(str_glue("{Sex}{Cohort_birth}")))
 
   cohorts <- cohorts_bysex %>%
     mutate(Sex    = "Total",
-           Cohort = str_glue("T{Cohort_birth}")) %>%
+           Cohort = as.character(str_glue("T{Cohort_birth}"))) %>%
     distinct() %>%
     bind_rows(cohorts_bysex)  %>%
     mutate(
       across(c(Cohort_min, Cohort_max), ~as.character(.)),
-      Cohort_label = str_glue("{Cohort_min} - {Cohort_max}")) %>%
+      Cohort_label = as.character(str_glue("{Cohort_min} - {Cohort_max}"))) %>%
     arrange(Cohort_birth, Year_birth, Sex, Age) %>%
     select(Cohort, Cohort_label, Year_birth, Sex, Age)
 
@@ -73,10 +75,7 @@ make_cohorts <- function(studbook,
 #' Label studbook rows by Birth Cohorts
 #'
 #' @param studbook A data frame of studbook data produced by \code{read_studbook}.
-#' @param Year_min Start year of cohorts (optional)
-#' @param Year_max End year (optional)
-#' @param span Years per cohort (optional)
-#' @param age_max Max age to include (optional)
+#' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
 #' @return A joined and restructured tibble
 #' @export
 #'
@@ -85,33 +84,9 @@ make_cohorts <- function(studbook,
 #' @importFrom stringr str_glue
 #' @importFrom magrittr %>%
 
-studbook_cohorts <- function(studbook,
-                          Year_min    = NULL,
-                          Year_max    = NULL,
-                          span        = 10,
-                          age_max     = NULL) {
-
-  if (is.null(age_max)) {
-    studbook_ages <- c(pull(studbook, age_event), pull(studbook, age_last))
-    age_max <- max(studbook_ages)
-  } else {
-    age_max <- age_max
-  }
-  if (is.null(Year_min)) {
-    Year_min <- min(studbook$Year_birth)
-  } else {
-    Year_min <- Year_min
-  }
-  if (is.null(Year_max)) {
-    Year_max <- year(today())
-  } else {
-    Year_max <- Year_max
-  }
-  cohorts <- make_cohorts(studbook,
-                          Year_min = Year_min,
-                          Year_max = Year_max,
-                          span     = span    ,
-                          age_max  = age_max)
+studbook_cohorts <- function(studbook, cohort_params = NULL) {
+  params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
+  cohorts <- make_cohorts(studbook, cohort_params = params)
   cohorts_bysex <- filter(cohorts, Sex != "Total")
   cohorts_total <- filter(cohorts, Sex == "Total") %>%
     select(Total_Cohort       = Cohort,
@@ -134,10 +109,7 @@ studbook_cohorts <- function(studbook,
 #' Create Special Cohort Labels based on values in `name_spec`
 #'
 #' @param studbook A data frame of studbook data produced by \code{read_studbook}.
-#' @param Year_min Start year of cohorts (optional)
-#' @param Year_max End year (optional)
-#' @param span Years per cohort (optional)
-#' @param age_max Max age to include (optional)
+#' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
 #' @return A joined and restructured tibble
 #' @export
 #'
@@ -146,35 +118,9 @@ studbook_cohorts <- function(studbook,
 #' @importFrom stringr str_glue
 #' @importFrom magrittr %>%
 
-special_cohorts <- function(studbook,
-                            Year_min    = NULL,
-                            Year_max    = NULL,
-                            span        = 10,
-                            age_max     = NULL) {
-
-  if (is.null(age_max)) {
-    studbook_ages <- c(pull(studbook, age_event), pull(studbook, age_last))
-    age_max <- max(studbook_ages)
-  } else {
-    age_max <- age_max
-  }
-  if (is.null(Year_min)) {
-    Year_min <- min(studbook$Year_birth)
-  } else {
-    Year_min <- Year_min
-  }
-  if (is.null(Year_max)) {
-    Year_max <- year(today())
-  } else {
-    Year_max <- Year_max
-  }
-
-  cohorts_short <- make_cohorts(studbook,
-                          Year_min = Year_min,
-                          Year_max = Year_max,
-                          span     = span    ,
-                          age_max  = age_max
-                          ) %>%
+special_cohorts <- function(studbook, cohort_params = NULL) {
+  params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
+  cohorts_short <- make_cohorts(studbook, cohort_params = params) %>%
     select(-Age) %>% distinct()
 
   specials_total <- filter(studbook, !is.na(name_spec)) %>%
@@ -196,68 +142,37 @@ special_cohorts <- function(studbook,
 #' Create a version of the Cohorts Tibble with special labels
 #'
 #' @param studbook A data frame of studbook data produced by \code{read_studbook}.
-#' @param Year_min Start year of cohorts (optional)
-#' @param Year_max End year (optional)
-#' @param span Years per cohort (optional)
-#' @param age_max Max age to include (optional)
+#' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
 #' @return A joined and restructured tibble
 #' @export
 #'
 #' @importFrom dplyr pull left_join mutate if_else distinct
-#' @importFrom lubridate year  today
+#' @importFrom lubridate year today
+#' @importFrom stringr str_sub
 #' @importFrom magrittr %>%
 #'
-annotated_cohorts <- function(studbook,
-                             Year_min    = NULL,
-                             Year_max    = NULL,
-                             span        = 10,
-                             age_max     = NULL) {
-  if (is.null(age_max)) {
-    studbook_ages <- c(pull(studbook, age_event), pull(studbook, age_last))
-    age_max <- max(studbook_ages)
-  } else {
-    age_max <- age_max
-  }
-  if (is.null(Year_min)) {
-    Year_min <- min(studbook$Year_birth)
-  } else {
-    Year_min <- Year_min
-  }
-  if (is.null(Year_max)) {
-    Year_max <- year(today())
-  } else {
-    Year_max <- Year_max
-  }
-
-  specials <- special_cohorts(
-    studbook,
-    Year_min = Year_min,
-    Year_max = Year_max,
-    span     = span    ,
-    age_max  = age_max
-  )
-
-  annotated_cohorts <- make_cohorts(
-    studbook,
-    Year_min = Year_min,
-    Year_max = Year_max,
-    span     = span    ,
-    age_max  = age_max
-  ) %>%
+annotated_cohorts <- function(studbook, cohort_params = NULL) {
+  params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
+  specials       <- special_cohorts(studbook = studbook, cohort_params = params)
+  annotated_cohorts <- make_cohorts(studbook = studbook, cohort_params = params) %>%
     left_join(specials, by = "Cohort") %>%
-    mutate(Cohort_label = if_else(!is.na(Special_label), Special_label, Cohort_label), .keep = "unused") %>%
+    mutate(Cohort_years = Cohort_label,
+           Cohort_period   = as.character(str_sub(Cohort, 2L, 2L))) %>%
+    mutate(Cohort_label = if_else(
+      !is.na(Special_label),
+      Special_label,
+      Cohort_label),
+           .keep = "unused") %>%
+    relocate(Cohort_period, Cohort_years, Cohort, Sex, Cohort_label) %>%
     distinct()
 
   return(annotated_cohorts)
 }
 
-#' Generate life table from studbook over cohorts
+#' Generate demography summary of studbook data over cohorts
 #'
 #' @param studbook Studbook tibble
-#' @param Year_min First cohort year (optional)
-#' @param Year_max Last cohort year (optional)
-#' @param span Years per cohort (optional)
-#' @param age_max Maximum age (optional)
+#' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
 #' @return A tibble with cohort life table summary
 #' @export
 #'
@@ -265,35 +180,14 @@ annotated_cohorts <- function(studbook,
 #' @importFrom lubridate year today
 #' @importFrom tidyr replace_na
 #'
-cohort_lifeTab <- function(studbook, Year_min = NULL, Year_max = NULL, span = 10, age_max = NULL) {
-  if (is.null(age_max)) {
-    studbook_ages <- c(pull(studbook, age_event), pull(studbook, age_last))
-    age_max <- max(studbook_ages)
-  } else {
-    age_max <- age_max
-  }
-  if (is.null(Year_min)) {
-    Year_min <- min(studbook$Year_birth)
-  } else {
-    Year_min <- Year_min
-  }
-  if (is.null(Year_max)) {
-    Year_max <- year(today())
-  } else {
-    Year_max <- Year_max
-  }
+cohort_demog <- function(studbook, cohort_params = NULL) {
+ params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
+ captive_births <- filter(studbook, Type_birth == "Captive")
+  studbook_life <- filter(studbook, between(Year_birth, params$Year_min, params$Year_max))
 
-  studbook_life <- filter(studbook, between(Year_birth, Year_min, Year_max))
+  cohorts_make <- annotated_cohorts(studbook, cohort_params = params)
 
-   cohorts_make <- annotated_cohorts(
-    studbook,
-    Year_min = Year_min,
-    Year_max = Year_max,
-    span     = span    ,
-    age_max  = age_max
-    )
-
-  life_table <- count_births(studbook_life) %>%
+  demog_table <- count_births(studbook_life) %>%
     mutate(Sex = "Total") %>%
     bind_rows(count_births(studbook_life)) %>%
     arrange(Year_birth, Sex, Age) %>%
@@ -303,15 +197,15 @@ cohort_lifeTab <- function(studbook, Year_min = NULL, Year_max = NULL, span = 10
     ungroup() %>%
     left_join(cohorts_make, by = join_by(Year_birth, Sex, Age)) %>%
     mutate(across(c(Births, Nx), ~replace_na(., 0))) %>%
-    group_by(Cohort_label, Cohort, Sex, Age) %>%
+    group_by(Cohort_period, Cohort_years, Cohort, Cohort_label, Sex, Age) %>%
     summarize(Births     = sum(Births),
               Nx         = sum(Nx)) %>%
     ungroup() %>%
-    arrange(Cohort, Age)  %>%
+    arrange(Cohort_period, Cohort, Age)  %>%
     filter(!is.na(Cohort)) %>%
-    lifeTab()
+    demog_tab()
 
-  return(life_table)
+  return(demog_table)
 }
 
 #' Build a full demographic life table from cohort data
@@ -321,7 +215,7 @@ cohort_lifeTab <- function(studbook, Year_min = NULL, Year_max = NULL, span = 10
 #' @export
 #'
 #' @importFrom dplyr mutate if_else first nth lead ungroup rowwise select
-lifeTab <- function(df) {
+demog_tab <- function(df) {
   df %>%
     mutate(Qx_risk = Nx,
            Mx_risk = Nx) %>%
@@ -352,63 +246,84 @@ lifeTab <- function(df) {
     mutate(T = if_else(R0 > 0, Tnum / R0, 0)) %>%
     mutate(lambda = if_else(R0 > 0 & T > 0, R0^(1/T), 0)) %>%
     ungroup() %>%
+      group_by(Cohort) %>%
+      arrange(desc(Age), .by_group = TRUE) %>%
+      mutate(Tx = cumsum(Lx)) %>%
+      arrange(Age, .by_group = TRUE) %>%
+      mutate(ex = if_else(Lx > 0, Tx / Lx, NA)) %>%
+      ungroup() %>%
+      mutate(r = if_else(lambda > 0, log(lambda), NA)) %>%
     select(
-      Cohort_label,
+      Cohort_period,
+      Cohort_years,
       Cohort,
+      Cohort_label,
       Sex,
+      N0         ,
+      N1         ,
+      Qx_1       ,
+      R0         ,
+      T          ,
+      MLE        ,
+      repro_first,
+      repro_last ,
+      age_max    ,
+      lambda     ,
+      r,
       Age,
       Births,
       Deaths,
-      N1,
+      Nx    ,
       Qx_risk,
+      Qx    ,
+      Lx    ,
+      Lx1   ,
+      Px    ,
+      ex    ,
+      Tx    ,
       Mx_risk,
-      N0,
-      Nx,
-      Px,
-      Lx,
-      Lx1,
-      Qx,
-      Qx_1,
-      Mx,
-      R0,
-      T,
-      MLE,
-      lambda,
-      repro_first,
-      repro_last,
-      age_max,
-      Fx
-    )
+      Mx    ,
+      Fx    ,
+      numT
+    ) %>%
+    distinct()
 }
 
 
 #' Reduce full life table to summary stats per cohort
 #'
-#' @param df Life table tibble
+#' @param studbook Studbook tibble
+#' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
 #' @return Condensed summary table with lambda and vital rates
 #' @export
 #'
 #' @importFrom dplyr select mutate across filter distinct arrange
-lifeTab_static <- function(df) {
-  df %>%
+lifetime_tab <- function(studbook, cohort_params = NULL) {
+  params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
+  cohort_demog(studbook = studbook, cohort_params = params) %>%
     select(
-      Cohort_label,
+      Cohort_period,
+      Cohort_years,
       Cohort,
+      Cohort_label,
       Sex,
-      N0,
-      Qx_1,
-      R0,
-      T,
-      MLE,
-      lambda,
+      N0         ,
+      N1         ,
+      Qx_1       ,
+      R0         ,
+      T          ,
+      MLE        ,
       repro_first,
-      repro_last,
-      age_max
+      repro_last ,
+      age_max    ,
+      lambda     ,
+      r
     ) %>%
-    mutate(across(c(N0:age_max), ~ round(., 3))) %>%
+    mutate(across(c(N0:r), ~ round(., 3))) %>%
     filter(N0 > 0) %>%
-    distinct() %>%
     arrange(Cohort, Sex) %>%
-    annotate_lambda()
+    annotate_lambda() %>%
+    ungroup() %>%
+    distinct()
 }
 

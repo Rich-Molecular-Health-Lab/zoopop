@@ -4,24 +4,12 @@
 \alias{annotated_cohorts}
 \title{Create a version of the Cohorts Tibble with special labels}
 \usage{
-annotated_cohorts(
-  studbook,
-  Year_min = NULL,
-  Year_max = NULL,
-  span = 10,
-  age_max = NULL
-)
+annotated_cohorts(studbook, cohort_params = NULL)
 }
 \arguments{
 \item{studbook}{A data frame of studbook data produced by \code{read_studbook}.}
 
-\item{Year_min}{Start year of cohorts (optional)}
-
-\item{Year_max}{End year (optional)}
-
-\item{span}{Years per cohort (optional)}
-
-\item{age_max}{Max age to include (optional)}
+\item{cohort_params}{A named list of the parameter values to use for cohorts (\code{Year_min}, \code{Year_max}, \code{span}, \code{age_max}) (optional)}
 }
 \value{
 A joined and restructured tibble

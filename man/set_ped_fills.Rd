@@ -4,7 +4,7 @@
 \alias{set_ped_fills}
 \title{Generate fill color mapping for pedigree plots}
 \usage{
-set_ped_fills(palette, studbook)
+set_ped_fills(palette = NULL, studbook)
 }
 \arguments{
 \item{palette}{A named list of color values}

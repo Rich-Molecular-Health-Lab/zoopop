@@ -1,5 +1,21 @@
 # palettes.R
-# Utility functions for managing color palettes across plots and pedigrees
+# Utility functions for managing color palettes and symbols across plots and pedigrees
+
+#' Generate symbol mapping for plotly plots
+#'
+#' If you do not wish to assign custom marker symbols, this will apply default symbols to your named list that are referenced in other functions in this package.
+#'
+#' @param f    A single symbol to map to females
+#' @param m    A single symbol to map to males
+#' @param u    A single symbol to map to undetermined sex
+#' @param t    A single symbol to map to totals
+#' @return A named list of symbols to reference in plotly functions and plots
+#' @export
+#'
+set_markers <- function(f = "circle", m = "square", u = "diamond", t = "cross") {
+  symbols <- list(f = f, m = m, u = u, t = t)
+  return(symbols)
+}
 
 #' Generate color mapping for reactable tables
 #'
@@ -64,23 +80,23 @@ set_colors <- function(seq  = NULL,
 #'
 #' @importFrom dplyr intersect setdiff union
 #' @importFrom purrr list_assign keep_at
-set_ped_fills <- function(palette, studbook) {
+set_ped_fills <- function(palette = NULL, studbook) {
+  if (is.null(palette)) { palette <- set_colors() }
+  pal.light <- lighten_palette(palette, "70")
   female       <- living(  studbook, "females"     )
   male         <- living(  studbook, "males"       )
   undet        <- living(  studbook, "undetermined")
   female.d     <- deceased(studbook, "females"     )
   male.d       <- deceased(studbook, "males"       )
   undet.d      <- deceased(studbook, "undetermined")
-  fills        <- list(female, male, undet)
-  names(fills) <- keep_at(palette, c("f", "m", "u"))
-  light.f      <- gsub("FF", "70", fills[["f"]])
-  light.m      <- gsub("FF", "70", fills[["m"]])
-  light.u      <- gsub("FF", "70", fills[["u"]])
-  ped.fills    <- list(female.d,
-                       male.d,
-                       undet.d)
-  names(ped.fills) <- c(light.f, light.m, light.u)
-  fills        <- list_assign(fills, !!!ped.fills)
+  fills        <- list(female, male, undet, female.d, male.d, undet.d) %>%
+    set_names(list(
+                palette[["f"]],
+                palette[["m"]],
+                palette[["u"]],
+                pal.light[["f"]],
+                pal.light[["m"]],
+                pal.light[["u"]]))
   return(fills)
 }
 

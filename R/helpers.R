@@ -170,21 +170,63 @@ mle <- function(lx, age) {
 
 #' Annotate lambda growth values with human-readable hover text
 #'
-#' @param df A data frame with a column `lambda`
+#' @param df A data frame with a column `r`
 #' @return The same data frame with a new `hover_lambda` column
 #' @export
 #'
-#' @importFrom dplyr if_else
-#' @importFrom dplyr mutate
-#' @importFrom glue glue
+#' @importFrom dplyr if_else mutate
+#' @importFrom stringr str_glue
 annotate_lambda <- function(df) {
   df %>%
-    mutate(hover_lambda = abs(round((lambda - 1) * 100, digits = 1))) %>%
+    mutate(hover_lambda = abs(round(r * 100, digits = 1))) %>%
     mutate(
       hover_lambda = if_else(
-        lambda >= 1,
+        r > 0,
         as.character(str_glue("Population growing by {hover_lambda}%")),
         as.character(str_glue("Population declining by {hover_lambda}%"))
       )
     )
+}
+
+#' Pivot a life table wider for ease of plotting multiple traces
+#'
+#' @param df A data frame with demography stats for plotting
+#' @param group The grouping variable(s) to plot as individual traces
+#' @param x The variable(s) that will be plotted on the x axis
+#' @param y The variable(s) that will be plotted on the y axis
+#' @return Wider version with sexes in columns for plotting multiple traces
+#' @export
+#'
+#' @importFrom tidyr pivot_wider
+
+demog_wide <- function(df, group, x, y) {
+    pivot_wider(
+      df,
+      id_cols     = x,
+      names_from  = group,
+      values_from = y
+    )
+}
+
+#' Add a formatted figure caption to plotly plots
+#'
+#' @param caption Caption text to add
+#' @param number Figure number to apply to caption (optional)
+#' @return nested list to add to plotly layout function
+#' @export
+#'
+caption_plotly <- function(caption, number) {
+  title = list(
+    text     = paste0("<b>Figure ",
+                      number,
+                      ". </b>",
+                      caption),
+    font       = list(size = 14),
+    x          = 0,
+    y          = 0,
+    xanchor    = "left",
+    yanchor    = "top",
+    automargin = TRUE
+  )
+  return(title)
 }

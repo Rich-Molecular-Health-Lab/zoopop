@@ -2,20 +2,20 @@
 % Please edit documentation in R/plots.R
 \name{plot_census}
 \alias{plot_census}
-\title{Plot population trends using census data}
+\title{Plot population trends based on census data calculated from studbook}
 \usage{
-plot_census(studbook, colors = NULL, title = NULL)
+plot_census(studbook, caption = NULL, number = NULL)
 }
 \arguments{
 \item{studbook}{A data frame containing studbook metadata.}
 
-\item{colors}{A named list of colors for "f", "m", and "u" (optional)}
+\item{caption}{The caption text for the plot (optional)}
 
-\item{title}{The title for the plot (optional)}
+\item{number}{The optional number to add to the plot caption (e.g., Figure 1.)}
 }
 \value{
 A plotly plot object
 }
 \description{
-Plot population trends using census data
+Plot population trends based on census data calculated from studbook
 }
