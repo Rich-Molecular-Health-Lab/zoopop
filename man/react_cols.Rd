@@ -2,6 +2,7 @@
 % Please edit documentation in R/coldefs.R, R/reactables.R
 \name{Cohort_years}
 \alias{Cohort_years}
+\alias{Sex}
 \alias{intrins_rate}
 \alias{n1}
 \alias{gen_T}
@@ -21,6 +22,8 @@
 \title{Reactable Column Defs}
 \usage{
 Cohort_years()
+
+Sex()
 
 intrins_rate()
 

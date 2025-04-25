@@ -31,6 +31,7 @@ library(reactablefmtr)
 library(htmlwidgets)
 library(htmltools)
 library(tidyverse)
+library(tippy)
 library(visNetwork)
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -53,35 +54,102 @@ demog <- cohort_demog(studbook, cohort_params = list(span = 5))
 ```
 
 
+
+```{r}
+ summary_df <- footer_lifetime(studbook)
+```
+
 ```{r}
 lifetime <- lifetime_tab(studbook, 
                          cohort_params = list(span = 5)) %>%
-  distinct() %>%
-  mutate(Sex = fct_recode(Sex, Overall = "Total", Males = "M", Females = "F")) %>%
-  mutate(Sex = fct_relevel(Sex, "Males", "Females", "Overall")) %>%
-  arrange(Cohort_period, Sex) %>% 
-  select(
-    Cohort_years,
-    Sex,
-    r,
-    N1,
-    T,
-    MLE,
-    repro_first,
-    repro_last,
-    age_max,
-    R0
-  ) %>%
-  group_by(Cohort_years)
+    distinct() %>%
+    mutate(Sex = fct_recode(Sex, Overall = "Total", Males = "M", Females = "F")) %>%
+    mutate(Sex = fct_relevel(Sex, "Males", "Females", "Overall")) %>%
+    arrange(Cohort_period, Sex) %>%
+    mutate(sex_col = case_match(Sex,
+                                "Overall" ~colors[["t"]],
+                                "Males"   ~colors[["m"]],
+                                "Females" ~colors[["f"]]
+    )) %>%
+    select(
+      Cohort_years,
+      Sex,
+      r,
+      N1,
+      T,
+      MLE,
+      repro_first,
+      repro_last,
+      age_max,
+      R0,
+      sex_col
+    ) %>%
+    group_by(Cohort_years)
 ```
 
+```{r}
+total <- footer_lifetime(studbook)
+```
+
+```{r}
+lifetime <- lifetime_tab(studbook, cohort_params = list(span = 5)) %>%
+    distinct() %>%
+    mutate(Sex = fct_recode(Sex, Overall = "Total", Males = "M", Females = "F")) %>%
+    mutate(Sex = fct_relevel(Sex, "Males", "Females", "Overall")) %>%
+    arrange(Cohort_period, Sex) %>%
+    mutate(sex_col = case_match(Sex,
+                                "Overall" ~colors[["t"]],
+                                "Males"   ~colors[["m"]],
+                                "Females" ~colors[["f"]]
+    )) %>%
+    select(
+      Cohort_years,
+      Sex,
+      r,
+      N1,
+      T,
+      MLE,
+      repro_first,
+      repro_last,
+      age_max,
+      R0,
+      sex_col
+    ) %>%
+    bind_rows(total) %>%
+    group_by(Cohort_years) %>%
+    mutate(Sex = as_factor(Sex))
+```
 
 ```{r}
 table <- reactable(
     lifetime,
+    sortable   = FALSE,
     borderless = TRUE,
-    rowStyle   = rows_bySex(),
+    rowStyle   = rows_bySex())
+table
+```
+
+
+```{r}
+  table <- reactable(
+    lifetime,
+    sortable   = FALSE,
+    borderless = TRUE,
+    rowStyle      = JS("
+    function(rowInfo, state) {
+      if (rowInfo.values['Sex'] === 'Females') {
+      return { borderLeft: '4px solid #C44D76FF', boxShadow: 'inset 0 -2px 0 #C44D7633'  }
+    }  else if (rowInfo.values['Sex'] === 'Males') {
+      return { borderLeft: '4px solid #4457A5FF', boxShadow: 'inset 0 -2px 0 #4457A533' }
+      } else if (rowInfo.values['Sex'] === 'Overall') {
+      return { borderLeft: '4px solid transparent' , boxShadow: 'inset 0 -1.5px 0 #444444FF' }
+      } else if (rowInfo.values['Sex'] === 'Summary')  {
+      return { borderLeft: '4px solid #999999' , background: '#eeeeee', fontWeight: 'bold' }
+      }
+    }
+  "),
     columns    = list(
+      Sex          = Sex(),
       Cohort_years = Cohort_years(),
       r            = intrins_rate(),
       N1           = n1(lifetime),
@@ -90,7 +158,8 @@ table <- reactable(
       repro_first  = age_ranges(lifetime),
       repro_last   = colDef(show = FALSE),
       age_max      = colDef(show = FALSE),
-      R0           = r0(lifetime)
+      R0           = r0(lifetime),
+      sex_col      = colDef(show = FALSE)
     )
   )
 table

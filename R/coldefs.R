@@ -1,6 +1,5 @@
 # coldefs.R
 #'
-#'
 #' @rdname react_cols
 #' @export
 #'
@@ -10,6 +9,8 @@
 #'
 Cohort_years <- function() {
   colDef(
+    sticky   = "left",
+    maxWidth = 120,
     header = tippy("Birth Cohort", tooltip = "Stats grouped based on birth-year spans"),
     style = JS("function(rowInfo, column, state) {
         const firstSorted = state.sorted[0]
@@ -20,6 +21,35 @@ Cohort_years <- function() {
           }
         }
       }")
+  )
+}
+
+
+#'
+#' @rdname react_cols
+#' @export
+#'
+#' @importFrom reactable colDef
+#' @importFrom tippy tippy
+#' @importFrom htmlwidgets JS
+#'
+Sex <- function() {
+  colDef(
+    maxWidth = 120,
+    header = tippy("Sex", tooltip = "Stats grouped by males and females within a birth-year cohort and then calculated. 'Overall' values were calculated without grouping by sex within cohorts."),
+    style =     JS("
+    function(rowInfo) {
+      if (rowInfo.values['Sex'] === 'Females') {
+      return { color: '#C44D76FF'}
+    }  else if (rowInfo.values['Sex'] === 'Males') {
+      return { color: '#4457A5FF' }
+      } else if (rowInfo.values['Sex'] === 'Overall') {
+      return { color: '#59386CFF', boxShadow: 'inset 0 -1.5px 0 #444444FF' , fontWeight: 'bold' }
+      } else if (rowInfo.values['Sex'] === 'Summary')  {
+      return { color: '#000000', background: '#eeeeee', fontWeight: 'bold'}
+      }
+    }
+  ")
   )
 }
 
@@ -35,6 +65,7 @@ Cohort_years <- function() {
 #'
 intrins_rate <- function() {
   colDef(
+    maxWidth = 150,
     align  = "left",
     header = tippy("r", tooltip = "Intrinsic rate of increase: the continuous growth rate of the population, computed as r = log(\u03BB), where \u03BB is the finite rate of increase."),
     cell   = function(value, index) {
@@ -54,14 +85,19 @@ intrins_rate <- function() {
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr color_scales
 #' @importFrom scales label_number
-#' @importFrom paletteer paletteer_dynamic
+#' @importFrom paletteer paletteer_d
 #' @importFrom tippy tippy
 #'
 n1 <- function(data) {
   colDef(
-    align  = "left",
-    header = tippy("N1", tooltip = "Total number of individuals at age 1 (i.e. total surviving first year)."),
-    cell   = color_scales(data)
+    align    = "center",
+    maxWidth = 50,
+    header   = tippy("N1", tooltip = "Total number of individuals at age 1 (i.e. total surviving first year)."),
+    style    = color_scales(
+      data,
+      bias    = 0.2,
+      colors  = paletteer_d("PNWColors::Shuksan", direction = -1, type = "continuous")
+    )
   )
 }
 
@@ -79,9 +115,11 @@ n1 <- function(data) {
 gen_T <- function(data) {
   colDef(
     align  = "left",
+    maxWidth = 115,
     header = tippy("T", tooltip = "Mean generation time (average age of reproduction), computed as T = Tnum / R0 where Tnum is the age‐weighted reproductive output."),
     cell   = icon_assign(data,
-                         fill_color  = "#13315FFF",
+                         icon        = "stop",
+                         fill_color  = "#23313CFF",
                          icon_size   = 9,
                          number_fmt  = label_number(accuracy = 0.1),
                          seq_by      = 2,
@@ -104,11 +142,13 @@ gen_T <- function(data) {
 MLE <- function(data) {
   min <- min(pull(data, MLE))
   colDef(
-    align  = "center",
+    maxWidth = 115,
+    align  = "left",
     header = tippy("MLE", tooltip = "Maximum Likelihood Estimate of the age at 50% survivorship; the interpolated age where survival drops to 50%."),
     cell = icon_assign(
       data,
-      fill_color  = "#13315FFF",
+      icon           = "stop",
+      fill_color  = "#23313CFF",
       icon_size   = 9,
       number_fmt  = label_number(accuracy = 0.1),
       seq_by      = 4,
@@ -128,6 +168,7 @@ MLE <- function(data) {
 #'
 age_ranges <- function(data) {
   colDef(
+    maxWidth = 120,
     align  = "left",
     header = tippy("Reproductive Years", tooltip = "The minimum age at which reproduction is observed,
                    indicating the onset of reproductive activity to the maximum age at which reproduction is observed in the cohort. Bottom number is the highest age at which mortality is recorded, representing the maximum observed lifespan in the cohort."),
@@ -162,18 +203,15 @@ age_ranges <- function(data) {
 r0 <- function(data) {
   colDef(
     header = tippy("R0", tooltip = "Net Reproductive Rate, the sum of reproductive outputs (Fx) across all ages for the cohort."),
+    align = "left",
     cell = data_bars(
       data,
-      fill_color    = "#EEEEEE",
-      min_value     = min(pull(data, age_max)),
-      text_position = "outside-end",
-      icon          = "ellipsis-vertical",
-      icon_color    = "#13315FFF",
-      icon_size     = 15,
-      bar_height    = 13,
-      text_color    = "#13315FFF",
-      round_edges   = FALSE,
-      text_size     = 12
+      text_position  = "above",
+      text_size      = 11,
+      bar_height     = 7,
+      number_fmt     = label_number(accuracy = 0.01),
+      fill_color_ref = "sex_col",
+      round_edges    = TRUE
     )
   )
 }

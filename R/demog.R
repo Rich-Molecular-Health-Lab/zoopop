@@ -289,6 +289,122 @@ demog_tab <- function(df) {
     distinct()
 }
 
+#' Build a full demographic life table for the population historic totals
+#'
+#' @param studbook A data frame of studbook data produced by \code{read_studbook}.
+#' @return A life table with survivorship, mortality, and reproductive values that can be used as a footer row for comparison across cohorts
+#' @export
+#'
+#' @importFrom dplyr mutate if_else first nth lead ungroup rowwise select
+demog_ungrouped <- function(studbook) {
+  count_births(studbook = studbook) %>%
+    mutate(Sex = "Total") %>%
+    bind_rows(count_births(studbook = studbook)) %>%
+    arrange(Sex, Age) %>%
+    group_by(Sex, Age) %>%
+    summarize(Births = sum(Births),
+              Nx     = n()) %>%
+    ungroup() %>%
+    arrange(Age)  %>%
+    mutate(Qx_risk = Nx,
+           Mx_risk = Nx) %>%
+    mutate(Deaths = if_else(Age == max(Age), Nx, Nx - lead(Nx)),
+           N0     = first(Nx),
+           N1     = nth(Nx, 2),
+           .by = Sex) %>%
+    mutate(Px     = if_else(Nx == 0 | Age == max(Age), 0, lead(Nx)/Nx),
+           .by = Sex) %>%
+    ungroup()  %>%
+    rowwise() %>%
+    mutate(Lx1 = if_else(N1 == 0, 0, Nx / N1),
+           Lx  = if_else(N0 == 0, 0, Nx / N0),
+           Qx  = if_else(Qx_risk == 0, 0, Deaths / Qx_risk),
+           Mx  = if_else(Mx_risk == 0, 0, (Births / Mx_risk) / 2)) %>%
+    mutate(Fx   = Mx * Lx) %>%
+    mutate(numT = Age * Fx) %>%
+    ungroup() %>%
+    mutate(Qx_1        = first(Qx),
+           MLE         = if_else(max(N1) > 0, mle(Lx1, Age), 0),
+           repro_first = min(Age[Mx > 0]),
+           repro_last  = max(Age[Mx > 0]),
+           age_max     = max(Age[Deaths > 0]),
+           R0          = sum(Fx),
+           Tnum        = sum(numT),
+           .by = Sex) %>%
+    rowwise() %>%
+    mutate(T = if_else(R0 > 0, Tnum / R0, 0)) %>%
+    mutate(lambda = if_else(R0 > 0 & T > 0, R0^(1/T), 0)) %>%
+    ungroup() %>%
+    group_by(Sex) %>%
+    arrange(desc(Age), .by_group = TRUE) %>%
+    mutate(Tx = cumsum(Lx)) %>%
+    arrange(Age, .by_group = TRUE) %>%
+    mutate(ex = if_else(Lx > 0, Tx / Lx, NA)) %>%
+    ungroup() %>%
+    mutate(r = if_else(lambda > 0, log(lambda), NA)) %>%
+    select(
+      Sex,
+      N0         ,
+      N1         ,
+      Qx_1       ,
+      R0         ,
+      T          ,
+      MLE        ,
+      repro_first,
+      repro_last ,
+      age_max    ,
+      lambda     ,
+      r,
+      Age,
+      Births,
+      Deaths,
+      Nx    ,
+      Qx_risk,
+      Qx    ,
+      Lx    ,
+      Lx1   ,
+      Px    ,
+      ex    ,
+      Tx    ,
+      Mx_risk,
+      Mx    ,
+      Fx    ,
+      numT
+    ) %>%
+    distinct()
+}
+
+#' Reduce full life table to summary stats for the population across all years and cohorts
+#'
+#' @param studbook Studbook tibble
+#' @return Condensed summary table with lambda and vital rates (3 rows - Females, Males, and Overall stats)
+#' @export
+#'
+#' @importFrom dplyr select mutate across filter distinct arrange
+lifetime_total <- function(studbook) {
+  demog_ungrouped(studbook = studbook) %>%
+    select(
+      Sex,
+      N0         ,
+      N1         ,
+      Qx_1       ,
+      R0         ,
+      T          ,
+      MLE        ,
+      repro_first,
+      repro_last ,
+      age_max    ,
+      lambda     ,
+      r
+    ) %>%
+    mutate(across(c(N0:r), ~ round(., 3))) %>%
+    filter(N0 > 0) %>%
+    arrange(Sex) %>%
+    annotate_lambda() %>%
+    ungroup() %>%
+    distinct()
+}
+
 
 #' Reduce full life table to summary stats per cohort
 #'
