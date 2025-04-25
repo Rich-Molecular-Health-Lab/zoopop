@@ -61,9 +61,7 @@ n1 <- function(data) {
   colDef(
     align  = "left",
     header = tippy("N1", tooltip = "Total number of individuals at age 1 (i.e. total surviving first year)."),
-    cell   = color_scales(data,
-                         opacity       = 0.7,
-                         brighten_text = FALSE)
+    cell   = color_scales(data)
   )
 }
 
