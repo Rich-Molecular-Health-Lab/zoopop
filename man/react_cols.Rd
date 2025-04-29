@@ -3,11 +3,21 @@
 \name{Cohort_years}
 \alias{Cohort_years}
 \alias{Sex}
+\alias{icon_cells}
+\alias{sparkline_cells}
 \alias{intrins_rate}
 \alias{n1}
-\alias{gen_T}
+\alias{nx}
+\alias{lx1}
+\alias{px}
+\alias{qx}
 \alias{MLE}
+\alias{tx}
+\alias{ex}
 \alias{age_ranges}
+\alias{gen_T}
+\alias{mx}
+\alias{fx}
 \alias{r0}
 \alias{ID}
 \alias{Status}
@@ -25,15 +35,35 @@ Cohort_years()
 
 Sex()
 
+icon_cells(data, seq_by)
+
+sparkline_cells(data)
+
 intrins_rate()
 
 n1(data)
 
-gen_T(data)
+nx(data)
+
+lx1(data)
+
+px(data)
+
+qx(data)
 
 MLE(data)
 
+tx(data)
+
+ex(data)
+
 age_ranges(data)
+
+gen_T(data)
+
+mx(data)
+
+fx(data)
 
 r0(data)
 
@@ -41,26 +71,30 @@ ID(df)
 
 Status()
 
-exclude(df, colors = set_colors())
+exclude(df, colors)
 
 Loc_birth(df)
 
 Loc_last(df)
 
-bubble_count(df, name, colors = set_colors())
+bubble_count(df, name, colors)
 
-Sire(df, colors = set_colors())
+Sire(df, colors)
 
-Dam(df, colors = set_colors())
+Dam(df, colors)
 
-Rel_Contribution(df, colors = set_colors())
+Rel_Contribution(df, colors)
 
-inbred(df, colors = set_colors())
+inbred(df, colors)
 }
 \arguments{
 \item{data}{Dataframe passed to reactable table function}
 
+\item{seq_by}{A numerical input that determines what number each icon represents.}
+
 \item{df}{A data frame passed to the reactable column definition}
+
+\item{colors}{A named list of colors to use (must a list of colors named \code{seq}, a list of colors named \code{div}, one color for \code{f} and one for \code{m})}
 
 \item{name}{The name of the column to be shown in the table}
 }

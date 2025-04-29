@@ -203,9 +203,24 @@ cohort_demog <- function(studbook, cohort_params = NULL) {
     ungroup() %>%
     arrange(Cohort_period, Cohort, Age)  %>%
     filter(!is.na(Cohort)) %>%
-    demog_tab()
+    demog_tab()   %>%
+    filter(N0 > 0) %>%
+    annotate_lambda() %>%
+    distinct()
 
-  return(demog_table)
+  cohorts <- demog_table %>%
+    pull(Cohort_period) %>%
+    unique()
+
+  cohort_colors <- as.list(paletteer_c("harrypotter::ronweasley2", length(cohorts))) %>%
+    set_names(cohorts) %>%
+    enframe(name = "Cohort_period", value = "Cohort_color") %>%
+    mutate(Cohort_color = as.character(Cohort_color))
+
+  data <- demog_table %>%
+    left_join(cohort_colors, by = "Cohort_period")
+
+  return(data)
 }
 
 #' Build a full demographic life table from cohort data
@@ -371,7 +386,12 @@ demog_ungrouped <- function(studbook) {
       Fx    ,
       numT
     ) %>%
-    distinct()
+    distinct()   %>%
+    filter(N0 > 0) %>%
+    annotate_lambda() %>%
+    mutate(Cohort_years = "All years",
+           Cohort_color = "black",
+           sex_col      = "black")
 }
 
 #' Reduce full life table to summary stats for the population across all years and cohorts
@@ -382,9 +402,14 @@ demog_ungrouped <- function(studbook) {
 #'
 #' @importFrom dplyr select mutate across filter distinct arrange
 lifetime_total <- function(studbook) {
-  demog_ungrouped(studbook = studbook) %>%
+  demog_ungrouped(studbook = studbook)  %>%
+    filter(Sex == "Overall") %>%
+    mutate(Sex = "Summary", N1 = NA) %>%
     select(
-      Sex,
+      Cohort_years,
+      Cohort_color,
+      Sex        ,
+      sex_col    ,
       N0         ,
       N1         ,
       Qx_1       ,
@@ -398,48 +423,162 @@ lifetime_total <- function(studbook) {
       r
     ) %>%
     mutate(across(c(N0:r), ~ round(., 3))) %>%
-    filter(N0 > 0) %>%
-    arrange(Sex) %>%
-    annotate_lambda() %>%
     ungroup() %>%
     distinct()
 }
 
-
-#' Reduce full life table to summary stats per cohort
+#' Reduce full life table to summary format for the population across all years and cohorts
 #'
 #' @param studbook Studbook tibble
-#' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
-#' @return Condensed summary table with lambda and vital rates
+#' @return Nested, condensed summary table with stats calculated by age in list-cols
 #' @export
 #'
 #' @importFrom dplyr select mutate across filter distinct arrange
-lifetime_tab <- function(studbook, cohort_params = NULL) {
-  params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
-  cohort_demog(studbook = studbook, cohort_params = params) %>%
-    select(
-      Cohort_period,
-      Cohort_years,
-      Cohort,
-      Cohort_label,
-      Sex,
-      N0         ,
-      N1         ,
-      Qx_1       ,
-      R0         ,
-      T          ,
-      MLE        ,
-      repro_first,
-      repro_last ,
-      age_max    ,
-      lambda     ,
-      r
-    ) %>%
-    mutate(across(c(N0:r), ~ round(., 3))) %>%
+demog_summary_total <- function(studbook) {
+  demog_ungrouped(studbook = studbook)  %>%
+    distinct()  %>%
     filter(N0 > 0) %>%
-    arrange(Cohort, Sex) %>%
     annotate_lambda() %>%
-    ungroup() %>%
-    distinct()
+    mutate(Sex          = fct_recode(Sex, Overall = "Total", Males = "M", Females = "F"),
+           Cohort_years = "All years",
+           Cohort_color = "black",
+           sex_col      = "black") %>%
+    filter(Sex == "Overall") %>%
+    mutate(Sex = "Summary", N1 = NA) %>%
+    select(
+      Cohort_years ,
+      Sex          ,
+      sex_col      ,
+      N1           ,
+      Qx_1         ,
+      R0           ,
+      T            ,
+      MLE          ,
+      repro_first  ,
+      repro_last   ,
+      age_max      ,
+      lambda       ,
+      r            ,
+      Age          ,
+      Births       ,
+      Deaths       ,
+      Nx           ,
+      Qx           ,
+      Lx1          ,
+      Px           ,
+      ex           ,
+      Tx           ,
+      Mx           ,
+      Fx           ,
+      numT         ,
+      Cohort_color
+    ) %>%
+    group_by(
+      Cohort_years ,
+      Cohort_color ,
+      Sex          ,
+      sex_col      ,
+      N1           ,
+      R0           ,
+      T            ,
+      MLE          ,
+      repro_first  ,
+      repro_last   ,
+      age_max      ,
+      lambda       ,
+      r            ) %>%
+    summarize(Age     = list(Age)         ,
+              Births  = list(Births)      ,
+              Deaths  = list(Deaths )     ,
+              Nx      = list(Nx     )     ,
+              Qx      = list(Qx     )     ,
+              Lx1     = list(Lx1    )     ,
+              Px      = list(Px     )     ,
+              ex      = list(ex     )     ,
+              Tx      = list(Tx     )     ,
+              Mx      = list(Mx     )     ,
+              Fx      = list(Fx     )     ,
+              numT    = list(numT   )
+    ) %>%
+    ungroup()
 }
 
+
+#' Reduce full life table to summary format for visualization
+#'
+#' @param studbook Studbook tibble
+#' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
+#' @return Nested summary table with stats calculated by age in list-cols
+#' @export
+#'
+#' @importFrom dplyr select mutate across filter distinct arrange
+demog_summary <- function(studbook, cohort_params = NULL) {
+  colors   <- set_colors()
+  params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
+  data <- cohort_demog(studbook = studbook, cohort_params = params)  %>%
+    mutate(Sex = fct_recode(Sex, Overall = "Total", Males = "M", Females = "F")) %>%
+    mutate(Sex = fct_relevel(Sex, "Males", "Females", "Overall")) %>%
+    arrange(Cohort_period, Sex) %>%
+    mutate(sex_col = case_match(Sex,
+                                "Overall" ~colors[["t"]],
+                                "Males"   ~colors[["m"]],
+                                "Females" ~colors[["f"]]
+    )) %>%
+    select(
+      Cohort_years ,
+      Cohort_color ,
+      Sex          ,
+      sex_col      ,
+      N1           ,
+      Qx_1         ,
+      R0           ,
+      T            ,
+      MLE          ,
+      repro_first  ,
+      repro_last   ,
+      age_max      ,
+      lambda       ,
+      r            ,
+      Age          ,
+      Births       ,
+      Deaths       ,
+      Nx           ,
+      Qx           ,
+      Lx1          ,
+      Px           ,
+      ex           ,
+      Tx           ,
+      Mx           ,
+      Fx           ,
+      numT
+    ) %>%
+    group_by(
+      Cohort_years ,
+      Cohort_color ,
+      Sex          ,
+      sex_col      ,
+      N1           ,
+      R0           ,
+      T            ,
+      MLE          ,
+      repro_first  ,
+      repro_last   ,
+      age_max      ,
+      lambda       ,
+      r            ) %>%
+    summarize(Age     = list(Age)         ,
+              Births  = list(Births)      ,
+              Deaths  = list(Deaths )     ,
+              Nx      = list(Nx     )     ,
+              Qx      = list(Qx     )     ,
+              Lx1     = list(Lx1    )     ,
+              Px      = list(Px     )     ,
+              ex      = list(ex     )     ,
+              Tx      = list(Tx     )     ,
+              Mx      = list(Mx     )     ,
+              Fx      = list(Fx     )     ,
+              numT    = list(numT   )
+    ) %>%
+    ungroup()
+  return(data)
+}

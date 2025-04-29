@@ -216,17 +216,18 @@ demog_wide <- function(df, group, x, y) {
 #' @export
 #'
 caption_plotly <- function(caption, number) {
-  title = list(
-    text     = paste0("<b>Figure ",
-                      number,
-                      ". </b>",
-                      caption),
+  cap_text <- paste0("Figure ", number, ". ", caption)
+  caption    <- list(
+    text       = cap_text,
     font       = list(size = 14),
     x          = 0,
-    y          = 0,
+    y          = -0.2,
+    xref       = "paper",
+    yref       = "paper",
     xanchor    = "left",
     yanchor    = "top",
+    showarrow  = FALSE,
     automargin = TRUE
   )
-  return(title)
+  return(caption)
 }

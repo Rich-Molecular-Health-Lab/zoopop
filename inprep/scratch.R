@@ -317,5 +317,125 @@ ped_graph <- function(nodes, edges) {
   return(output)
 }
 
+#' Plot lambda growth rates by cohort
+#'
+#' @param studbook Studbook tibble
+#' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
+#' @param caption The caption text for the plot (optional)
+#' @param number The optional number to add to the plot caption (e.g., Figure 1.)
+#'
+#' @return A plotly object
+#' @export
+#'
+#' @importFrom plotly layout plot_ly add_trace
+plot_lambda <- function(studbook, cohort_params = NULL, caption = NULL, number = NULL) {
+  annotation <- list(
+    x          = 0.9,
+    xref       = "paper",
+    y          = 1,
+    yref       = "y",
+    text       = "Stable if \u03BB = 1.0",
+    showarrow  = TRUE,
+    arrowhead  = 4,
+    arrowcolor = "#444444",
+    arrowsize  = 1,
+    arrowwidth = 0.7,
+    ax         = 10,
+    ay         = 40,
+    font       = list(
+      color = "#444444",
+      size  = 12,
+      style = "italic"
+    )
+  )
+  data <- lifetime_tab(studbook      = studbook,
+                       cohort_params = cohort_params) %>%
+    demog_wide("Sex",
+               c("Cohort_period",
+                 "Cohort_years"),
+               c("lambda", "hover_lambda")
+    )
+  trace_lambda <- function(p, col, ...) {
+    colors    <- set_colors()
+    fill.col  <- lighten_palette(colors, "26")
+    symbols   <- set_markers()
+    fillcolor <- fill.col[[paste0(col)]]
+    color     <- colors[[paste0(col)]]
+    symbol    <- symbols[[paste0(col)]]
+    line      <- list(
+      shape     = "spline",
+      smoothing = 0.8,
+      width     = 1.5,
+      color     = color
+    )
+    marker    <- list(
+      size    = 7,
+      opacity = 0.7,
+      line    = list(width = 1, color = color),
+      color   = fill.col,
+      symbol  = symbol
+    )
+    if (col == "f") {
+      y    <- data$lambda_F
+      text <- data$hover_lambda_F
+      name <- "Females"
+    } else if (col == "m") {
+      y    <- data$lambda_M
+      text <- data$hover_lambda_M
+      name <- "Males"
+    } else if (col == "t") {
+      y    <- data$lambda_Total
+      text <- data$hover_lambda_Total
+      name <- "Overall"
+    }
+    add_trace(p           = p,
+              data        = data,
+              y           = y,
+              x           = ~Cohort_years,
+              name        = name,
+              type        = "scatter",
+              mode        = "lines+markers",
+              marker      = marker,
+              line        = line,
+              text        = text,
+              connectgaps = TRUE,
+              ...)
+
+  }
+
+  if (is.null(caption)) { caption <- "Population Lambda by Birth Year Cohort" }
+  if (is.null(number)) { number <- "" }
+  title <- caption_plotly(caption = caption, number = number)
+  plot <- plot_ly(
+    data        = data,
+    type        = "scatter",
+    mode        = "lines+markers"
+  ) %>%
+    trace_lambda("t") %>%
+    trace_lambda("f") %>%
+    trace_lambda("m") %>%
+    config(displaylogo = FALSE) %>%
+    plotly::layout(
+      title        = title,
+      plot_bgcolor = "#ffffff",
+      shapes       = list(hline(1.0)),
+      annotations  = annotation,
+      yaxis        = list(
+        title     = "Lambda (\u03BB)",
+        rangemode  = "normal",
+        showgrid   = FALSE,
+        showline   = TRUE,
+        showlegend = FALSE
+      ),
+      xaxis        = list(
+        title      = "Birth Year Cohort",
+        showgrid   = TRUE,
+        gridcolor  = "#2323231A",
+        showline   = TRUE,
+        showlegend = FALSE
+      )
+    )
+  return(plot)
+}
 
 

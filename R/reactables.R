@@ -84,6 +84,7 @@ Status <- function() {
 
 #'
 #' @param df A data frame passed to the reactable column definition
+#' @param colors A named list of colors to use (must a list of colors named `seq`, a list of colors named `div`, one color for `f` and one for `m`)
 #'
 #' @rdname react_cols
 #' @export
@@ -92,7 +93,7 @@ Status <- function() {
 #' @importFrom htmltools img
 #' @importFrom knitr image_uri
 #' @importFrom tippy tippy
-exclude <- function(df, colors = set_colors()) {
+exclude <- function(df, colors) {
   colDef(
     header   = tippy("Breeding Plan",
                      tooltip = "Most recent report status - deceased, included (implies living), excluded (for either behavior or age - also implies living)"),
@@ -171,6 +172,7 @@ Loc_last <- function(df) {
 #'
 #' @param df A data frame passed to the reactable column definition
 #' @param name The name of the column to be shown in the table
+#' @param colors A named list of colors to use (must a list of colors named `seq`, a list of colors named `div`, one color for `f` and one for `m`)
 #'
 #' @rdname react_cols
 #' @export
@@ -178,7 +180,7 @@ Loc_last <- function(df) {
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr bubble_grid
 #' @importFrom tippy tippy
-bubble_count <- function(df, name, colors = set_colors()) {
+bubble_count <- function(df, name, colors) {
   colDef(
     name     = name,
     maxWidth = 250,
@@ -194,6 +196,7 @@ bubble_count <- function(df, name, colors = set_colors()) {
 }
 #'
 #' @param df A data frame passed to the reactable column definition
+#' @param colors A named list of colors to use (must a list of colors named `seq`, a list of colors named `div`, one color for `f` and one for `m`)
 #'
 #' @rdname react_cols
 #' @export
@@ -201,16 +204,17 @@ bubble_count <- function(df, name, colors = set_colors()) {
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr pill_buttons
 #' @importFrom tippy tippy
-Sire <- function(df, colors = set_colors()) {
+Sire <- function(df, colors) {
   colDef(
     header   = tippy("Father", tooltip = "Studbook ID of Sire (0 if wildborn or unknown)"),
     align    = "center",
     maxWidth = 100,
-    style    = list(fontFamily = "Courier New, monospace", color = colors$m)
+    style    = list(fontFamily = "Courier New, monospace", color = colors[["m"]])
   )
 }
 #'
 #' @param df A data frame passed to the reactable column definition
+#' @param colors A named list of colors to use (must a list of colors named `seq`, a list of colors named `div`, one color for `f` and one for `m`)
 #'
 #' @rdname react_cols
 #' @export
@@ -218,16 +222,17 @@ Sire <- function(df, colors = set_colors()) {
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr pill_buttons
 #' @importFrom tippy tippy
-Dam <- function(df, colors = set_colors()) {
+Dam <- function(df, colors) {
   colDef(
     header   = tippy("Mother", tooltip = "Studbook ID of Dam (0 if wildborn or unknown)"),
     align    = "center",
     maxWidth = 100,
-    style    = list(fontFamily = "Courier New, monospace", color = colors$f)
+    style    = list(fontFamily = "Courier New, monospace", color = colors[["f"]])
   )
 }
 #'
 #' @param df A data frame passed to the reactable column definition
+#' @param colors A named list of colors to use (must a list of colors named `seq`, a list of colors named `div`, one color for `f` and one for `m`)
 #'
 #' @rdname react_cols
 #' @export
@@ -236,7 +241,7 @@ Dam <- function(df, colors = set_colors()) {
 #' @importFrom reactablefmtr data_bars
 #' @importFrom scales label_percent
 #' @importFrom tippy tippy
-Rel_Contribution <- function(df, colors = set_colors()) {
+Rel_Contribution <- function(df, colors) {
   colDef(
     header   = tippy("Relative Contribution", tooltip = "Individual's contribution to living population relative to total founder representation"),
     maxWidth = 200,
@@ -252,6 +257,7 @@ Rel_Contribution <- function(df, colors = set_colors()) {
 }
 #'
 #' @param df A data frame passed to the reactable column definition
+#' @param colors A named list of colors to use (must a list of colors named `seq`, a list of colors named `div`, one color for `f` and one for `m`)
 #'
 #' @rdname react_cols
 #' @export
@@ -260,7 +266,7 @@ Rel_Contribution <- function(df, colors = set_colors()) {
 #' @importFrom reactablefmtr data_bars
 #' @importFrom scales label_number
 #' @importFrom tippy tippy
-inbred <- function(df, colors = set_colors()) {
+inbred <- function(df, colors) {
   colDef(
     header   = tippy("F", tooltip = "Inbreeding coefficient: probability two alleles are identical by descent"),
     align    = "center",
@@ -285,19 +291,21 @@ inbred <- function(df, colors = set_colors()) {
 #' Column definitions for full studbook summary tables
 #'
 #' @param df A filtered founder summary dataframe
+#' @param colors A named list of colors to use (optional - must a list of colors named `seq`, a list of colors named `div`, one color for `f` and one for `m`)
 #' @return A named list of column definitions
 #' @export
 #'
 #' @importFrom reactable colDef
 #' @importFrom purrr keep_at
-studbook_cols <- function(df, df_cols, colors = set_colors()) {
+studbook_cols <- function(df, df_cols, colors = NULL) {
+  if (is.null(colors)) { colors <- set_colors() }
   list(
     Status              = Status(),
     ID                  = ID(df),
-    Sire                = Sire(df),
-    Dam                 = Dam(df),
+    Sire                = Sire(df, colors),
+    Dam                 = Dam(df, colors),
     Loc_birth           = Loc_birth(df),
-    exclude             = exclude(df),
+    exclude             = exclude(df, colors),
     Loc_last            = Loc_last(df),
     age_last            = colDef(show = FALSE),
     name_spec           = colDef(show = FALSE),
@@ -361,13 +369,35 @@ kin.cols <- function() {
 #' Create a reactable summary table from any dataset
 #'
 #' @param df The data frame to summarize
-#' @param cols A named list of column definitions
+#' @param df_cols A named vector of column definitions (optional)
+#' @param colors A named list of colors to use (optional - must a list of colors named `seq`, a list of colors named `div`, one color for `f` and one for `m`)
 #' @param ... Additional arguments passed to `reactable()`
 #' @return A reactable widget
 #' @export
 #' @importFrom reactable reactable
 #' @importFrom dplyr distinct
-studbook_react <- function(df, df_cols, colors = set_colors(), ...) {
+studbook_react <- function(df, df_cols = NULL, colors = NULL, ...) {
+  if (is.null(df_cols)) {
+    df_cols <- c(
+      "Status"              ,
+      "ID"                  ,
+      "name_spec"           ,
+      "exclude"             ,
+      "Loc_birth"           ,
+      "Loc_last"            ,
+      "Sire"                ,
+      "Dam"                 ,
+      "Date_birth"          ,
+      "age_last"            ,
+      "Date_last"           ,
+      "Sex"                 ,
+      "Institution_birth"   ,
+      "iconLoc_birth"       ,
+      "Institution_last"    ,
+      "iconLoc_last"
+      )
+  }
+  if (is.null(colors)) { colors <- set_colors() }
   df <- distinct(df, df_cols)
   reactable::reactable(
     df,
@@ -377,7 +407,7 @@ studbook_react <- function(df, df_cols, colors = set_colors(), ...) {
     defaultExpanded     = TRUE,
     defaultPageSize     = 20,
     highlight           = TRUE,
-    columns             = studbook_cols(df, df_cols),
+    columns             = studbook_cols(df, df_cols, colors),
     ...
   )
 }

@@ -1,3 +1,5 @@
+#'
+#'
 #' Plot population trends based on census data calculated from studbook
 #'
 #' @param studbook A data frame containing studbook metadata.
@@ -118,125 +120,441 @@ hline <- function(y = 0, color = "#444444") {
     line = list(color = color, width = 0.9, dash = "dot")
   )
 }
-
-#' Plot lambda growth rates by cohort
+#' Plot lifetime demographic variables by sex and birth year
 #'
 #' @param studbook Studbook tibble
 #' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
-#' @param caption The caption text for the plot (optional)
-#' @param number The optional number to add to the plot caption (e.g., Figure 1.)
+#' @param variable Name of the column containing an age-specific variable to map onto the y-axis
+#' options for variable: `N0`, `N1`, `R0`, `T`, `MLE`, `Repro_first`, `Repro_last`, `age_max`, `lambda`, `r`
 #'
 #' @return A plotly object
 #' @export
 #'
 #' @importFrom plotly layout plot_ly add_trace
-plot_lambda <- function(studbook, cohort_params = NULL, caption = NULL, number = NULL) {
-  annotation <- list(
-    x          = 0.9,
-    xref       = "paper",
-    y          = 1,
-    yref       = "y",
-    text       = "Stable if \u03BB = 1.0",
-    showarrow  = TRUE,
-    arrowhead  = 4,
-    arrowcolor = "#444444",
-    arrowsize  = 1,
-    arrowwidth = 0.7,
-    ax         = 10,
-    ay         = 40,
-    font       = list(
-      color = "#444444",
-      size  = 12,
-      style = "italic"
-    )
-  )
-  data <- lifetime_tab(studbook      = studbook,
-                       cohort_params = cohort_params) %>%
-    demog_wide("Sex",
-              c("Cohort_period",
-                "Cohort_years"),
-              c("lambda", "hover_lambda")
-              )
-  trace_lambda <- function(p, col, ...) {
-    colors    <- set_colors()
-    fill.col  <- lighten_palette(colors, "26")
-    symbols   <- set_markers()
-    fillcolor <- fill.col[[paste0(col)]]
-    color     <- colors[[paste0(col)]]
-    symbol    <- symbols[[paste0(col)]]
-    line      <- list(
-      shape     = "spline",
-      smoothing = 0.8,
-      width     = 1.5,
-      color     = color
-    )
-    marker    <- list(
-      size    = 7,
-      opacity = 0.7,
-      line    = list(width = 1, color = color),
-      color   = fill.col,
-      symbol  = symbol
-    )
-    if (col == "f") {
-      y    <- data$lambda_F
-      text <- data$hover_lambda_F
-      name <- "Females"
-    } else if (col == "m") {
-      y    <- data$lambda_M
-      text <- data$hover_lambda_M
-      name <- "Males"
-    } else if (col == "t") {
-      y    <- data$lambda_Total
-      text <- data$hover_lambda_Total
-      name <- "Overall"
-    }
-    add_trace(p           = p,
-              data        = data,
-              y           = y,
-              x           = ~Cohort_years,
-              name        = name,
-              type        = "scatter",
-              mode        = "lines+markers",
-              marker      = marker,
-              line        = line,
-              text        = text,
-              connectgaps = TRUE,
-              ...)
+#'
+#'
+#'
+plot_demog <- function(studbook, cohort_params = NULL, variable) {
+  colors <- set_colors()
+  col <- list(Males   = colors$m,
+              Females = colors$f,
+              Overall = colors$t) %>%
+    unlist()
+  params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
+  total <- demog_ungrouped(studbook)  %>%
+    filter(Sex == "Total") %>%
+    rename(y_var = variable) %>%
+    distinct()
+  data <- cohort_demog(studbook = studbook, cohort_params = params)  %>%
+    mutate(Sex = fct_recode(Sex,
+                            Overall = "Total",
+                            Males   = "M",
+                            Females = "F")) %>%
+    mutate(Sex = fct_relevel(Sex,
+                             "Males",
+                             "Females",
+                             "Overall")) %>%
+    rename(y_var = variable) %>%
+    mutate(Cohort_start = as.integer(str_extract_all(Cohort_years, "^\\d{4}"))) %>%
+    select(-c(
+      Age          ,
+      Births       ,
+      Deaths       ,
+      Nx           ,
+      Qx           ,
+      Lx1          ,
+      Px           ,
+      ex           ,
+      Tx           ,
+      Mx           ,
+      Fx           ,
+      numT
+    )) %>%
+    distinct() %>%
+    mutate(across(where(is.numeric), ~round(., digits = 2)))
 
+  if (variable == "N1") {
+    overall_val <- mean(data$y_var)
+  } else {
+    overall_val <- pull(total, y_var) %>% unique()
   }
 
-  if (is.null(caption)) { caption <- "Population Lambda by Birth Year Cohort" }
-  if (is.null(number)) { number <- "" }
-  title <- caption_plotly(caption = caption, number = number)
-  plot <- plot_ly(
-                  data        = data,
-                  type        = "scatter",
-                  mode        = "lines+markers"
-                  ) %>%
-    trace_lambda("t") %>%
-    trace_lambda("f") %>%
-    trace_lambda("m") %>%
-    config(displaylogo = FALSE) %>%
-  plotly::layout(
-           title        = title,
-           plot_bgcolor = "#ffffff",
-           shapes       = list(hline(1.0)),
-           annotations  = annotation,
-           yaxis        = list(
-             title     = "Lambda (\u03BB)",
-             rangemode  = "normal",
-             showgrid   = FALSE,
-             showline   = TRUE,
-             showlegend = FALSE
-             ),
-           xaxis        = list(
-             title      = "Birth Year Cohort",
-             showgrid   = TRUE,
-             gridcolor  = "#2323231A",
-             showline   = TRUE,
-             showlegend = FALSE
-             )
+  plot <- plot_ly() %>%
+    add_trace(
+      data        = filter(data, Sex == "Overall"),
+      x           = ~Cohort_years,
+      y           = ~y_var,
+      split       = ~Sex,
+      name        = ~Sex,
+      color       = I(colors$t),
+      type        = "scatter",
+      mode        = "lines+markers",
+      line        = list(shape       = "spline",
+                         smoothing   = 0.8,
+                         width       = 3),
+      marker      = list(symbol      = "x",
+                         size        = 5),
+      connectgaps = TRUE
+    ) %>%
+    add_trace(
+      data        = filter(data, Sex == "Males"),
+      x           = ~Cohort_years,
+      y           = ~y_var,
+      split       = ~Sex,
+      name        = ~Sex,
+      color       = I(colors$m),
+      opacity     = 0.6,
+      type        = "scatter",
+      mode        = "lines+markers",
+      line        = list(shape       = "spline",
+                         smoothing   = 0.8,
+                         width       = 1),
+      marker      = list(symbol      = "square",
+                         size        = 8),
+      connectgaps = TRUE
+    ) %>%
+    add_trace(
+      data        = filter(data, Sex == "Females"),
+      x           = ~Cohort_years,
+      y           = ~y_var,
+      split       = ~Sex,
+      name        = ~Sex,
+      color       = I(colors$f),
+      opacity     = 0.6,
+      type        = "scatter",
+      mode        = "lines+markers",
+      line        = list(shape       = "spline",
+                         smoothing   = 0.8,
+                         width       = 1),
+      marker      = list(symbol      = "circle",
+                         size        = 8),
+      connectgaps = TRUE
+    ) %>%
+    plotly::layout(
+      plot_bgcolor = "transparent",
+      shapes       = list(
+        list(
+          type         = "line",
+          showlegend   = TRUE,
+          name         = "All Sexes/Cohorts",
+          text         = "All Sexes/Cohorts",
+          label        = "All Sexes/Cohorts",
+          xref         = "paper",
+          yref         = "y",
+          x0           = 0,
+          x1           = 1,
+          y0           = overall_val,
+          y1           = overall_val,
+          line         = list(dash    = "dot",
+                              width   = 1,
+                              color   = "#44444480")
+          ),
+          list(
+            type         = "line",
+            xref         = "paper",
+            yref         = "paper",
+            x0           = 0 + 0.01,
+            x1           = 1,
+            y0           = 0,
+            y1           = 0,
+            line         = list(width = 0.5)
+        ),
+        list(
+          type         = "line",
+          xref         = "paper",
+          yref         = "paper",
+          x0           = 0 + 0.01,
+          x1           = 0 + 0.01,
+          y0           = 0,
+          y1           = 1,
+          line         = list(width = 0.5)
+        )
+      ),
+      annotations  = list(
+        text       = paste0("All Cohorts<br>= ", round(overall_val, digits = 2)),
+        font       = list(size   = 10,
+                          family = "sans serif",
+                          style  = "italic",
+                          opacity = 0.7),
+        x          = 1,
+        y          = overall_val,
+        xref       = "paper",
+        yref       = "y"    ,
+        xanchor    = "right",
+        yanchor    = "bottom",
+        showarrow  = FALSE
+      ),
+      yaxis        = list(
+        title      = paste0(variable),
+        showgrid   = FALSE,
+        zeroline   = FALSE,
+        showlegend = TRUE,
+        nticks     = 6,
+        ticks      = "inside"
+      ),
+      xaxis        = list(
+        title      = "Cohorts by Birth Year",
+        showgrid   = TRUE,
+        gridcolor  = "#2323231A",
+        gridwidth  = 0.5,
+        showlegend = FALSE,
+        zeroline   = FALSE
+      )
+    )
+
+
+
+}
+
+#' Plot age-specific demographic variables with animation by birth year
+#'
+#' @param studbook Studbook tibble
+#' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
+#' @param variable Name of the column containing an age-specific variable to map onto the y-axis
+#' options for variable: `Births`, `Deaths`, `Nx`, `Qx`, `Lx`, `Lx1`, `Px`, `ex`, `Tx`, `Mx`, `Fx`
+#' @param sex One of `"Males"`, `"Females"`, or `"Overall"` to plot stats by sex (default is `"Overall"`)
+#'
+#' @return A plotly object
+#' @export
+#'
+#' @importFrom plotly layout plot_ly add_trace
+#'
+#'
+#'
+plot_demog_age <- function(studbook, cohort_params = NULL, variable, sex = NULL) {
+  if (is.null(sex)) { sex <- "Overall" }
+  params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
+  total <- demog_ungrouped(studbook)  %>%
+    mutate(Sex = fct_recode(Sex,
+                            Overall = "Total",
+                            Males   = "M",
+                            Females = "F")) %>%
+    mutate(Sex = fct_relevel(Sex,
+                             "Males",
+                             "Females",
+                             "Overall"),
+           Cohort_period = "All Years")
+  data <- cohort_demog(studbook, params)  %>%
+    mutate(Sex = fct_recode(Sex,
+                            Overall = "Total",
+                            Males   = "M",
+                            Females = "F")) %>%
+    mutate(Sex = fct_relevel(Sex,
+                             "Males",
+                             "Females",
+                             "Overall")) %>%
+    bind_rows(total) %>%
+    rename(y_var = variable) %>%
+    mutate(across(where(is.numeric), ~round(., digits = 2)))
+  cohorts <- data %>%
+    pull(Cohort_period) %>%
+    unique()
+  cohort_colors <- as.list(paletteer_c("harrypotter::ronweasley2", length(cohorts))) %>%
+    set_names(cohorts) %>%
+    unlist()
+
+  symbols <- c(
+    Males   = "square",
+    Females = "circle",
+    Overall = "x"
+  )
+
+  range_y <- list(min(data$y_var), max(data$y_var))
+  range_x <- list(0, max(data$Age))
+
+  plot <- plot_ly() %>%
+    add_trace(
+      data   = filter(data, Sex == sex),
+      x      = ~Age,
+      y      = ~y_var,
+      split  = ~Cohort_period,
+      frame  = ~Cohort_years,
+      name   = ~Cohort_years,
+      color  = ~Cohort_period,
+      colors = cohort_colors,
+      type   = "scatter",
+      mode   = "lines+markers",
+      line   = list(shape = "spline"),
+      marker = list(opacity = 0.5,
+                    symbol  = ~Sex,
+                    symbols = symbols)
+    ) %>%
+    animation_opts(frame = 2000, transition = 1000, redraw = FALSE) %>%
+    animation_slider(currentvalue =
+                       list(prefix  = "Born ",
+                            xanchor = "left",
+                            font    = list(
+                              color   = ~Cohort_period,
+                              colors  = cohort_colors,
+                              family  = "sans serif",
+                              variant = "small-caps",
+                              weight  = 800)
+                       )
+    ) %>%
+    add_annotations(
+      x         = 0.5,
+      y         = 1,
+      text      = paste0(sex),
+      xref      = "paper",
+      yref      = "paper",
+      xanchor   = "center",
+      yanchor   = "bottom",
+      showarrow = FALSE
+      ) %>%
+    plotly::layout(
+      plot_bgcolor = "#ffffff",
+      yaxis        = list(
+        title      = paste0(variable),
+        range      = range_y,
+        showgrid   = FALSE,
+        showline   = TRUE,
+        showlegend = FALSE,
+        nticks     = 6,
+        ticks      = "inside"
+      ),
+      xaxis        = list(
+        title      = "Age in Years",
+        range      = range_x,
+        showgrid   = TRUE,
+        gridcolor  = "#2323231A",
+        gridwidth  = 0.5,
+        showline   = TRUE,
+        showlegend = FALSE,
+        nticks     = round(params$age_max/2)
+      )
     )
   return(plot)
 }
+
+#' Plot age-specific demographic variables with animation by birth year and sex by line color
+#'
+#' @param studbook Studbook tibble
+#' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
+#' @param variable Name of the column containing an age-specific variable to map onto the y-axis
+#' options for variable: `Births`, `Deaths`, `Nx`, `Qx`, `Lx`, `Lx1`, `Px`, `ex`, `Tx`, `Mx`, `Fx`
+#'
+#' @return A plotly object
+#' @export
+#'
+#' @importFrom plotly layout plot_ly add_trace
+#'
+#'
+#'
+demog_age_bysex <- function(studbook, cohort_params = NULL, variable) {
+  params  <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
+  total <- demog_ungrouped(studbook)  %>%
+    mutate(Sex = fct_recode(Sex,
+                            Overall = "Total",
+                            Males   = "M",
+                            Females = "F")) %>%
+    mutate(Sex = fct_relevel(Sex,
+                             "Males",
+                             "Females",
+                             "Overall"),
+           Cohort_period = "All Years")
+  data <- cohort_demog(studbook, params)  %>%
+    mutate(Sex = fct_recode(Sex,
+                            Overall = "Total",
+                            Males   = "M",
+                            Females = "F")) %>%
+    mutate(Sex = fct_relevel(Sex,
+                             "Males",
+                             "Females",
+                             "Overall")) %>%
+    bind_rows(total) %>%
+    rename(y_var = variable) %>%
+    mutate(across(where(is.numeric), ~round(., digits = 2)))
+  cohorts <- data %>%
+    pull(Cohort_period) %>%
+    unique()
+  cohort_colors <- as.list(paletteer_c("harrypotter::ravenclaw2", length(cohorts))) %>%
+    set_names(cohorts) %>%
+    unlist()
+
+  range_y <- list(min(data$y_var), max(data$y_var))
+  range_x <- list(0, max(data$Age))
+
+  plot <- plot_ly() %>%
+    add_trace(
+      data    = filter(data, Sex == "Males"),
+      x       = ~Age,
+      y       = ~y_var,
+      split   = ~Cohort_period,
+      frame   = ~Cohort_years,
+      name    = ~Sex,
+      color   = ~Cohort_period,
+      colors  = cohort_colors,
+      opacity = 0.2,
+      type    = "scatter",
+      mode    = "lines+markers",
+      line    = list(shape = "spline", dash = "dot"),
+      marker  = list(shape = "square", size = 8)
+    ) %>%
+    add_trace(
+      data    = filter(data, Sex == "Females"),
+      x       = ~Age,
+      y       = ~y_var,
+      split   = ~Cohort_period,
+      frame   = ~Cohort_years,
+      name    = ~Sex,
+      color   = ~Cohort_period,
+      colors  = cohort_colors,
+      opacity = 0.2,
+      type    = "scatter",
+      mode    = "lines+markers",
+      line    = list(shape = "spline", dash = "dash"),
+      marker  = list(shape = "circle", size = 8)
+    ) %>%
+    add_trace(
+      data    = filter(data, Sex == "Overall"),
+      x       = ~Age,
+      y       = ~y_var,
+      split   = ~Cohort_period,
+      frame   = ~Cohort_years,
+      name    = ~Sex,
+      color   = ~Cohort_period,
+      colors  = cohort_colors,
+      type    = "scatter",
+      mode    = "lines+markers",
+      line    = list(shape = "spline", width = 3)
+    ) %>%
+    animation_opts(frame = 2000, transition = 1000, redraw = FALSE) %>%
+    animation_slider(currentvalue =
+                       list(prefix  = "Born ",
+                            xanchor = "left",
+                            font    = list(
+                              color   = ~Cohort_period,
+                              colors  = cohort_colors,
+                              family  = "sans-serif",
+                              variant = "small-caps",
+                              weight  = 800)
+                       )
+    ) %>%
+    plotly::layout(
+      plot_bgcolor = "#ffffff",
+      yaxis        = list(
+        title      = paste0(variable),
+        range      = range_y,
+        showgrid   = FALSE,
+        showline   = TRUE,
+        showlegend = FALSE,
+        nticks     = 6,
+        ticks      = "inside"
+      ),
+      xaxis        = list(
+        title      = "Age (Yr)",
+        range      = range_x,
+        showgrid   = TRUE,
+        gridcolor  = "#2323231A",
+        gridwidth  = 0.5,
+        showline   = TRUE,
+        showlegend = FALSE,
+        nticks     = round(params$age_max/2)
+      )
+    )
+  return(plot)
+}
+
+
+
 

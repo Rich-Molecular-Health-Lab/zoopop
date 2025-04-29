@@ -24,24 +24,23 @@ I am going to use the Pygmy Slow Loris population reports to generate a reproduc
 
 2.  Historic Demographic Trends Compared Across Generations
 
-2.  Contemporary Patterns of Genetic Diversity and Relatedness
-
-3.  Projected Population Viability
+  - We will examine these trends at two temporal scales:
+  
+    a.  Survival, mortality, and reproductive variables over the entire lifetime.
+    b.  Age-specific patterns in survival, mortality, and reproduction across the lifetime.
+    
+3.  Demographic Projections
 
 ### Files Needed
 
-I am loading two csv files created with the `zoopop` package: 
+I am loading one `csv` file created with the `zoopop` package, which is derived from the published studbook for my population of interest.
 
-1.  A studbook organized into rows containing static profiles of individuals across the entire population history and individual transfer and breeding events over each individual's lifetime: `studbook.csv`
+>To create a formatted studbook file that will work with the other `zoopop` functions, see the `new_studbook` tutorial. I followed the steps in that tutorial to create `studbook.csv`, which we will read in as a tibble in the setup chunk below.
 
-2.  A table where every institution appearing in the studbook is represented by a single row: `locations.csv`
-
-For more information, see the tutorial below.
 
 ```{r eval=FALSE}
-learnr::run_tutorial("new_studbook", package = "zoopop")
+learnr::run_tutorial("demography", package = "zoopop")
 ```
-
 
 
 ## Setup
@@ -52,9 +51,8 @@ library(conflicted)
 library(here)
 library(knitr)
 library(learnr)
-library(shiny)
+library(plotly)
 library(tidyverse)
-library(visNetwork)
 library(zoopop)
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -69,40 +67,15 @@ conflicts_prefer(lubridate::interval)
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(purrr::set_names)
 studbook <- read_csv(here("inst/extdata/studbook.csv"))
-pedigree <- featured_pedigree(studbook)
 ```
 
-
-```{r setup, context="setup"}
-cols_default <- c(
-  "Status"              ,
-  "ID"                  ,
-  "name_spec"           ,
-  "exclude"             ,
-  "Loc_birth"           ,
-  "Loc_last"            ,
-  "Sire"                ,
-  "Dam"                 ,
-  "Date_birth"          ,
-  "age_last"            ,
-  "Date_last"           ,
-  "Sex"                 ,
-  "Institution_birth"   ,
-  "iconLoc_birth"       ,
-  "Institution_last"    ,
-  "iconLoc_last"        
-)
-
-```
 
 # Studbook Overview
 
-Let's create a graphical table to summarize our studbook data.
+Let's create a graphical table to summarize our studbook data loaded in the setup chunk.
 
 ```{r studbook-view, exercise=TRUE}
-studbook.tbl <- studbook %>% 
-  studbook_react(., df_cols = c(cols_default), groupBy = "Status")
-
+studbook.tbl <- studbook %>% studbook_react(groupBy = "Status")
 studbook.tbl
 ```
 
@@ -115,107 +88,210 @@ population.plot <- plot_census(studbook)
 population.plot
 ```
 
-## Life Table Calculations 
+## Demographic Summary
 
 Now we will use annual birth counts to follow the standard method for computing a normalized rate of growth over the past 5 years compared to all years (\u03BB), along with a series of other common life history variables.
 
-```{r lifetab, exercise = TRUE}
-demog <- cohort_demog(studbook, 
-                      cohort_params = list(span = 5))
+>**Note:** You can play around with the values for the `cohort_params` list in this chunk to change the cohort bins and the overall scale of your analysis.
+>>**Values available in this list:** `Year_min` (the earliest year to include for analysis), `Year_max` (the latest year to include), `span` (the interval in years to use for lumping individuals into generational cohorts, based on their birth year), `age_max` (the maximum age in years to include when forming cohort bins)
+>>**Default values** - if you leave any/all values blank, the following defaults will be used: `Year_min =` *minimum birth year found in studbook*, `Year_min =` *current year*, `span = 10` (*individuals lumped into cohorts based on the decade of their birth*), `age_max =` *maximum age in years observed in studbook records*.
+
+```{r cohort_demog, exercise = TRUE}
+demog <- cohort_demog(studbook, cohort_params = list(span = 5))
 ```
+
+### Summary Table
+
+```{r demog_summary, exercise = TRUE}
+demog_summary <- rct_demog(studbook, cohort_params = list(span = 5))
+demog_summary
+```
+
+The code below will also save a local, html version of this table. If you would rather save a png version, change the file extension. *Note that saving as `png` will disable the html feature where you can hover over the headings or cells for more information.*
+
+
+```{r save_demog_summary, exercise = TRUE, exercise.setup = "demog_summary"}
+reactablefmtr::save_reactable_test(demog_summary, "zoopop_plots/demographic_summary.html")
+```
+
+### Lifetime Stats
 
 Some of the stats in this table are broken down by age (dynamic values), while others are averaged across each cohort's lifetime (static values). Let's first summarize the static values that are averaged across the lifetime and compared between birth year cohorts.
 
-### Static Variables
+#### \u03BB
 
-#### Summary Table
+**\u03BB** is the finite rate of increase calculated as \u03BB = `R0^(1/T)`, representing the population growth rate.
 
-```{r}
-lifetime <- rct_lifetime(studbook, 
-                         cohort_params = list(span = 5))
-lifetime
+```{r lambda, exercise = TRUE}
+lambda_plot  <- plot_demog(studbook, list(span = 5), "lambda")
+lambda_plot
+```
+
+Run the chunk below to save a local copy.
+
+```{r save_lambda, exercise = TRUE, exercise.setup = "lambda"}
+saveWidget(lambda_plot, "zoopop_plots/lambda_plot.html")
+```
+
+#### r
+
+***r*** is the intrinsic rate of increase: the **continuous growth rate of the population**, computed as r = log(\u03BB), where \u03BB is the finite rate of increase.
+
+```{r r_plot, exercise = TRUE}
+r_plot <- plot_demog(studbook, list(span = 5), "r")
+r_plot
+```
+
+Run the chunk below to save a local copy.
+
+```{r save_r_plot, exercise = TRUE, exercise.setup = "r_plot"}
+saveWidget(r_plot, "zoopop_plots/r_plot.html")
 ```
 
 
-#### Plots
+#### N1
 
-Now, let's plot population growth rate or \u03BB.
+***N1*** is the total number of individuals at age 1 (i.e. total surviving first year).
 
-```{r lambda, exercise = TRUE, exercise.setup = "lifetab"}
-lambda.plot  <- plot_lambda(studbook, 
-                            cohort_params = list(span = 5))
-lambda.plot
+```{r N1_plot, exercise = TRUE}
+N1_plot <- plot_demog(studbook, list(span = 5), "N1")
+N1_plot
 ```
 
-## Construct Pedigree 
+Run the chunk below to save a local copy.
 
-Now we will use `pedtools` to create our pedigree objects based on the studbook data. We will use the pedigree object to generate all genetic stats and projections.
-
-```{r pedigree, exercise = TRUE}
-ped_series <- build_ped_series(studbook)
+```{r save_N1_plot, exercise = TRUE, exercise.setup = "N1_plot"}
+saveWidget(N1_plot, "zoopop_plots/N1_plot.html")
 ```
 
-When working with studbook data, this usually produces a list of multiple pedigree objects, as any founders or lineages not represented in the current living population will form discrete, disconnected trees. There also will probably be several "singletons" which are founders without any connections to the living population. That is why the code above also included a line to thin out your dataset by ignoring the founders that never reproduced.
+#### R0
 
-### Pedigree Plot
+***R0*** is the **net reproductive rate**, the sum of reproductive outputs (*Fx*) across all ages for the cohort.
 
-Now we will take a look at the data in the form of the traditional pedigree structures produced by `pedtools`. The code below also prepares some formatting variables to assign color-coding that matches the other graphics in this workflow before plotting the pedigree(s).
-
-```{r pedplots, exercise = TRUE, exercise.setup = "pedigree"}
-ped_series_plots <- plot_ped_series(ped_series, 
-                                    studbook, 
-                                    labs_spec = TRUE)
-ped_series_plots
+```{r R0_plot, exercise = TRUE}
+R0_plot <- plot_demog(studbook, list(span = 5), "R0")
+R0_plot
 ```
 
-For many of our operations, it will be easier to work with one pedigree object of interest and ignore the pedigrees not currently represented in the breeding population. The function below helps you extract the pedigree of interest as its own object with a new name.
+Run the chunk below to save a local copy.
 
-```{r}
-pedigree <- extract_pedigree(ped_series, "_comp1", "Contemporary")
+```{r save_R0_plot, exercise = TRUE, exercise.setup = "R0_plot"}
+saveWidget(R0_plot, "zoopop_plots/R0_plot.html")
 ```
 
-You could also take out the guesswork and cut some of the steps above by using the function below. This function starts with your studbook, builds a pedigree series, and then automatically extracts the pedigree with the deepest multi-generational representation. This is convenient for creating a single pedigree object without leaving unnecessary objects lingering in your environment.
+#### MLE
 
-```{r}
-pedigree <- featured_pedigree(studbook)
+***MLE*** - **Maximum Likelihood Estimate** of the **age at 50% survivorship**; the interpolated age where survival drops to 50%.
+
+```{r MLE_plot, exercise = TRUE}
+MLE_plot <- plot_demog(studbook, list(span = 5), "MLE")
+MLE_plot
+```
+
+Run the chunk below to save a local copy.
+
+```{r save_MLE_plot, exercise = TRUE, exercise.setup = "MLE_plot"}
+saveWidget(MLE_plot, "zoopop_plots/MLE_plot.html")
+```
+
+#### T
+
+***T*** - *Mean generation time* **(average age of reproduction)**, computed as `T = Tnum/R0` where `Tnum` is the age‐weighted reproductive output.
+
+```{r T_plot, exercise = TRUE}
+T_plot <- plot_demog(studbook, list(span = 5), "T")
+T_plot
+```
+
+Run the chunk below to save a local copy.
+
+```{r save_T_plot, exercise = TRUE, exercise.setup = "T_plot"}
+saveWidget(T_plot, "zoopop_plots/T_plot.html")
+```
+#### Array Plots
+
+Now we can also put each of the most informative plots into a single graphic as subplots for ease of comparison.
+
+```{r lifetime_plots, exercise = TRUE}
+lifetime_plots <- subplot(
+  r_plot,
+  style(R0_plot , showlegend = FALSE),
+  style(MLE_plot, showlegend = FALSE),
+  style(T_plot  , showlegend = FALSE),
+  nrows  = 2,
+  shareX = TRUE,
+  titleY = TRUE
+)
+lifetime_plots
+```
+
+Run the chunk below to save a local copy.
+
+```{r save_lifetime_plots, exercise = TRUE, exercise.setup = "lifetime_plots"}
+saveWidget(lifetime_plots, "zoopop_plots/lifetime_plots.html")
 ```
 
 
-Now we can plot just this pedigree on its own.
+### Age-Specific Variables
 
-```{r}
-ped_plot <- plot_pedigree(pedigree, studbook, labs_spec = TRUE)
-ped_plot
+#### Lx1
+
+***Lx1*** is the proportion of individuals surviving past the initial age interval (relative to *N1*), used to assess survival beyond infancy.
+
+```{r Lx1_plot, exercise = TRUE}
+Lx1_plot <- demog_age_bysex(studbook, list(span = 5), "Lx1")
+Lx1_plot
 ```
 
-And to download this as a single html file we can use the function below.
+Run the chunk below to save a local copy.
 
-```{r}
-pedsave(pedigree, studbook, labs_spec = TRUE)
+```{r save_Lx1_plot, exercise = TRUE, exercise.setup = "Lx1_plot"}
+saveWidget(Lx1_plot, "zoopop_plots/Lx1_plot.html")
 ```
 
-#### Interactive Pedigree Graphics
+#### Qx
 
-We can also adapt `visNetwork` functions to render javascript-based graphics to represent the pedigree relationships built by `pedtools.`
+***Qx*** is age-specific mortality rate, calculated as the number of deaths in the age interval divided by the risk population (in this case, *Nx*).
 
-```{r}
-vis_pedigree <- visPed_tree(studbook, pedigree)
-vis_pedigree
+```{r Qx_plot, exercise = TRUE}
+Qx_plot <- demog_age_bysex(studbook, list(span = 5), "Qx")
+Qx_plot
 ```
 
-You can use the optional parameter `variable` in that function to change the filtering options in the dropdown menu to highlight a subset of the nodes.
+Run the chunk below to save a local copy.
 
-```{r}
-vis_pedigree_year <- visPed_tree(studbook, pedigree, variable = "Year_birth")
-vis_pedigree_year
+```{r save_Qx_plot, exercise = TRUE, exercise.setup = "Qx_plot"}
+saveWidget(Qx_plot, "zoopop_plots/Qx_plot.html")
 ```
 
-The best way to save interactive graphics like this is as an html file. `visNetwork` already has a function to make this easy.
+#### ex
 
-```{r}
-visSave(vis_pedigree,
-        "zoopop_plots/visPed_tree_tutorial.html", 
-        selfcontained = TRUE)
+***ex*** is the life expectancy at age x: the average number of additional years an individual is expected to live if they survive to age x. Calculated as `ex = Tx/Lx`.
+
+```{r ex_plot, exercise = TRUE}
+ex_plot <- demog_age_bysex(studbook, list(span = 5), "ex")
+ex_plot
+```
+
+Run the chunk below to save a local copy.
+
+```{r save_ex_plot, exercise = TRUE, exercise.setup = "ex_plot"}
+saveWidget(ex_plot, "zoopop_plots/ex_plot.html")
+```
+
+#### Fx
+
+***Fx*** is the age-specific reproductive output, computed as *Mx* multiplied by *Lx.* It represents the expected number of offspring produced by an individual at age x.
+
+```{r Fx_plot, exercise = TRUE}
+Fx_plot <- demog_age_bysex(studbook, list(span = 5), "Fx")
+Fx_plot
+```
+
+Run the chunk below to save a local copy.
+
+```{r save_Fx_plot, exercise = TRUE, exercise.setup = "Fx_plot"}
+saveWidget(Fx_plot, "zoopop_plots/Fx_plot.html")
 ```
 
 
