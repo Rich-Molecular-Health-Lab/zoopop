@@ -4,14 +4,10 @@
 \alias{plot_census}
 \title{Plot population trends based on census data calculated from studbook}
 \usage{
-plot_census(studbook, caption = NULL, number = NULL)
+plot_census(studbook)
 }
 \arguments{
 \item{studbook}{A data frame containing studbook metadata.}
-
-\item{caption}{The caption text for the plot (optional)}
-
-\item{number}{The optional number to add to the plot caption (e.g., Figure 1.)}
 }
 \value{
 A plotly plot object

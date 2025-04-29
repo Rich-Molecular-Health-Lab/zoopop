@@ -231,3 +231,78 @@ caption_plotly <- function(caption, number) {
   )
   return(caption)
 }
+
+#' Generate a list with descriptions for values calculated by demographic functions
+#'
+#' @return nested list to annotate visuals
+#' @export
+#'
+#'
+demog_variables <- function() {
+  list(
+    N0          = list(title = "N Births", descr = "Total number of individuals at age 0 (i.e. total births in the cohort)."),
+    N1          = list(title = "N at 1 year", descr = "Total number of individuals at age 1 (i.e. total surviving first year)."),
+    Qx_1        = list(title = "Infant mortality rate", descr = "Infant mortality rate, computed as the ratio of observed deaths in the first age class to the initial cohort size."),
+    R0          = list(title = "Net Reproductive Rate", descr = "Net Reproductive Rate, the sum of reproductive outputs (`Fx`) across all ages for the cohort."),
+    MLE         = list(title = "Age at 50% survivorship", descr = "Maximum Likelihood Estimate of the age at 50% survivorship; the interpolated age where survival drops to 50%."),
+    T           = list(title = "Mean generation time", descr = "Mean generation time (average age of reproduction), computed as `T = Tnum / R0` where `Tnum` is the age‐weighted reproductive output."),
+    repro_first = list(title = "Min age of observed reproduction", descr = "The minimum age at which reproduction is observed, indicating the onset of reproductive activity."),
+    repro_last  = list(title = "Max age of observed reproduction", descr = "The maximum age at which reproduction is observed in the cohort."),
+    age_max     = list(title = "Max age of death", descr = "The highest age at which mortality is recorded, representing the maximum observed lifespan in the cohort."),
+    lambda      = list(title = "Population growth rate", descr = "Finite rate of increase calculated as \u03BB `= R0^(1/T)`, representing the population growth rate."),
+    r           = list(title = "Intrinsic population growth rate", descr = "Intrinsic rate of increase: the continuous growth rate of the population, computed as `r = log(\u03BB)`, where \u03BB is the finite rate of increase."),
+    Age         = list(title = "Age in years", descr = "The age or age class (in years) for which all other demographic values are computed."),
+    Births      = list(title = "N Births", descr = "The number of births recorded for that specific age class."),
+    Deaths      = list(title = "N Deaths", descr = "The number of deaths occurring within that age interval (or age class)."),
+    Nx          = list(title = "N alive at age start", descr = "The number of individuals alive at the beginning of the age class x."),
+    Qx_risk     = list(title = "N alive at age start", descr = "The total number of individuals alive at the start of age x (`Nx`)"),
+    Qx          = list(title = "Age-specific mortality rate", descr = "The age-specific mortality rate, calculated as the number of deaths in the age interval divided by the risk population (often `Nx`)."),
+    Lx          = list(title = "Proportion surviving to age x (rel. to `N0`)", descr = "The proportion of the original cohort (`N0`) surviving to age x. It is a cumulative survival function."),
+    Lx1         = list(title = "Proportion surviving to age x (rel. to `N1`)", descr = "The proportion of individuals surviving past the initial age interval (relative to `N1`), used to assess survival beyond infancy."),
+    Px          = list(title = "Probability of survival to next age", descr = "The probability of surviving from age x to the next age class, computed as the ratio of survivors in the next age class to `Nx.`"),
+    ex          = list(title = "Life expectancy at age x", descr = "Life expectancy at age x: the average number of additional years an individual is expected to live if they survive to age x. Typically calculated as `ex = Tx/Lx`."),
+    Tx          = list(title = "Total future lifetime", descr = "Total future lifetime: the sum of survivors (`Lx`) from age x onward, representing the total person-years lived by the cohort beyond age x."),
+    Mx_risk     = list(title = "N alive at age start", descr = "The total number of individuals capable of reproducing at age x (`Nx`)"),
+    Mx          = list(title = "Age-specific fertility rate", descr = "The age-specific fertility rate (or production rate), representing the per-individual contribution of offspring at each age (often adjusted by 1/2 for biparental reproduction)."),
+    Fx          = list(title = "Age-specific reproductive output", descr = "The age-specific reproductive output, computed as `Mx` multiplied by `Lx.` It represents the expected number of offspring produced by an individual at age x."),
+    numT        = list(title = "Reproductive output weighted by age", descr = "The product of `Age` and `Fx`, which weights the reproductive output by age and is used to compute the mean generation time (`T`).")
+  )
+}
+
+#' Generate formatted y-axis labels for demographic variables
+#'
+#' @return nested list of strings to use for labeling y-variables
+#' @export
+#'
+#' @param variable Name of the column containing an age-specific variable to map onto the y-axis
+#' options for variable: `N0`, `N1`, `R0`, `T`, `MLE`, `Repro_first`, `Repro_last`, `age_max`, `lambda`, `r`,
+#' `Births`, `Deaths`, `Nx`, `Qx`, `Lx`, `Lx1`, `Px`, `ex`, `Tx`, `Mx`, `Fx`
+#'
+#' @importFrom stringr str_wrap str_replace_all
+#' @importFrom purrr map_depth keep_at pluck
+#'
+demog_ylab <- function(variable) {
+  var <- demog_variables() %>% keep_at(variable)
+  y_short <- str_replace_all(variable, "lambda", "\u03BB")
+  y_name  <- pluck(var, 1, "title")
+  y_descr <- pluck(var, 1, "descr") %>%
+    str_wrap(., width = 80) %>%
+    str_replace_all(., "/n", "<br>")
+  ylab <- paste0("<b>", y_short, "</b> (", y_name, ")") %>%
+    str_wrap(., width = 40) %>%
+    str_replace_all(., "/n", "<br>")
+  y <- list(
+    short     = y_short,
+    lab       = ylab,
+    descr     = y_descr
+  )
+  return(y)
+}
+
+
+
+
+
+
+
+

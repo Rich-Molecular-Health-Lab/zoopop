@@ -398,7 +398,7 @@ studbook_react <- function(df, df_cols = NULL, colors = NULL, ...) {
       )
   }
   if (is.null(colors)) { colors <- set_colors() }
-  df <- distinct(df, df_cols)
+  df <- df %>% distinct(c(df_cols))
   reactable::reactable(
     df,
     fullWidth           = TRUE,

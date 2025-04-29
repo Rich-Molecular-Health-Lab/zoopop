@@ -46,9 +46,7 @@ learnr::run_tutorial("demography", package = "zoopop")
 ## Setup
 
 ```{r setup, context="setup"}
-here::i_am("inst/tutorials/demography/demography.Rmd")
 library(conflicted)
-library(here)
 library(knitr)
 library(learnr)
 library(plotly)
@@ -66,17 +64,16 @@ knitr::opts_chunk$set(
 conflicts_prefer(lubridate::interval)
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(purrr::set_names)
-studbook <- read_csv(here("inst/extdata/studbook.csv"))
+studbook <- read_csv("../../extdata/studbook.csv")
 ```
 
 
 # Studbook Overview
 
-Let's create a graphical table to summarize our studbook data loaded in the setup chunk.
+Let's take a quick glance at our studbook data loaded in the setup chunk.
 
 ```{r studbook-view, exercise=TRUE}
-studbook.tbl <- studbook %>% studbook_react(groupBy = "Status")
-studbook.tbl
+print(studbook)
 ```
 
 ## Summarize Demographic Trends
@@ -98,6 +95,7 @@ Now we will use annual birth counts to follow the standard method for computing 
 
 ```{r cohort_demog, exercise = TRUE}
 demog <- cohort_demog(studbook, cohort_params = list(span = 5))
+print(demog)
 ```
 
 ### Summary Table

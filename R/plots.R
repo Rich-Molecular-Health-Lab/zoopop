@@ -3,8 +3,6 @@
 #' Plot population trends based on census data calculated from studbook
 #'
 #' @param studbook A data frame containing studbook metadata.
-#' @param caption The caption text for the plot (optional)
-#' @param number The optional number to add to the plot caption (e.g., Figure 1.)
 #'
 #' @return A plotly plot object
 #' @export
@@ -12,7 +10,7 @@
 #' @importFrom dplyr rowwise mutate
 #' @importFrom plotly add_trace layout plot_ly config
 #'
-plot_census <- function(studbook, caption = NULL, number = NULL) {
+plot_census <- function(studbook) {
   colors    <- set_colors()
   fill.col <- lighten_palette(colors, "26")
   symbols  <- set_markers()
@@ -69,9 +67,6 @@ trace_census <- function(p, col, ...) {
             fillcolor  = fillcolor,
             ...)
 }
-if (is.null(caption)) { caption <- "Population Census by Year" }
-if (is.null(number)) { number <- "" }
-title <- caption_plotly(caption = caption, number = number)
 plot <- plot_ly(census_df,
                 type       = "scatter",
                 mode       = "lines",
@@ -83,7 +78,6 @@ plot <- plot_ly(census_df,
   config(displaylogo = FALSE) %>%
   plotly::layout(
     plot_bgcolor = "#ffffff",
-    title        = title,
     yaxis        = list(
       title      = "Count",
       showgrid   = FALSE,
@@ -130,8 +124,12 @@ hline <- function(y = 0, color = "#444444") {
 #' @return A plotly object
 #' @export
 #'
+#' @importFrom dplyr filter rename distinct mutate select across pull
+#' @importFrom forcats fct_recode fct_relevel
 #' @importFrom plotly layout plot_ly add_trace
-#'
+#' @importFrom stringr str_extract_all
+#' @importFrom tidyselect where
+#' @importFrom purrr map_depth
 #'
 #'
 plot_demog <- function(studbook, cohort_params = NULL, variable) {
@@ -179,66 +177,69 @@ plot_demog <- function(studbook, cohort_params = NULL, variable) {
     overall_val <- pull(total, y_var) %>% unique()
   }
 
+
+  ylab <- demog_ylab(variable)
+  hover_template <-  paste0(ylab$short, " = %{y}<br><i>Birth Year %{x}</i>")
+
   plot <- plot_ly() %>%
     add_trace(
-      data        = filter(data, Sex == "Overall"),
-      x           = ~Cohort_years,
-      y           = ~y_var,
-      split       = ~Sex,
-      name        = ~Sex,
-      color       = I(colors$t),
-      type        = "scatter",
-      mode        = "lines+markers",
-      line        = list(shape       = "spline",
-                         smoothing   = 0.8,
-                         width       = 3),
-      marker      = list(symbol      = "x",
-                         size        = 5),
-      connectgaps = TRUE
+      data          = filter(data, Sex == "Overall"),
+      x             = ~Cohort_years,
+      y             = ~y_var,
+      split         = ~Sex,
+      name          = ~Sex,
+      hovertemplate = hover_template,
+      color         = I(colors$t),
+      type          = "scatter",
+      mode          = "lines+markers",
+      line          = list(shape       = "spline",
+                           smoothing   = 1.3,
+                           width       = 3),
+      marker        = list(symbol      = "x",
+                           size        = 7),
+      connectgaps   = TRUE
     ) %>%
     add_trace(
-      data        = filter(data, Sex == "Males"),
-      x           = ~Cohort_years,
-      y           = ~y_var,
-      split       = ~Sex,
-      name        = ~Sex,
-      color       = I(colors$m),
-      opacity     = 0.6,
-      type        = "scatter",
-      mode        = "lines+markers",
-      line        = list(shape       = "spline",
-                         smoothing   = 0.8,
-                         width       = 1),
-      marker      = list(symbol      = "square",
-                         size        = 8),
-      connectgaps = TRUE
+      data          = filter(data, Sex == "Males"),
+      x             = ~Cohort_years,
+      y             = ~y_var,
+      split         = ~Sex,
+      name          = ~Sex,
+      hovertemplate = hover_template,
+      color         = I(colors$m),
+      opacity       = 0.8,
+      type          = "scatter",
+      mode          = "lines+markers",
+      line          = list(shape       = "spline",
+                           smoothing   = 1.3,
+                           width       = 1),
+      marker        = list(symbol      = "square",
+                           size        = 8),
+      connectgaps   = TRUE
     ) %>%
     add_trace(
-      data        = filter(data, Sex == "Females"),
-      x           = ~Cohort_years,
-      y           = ~y_var,
-      split       = ~Sex,
-      name        = ~Sex,
-      color       = I(colors$f),
-      opacity     = 0.6,
-      type        = "scatter",
-      mode        = "lines+markers",
-      line        = list(shape       = "spline",
-                         smoothing   = 0.8,
-                         width       = 1),
-      marker      = list(symbol      = "circle",
-                         size        = 8),
-      connectgaps = TRUE
+      data          = filter(data, Sex == "Females"),
+      x             = ~Cohort_years,
+      y             = ~y_var,
+      split         = ~Sex,
+      name          = ~Sex,
+      hovertemplate = hover_template,
+      color         = I(colors$f),
+      opacity       = 0.8,
+      type          = "scatter",
+      mode          = "lines+markers",
+      line          = list(shape       = "spline",
+                           smoothing   = 1.3,
+                           width       = 1),
+      marker        = list(symbol      = "circle",
+                           size        = 8),
+      connectgaps   = TRUE
     ) %>%
     plotly::layout(
       plot_bgcolor = "transparent",
       shapes       = list(
         list(
           type         = "line",
-          showlegend   = TRUE,
-          name         = "All Sexes/Cohorts",
-          text         = "All Sexes/Cohorts",
-          label        = "All Sexes/Cohorts",
           xref         = "paper",
           yref         = "y",
           x0           = 0,
@@ -246,14 +247,14 @@ plot_demog <- function(studbook, cohort_params = NULL, variable) {
           y0           = overall_val,
           y1           = overall_val,
           line         = list(dash    = "dot",
-                              width   = 1,
+                              width   = 1.5,
                               color   = "#44444480")
           ),
           list(
             type         = "line",
             xref         = "paper",
             yref         = "paper",
-            x0           = 0 + 0.01,
+            x0           = 0,
             x1           = 1,
             y0           = 0,
             y1           = 0,
@@ -263,29 +264,43 @@ plot_demog <- function(studbook, cohort_params = NULL, variable) {
           type         = "line",
           xref         = "paper",
           yref         = "paper",
-          x0           = 0 + 0.01,
-          x1           = 0 + 0.01,
+          x0           = 0,
+          x1           = 0,
           y0           = 0,
           y1           = 1,
           line         = list(width = 0.5)
         )
       ),
       annotations  = list(
-        text       = paste0("All Cohorts<br>= ", round(overall_val, digits = 2)),
-        font       = list(size   = 10,
-                          family = "sans serif",
-                          style  = "italic",
-                          opacity = 0.7),
-        x          = 1,
-        y          = overall_val,
-        xref       = "paper",
-        yref       = "y"    ,
-        xanchor    = "right",
-        yanchor    = "bottom",
-        showarrow  = FALSE
+        list(
+          text       = paste0("All Cohorts<br>", ylab$short, " = ", round(overall_val, digits = 2)),
+          hovertext  = "Intercept represents value calculated across all generations/cohorts/sexes",
+          font       = list(size   = 12,
+                            family = "sans serif",
+                            style  = "italic",
+                            opacity = 0.7),
+          x          = 1,
+          y          = overall_val,
+          xref       = "paper",
+          yref       = "y"    ,
+          xanchor    = "right",
+          yanchor    = "bottom",
+          showarrow  = FALSE
+          ),
+        list(
+          text       = "",
+          hovertext  = ylab$descr,
+          x          = 0,
+          y          = 0.5,
+          xref       = "paper",
+          yref       = "paper",
+          xanchor    = "right",
+          yanchor    = "center",
+          align      = "center",
+          showarrow  = FALSE)
       ),
       yaxis        = list(
-        title      = paste0(variable),
+        title      = ylab$lab,
         showgrid   = FALSE,
         zeroline   = FALSE,
         showlegend = TRUE,
@@ -317,8 +332,13 @@ plot_demog <- function(studbook, cohort_params = NULL, variable) {
 #' @return A plotly object
 #' @export
 #'
-#' @importFrom plotly layout plot_ly add_trace
-#'
+#' @importFrom dplyr filter rename distinct mutate select across pull bind_rows
+#' @importFrom forcats fct_recode fct_relevel
+#' @importFrom paletteer paletteer_c
+#' @importFrom plotly layout plot_ly add_trace animation_opts animation_slider add_annotations
+#' @importFrom purrr set_names
+#' @importFrom stringr str_extract_all
+#' @importFrom tidyselect where
 #'
 #'
 plot_demog_age <- function(studbook, cohort_params = NULL, variable, sex = NULL) {
@@ -359,25 +379,42 @@ plot_demog_age <- function(studbook, cohort_params = NULL, variable, sex = NULL)
     Overall = "x"
   )
 
+
+  ylab <- demog_ylab(variable)
+  hover_template <-  paste0(ylab$short, " = %{y}<br>Age = %{x} yrs")
+
   range_y <- list(min(data$y_var), max(data$y_var))
   range_x <- list(0, max(data$Age))
 
+
+
   plot <- plot_ly() %>%
     add_trace(
-      data   = filter(data, Sex == sex),
-      x      = ~Age,
-      y      = ~y_var,
-      split  = ~Cohort_period,
-      frame  = ~Cohort_years,
-      name   = ~Cohort_years,
-      color  = ~Cohort_period,
-      colors = cohort_colors,
-      type   = "scatter",
-      mode   = "lines+markers",
-      line   = list(shape = "spline"),
-      marker = list(opacity = 0.5,
-                    symbol  = ~Sex,
-                    symbols = symbols)
+      data          = filter(data, Sex == sex),
+      x             = ~Age,
+      y             = ~y_var,
+      split         = ~Cohort_period,
+      frame         = ~Cohort_years,
+      name          = ~Cohort_years,
+      hovertemplate = hover_template,
+      color         = ~Cohort_period,
+      colors        = cohort_colors,
+      type          = "scatter",
+      mode          = "lines+markers",
+      line          = list(shape = "spline"),
+      marker        = list(opacity = 0.5,
+                           symbol  = ~Sex,
+                           symbols = symbols)
+    ) %>%
+    add_annotations(
+      x         = 0.5,
+      y         = 1,
+      text      = paste0(sex),
+      xref      = "paper",
+      yref      = "paper",
+      xanchor   = "center",
+      yanchor   = "bottom",
+      showarrow = FALSE
     ) %>%
     animation_opts(frame = 2000, transition = 1000, redraw = FALSE) %>%
     animation_slider(currentvalue =
@@ -392,19 +429,20 @@ plot_demog_age <- function(studbook, cohort_params = NULL, variable, sex = NULL)
                        )
     ) %>%
     add_annotations(
-      x         = 0.5,
-      y         = 1,
-      text      = paste0(sex),
-      xref      = "paper",
-      yref      = "paper",
-      xanchor   = "center",
-      yanchor   = "bottom",
-      showarrow = FALSE
-      ) %>%
+      x          = 0,
+      y          = 0.5,
+      text       = "",
+      hovertext  = ylab$descr,
+      xref       = "paper",
+      yref       = "paper",
+      xanchor    = "center",
+      yanchor    = "bottom",
+      showarrow  = FALSE
+    ) %>%
     plotly::layout(
       plot_bgcolor = "#ffffff",
       yaxis        = list(
-        title      = paste0(variable),
+        title      = ylab$lab,
         range      = range_y,
         showgrid   = FALSE,
         showline   = TRUE,
@@ -436,8 +474,13 @@ plot_demog_age <- function(studbook, cohort_params = NULL, variable, sex = NULL)
 #' @return A plotly object
 #' @export
 #'
-#' @importFrom plotly layout plot_ly add_trace
-#'
+#' @importFrom dplyr filter rename distinct mutate select across pull bind_rows
+#' @importFrom forcats fct_recode fct_relevel
+#' @importFrom paletteer paletteer_c
+#' @importFrom plotly layout plot_ly add_trace animation_opts animation_slider add_annotations
+#' @importFrom purrr set_names
+#' @importFrom stringr str_extract_all
+#' @importFrom tidyselect where
 #'
 #'
 demog_age_bysex <- function(studbook, cohort_params = NULL, variable) {
@@ -471,6 +514,10 @@ demog_age_bysex <- function(studbook, cohort_params = NULL, variable) {
     set_names(cohorts) %>%
     unlist()
 
+
+  ylab <- demog_ylab(variable)
+  hover_template <-  paste0(ylab$short, " = %{y}<br>Age = %{x} yrs")
+
   range_y <- list(min(data$y_var), max(data$y_var))
   range_x <- list(0, max(data$Age))
 
@@ -482,6 +529,7 @@ demog_age_bysex <- function(studbook, cohort_params = NULL, variable) {
       split   = ~Cohort_period,
       frame   = ~Cohort_years,
       name    = ~Sex,
+      hovertemplate = hover_template,
       color   = ~Cohort_period,
       colors  = cohort_colors,
       opacity = 0.2,
@@ -497,6 +545,7 @@ demog_age_bysex <- function(studbook, cohort_params = NULL, variable) {
       split   = ~Cohort_period,
       frame   = ~Cohort_years,
       name    = ~Sex,
+      hovertemplate = hover_template,
       color   = ~Cohort_period,
       colors  = cohort_colors,
       opacity = 0.2,
@@ -512,6 +561,7 @@ demog_age_bysex <- function(studbook, cohort_params = NULL, variable) {
       split   = ~Cohort_period,
       frame   = ~Cohort_years,
       name    = ~Sex,
+      hovertemplate = hover_template,
       color   = ~Cohort_period,
       colors  = cohort_colors,
       type    = "scatter",
@@ -530,10 +580,21 @@ demog_age_bysex <- function(studbook, cohort_params = NULL, variable) {
                               weight  = 800)
                        )
     ) %>%
+    add_annotations(
+      x          = 0,
+      y          = 0.5,
+      text       = "",
+      hovertext  = ylab$descr,
+      xref       = "paper",
+      yref       = "paper",
+      xanchor    = "center",
+      yanchor    = "bottom",
+      showarrow  = FALSE
+    ) %>%
     plotly::layout(
       plot_bgcolor = "#ffffff",
       yaxis        = list(
-        title      = paste0(variable),
+        title      = ylab$lab,
         range      = range_y,
         showgrid   = FALSE,
         showline   = TRUE,

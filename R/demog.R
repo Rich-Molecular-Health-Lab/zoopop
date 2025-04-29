@@ -28,7 +28,6 @@ cohort_defaults <- function(studbook, cohort_params = list(NULL, ...)) {
 #'
 #' @param studbook A data frame of studbook data produced by \code{read_studbook}.
 #' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
-#' @param include_sex Whether to include sex as a grouping var (optional)
 #' @return A joined and restructured tibble
 #' @export
 #'
@@ -79,7 +78,7 @@ make_cohorts <- function(studbook, cohort_params = NULL) {
 #' @return A joined and restructured tibble
 #' @export
 #'
-#' @importFrom dplyr pull select left_join filter join_by mutate if_else
+#' @importFrom dplyr select left_join filter join_by mutate if_else
 #' @importFrom lubridate year today
 #' @importFrom stringr str_glue
 #' @importFrom magrittr %>%
@@ -113,7 +112,7 @@ studbook_cohorts <- function(studbook, cohort_params = NULL) {
 #' @return A joined and restructured tibble
 #' @export
 #'
-#' @importFrom dplyr pull select distinct left_join filter join_by mutate bind_rows
+#' @importFrom dplyr select distinct left_join filter join_by mutate bind_rows
 #' @importFrom lubridate year today
 #' @importFrom stringr str_glue
 #' @importFrom magrittr %>%
@@ -146,7 +145,7 @@ special_cohorts <- function(studbook, cohort_params = NULL) {
 #' @return A joined and restructured tibble
 #' @export
 #'
-#' @importFrom dplyr pull left_join mutate if_else distinct
+#' @importFrom dplyr left_join mutate if_else distinct relocate
 #' @importFrom lubridate year today
 #' @importFrom stringr str_sub
 #' @importFrom magrittr %>%
@@ -310,7 +309,7 @@ demog_tab <- function(df) {
 #' @return A life table with survivorship, mortality, and reproductive values that can be used as a footer row for comparison across cohorts
 #' @export
 #'
-#' @importFrom dplyr mutate if_else first nth lead ungroup rowwise select
+#' @importFrom dplyr mutate bind_rows arrange group_by summarize n ungroup if_else lead first nth rowwise desc select distinct filter
 demog_ungrouped <- function(studbook) {
   count_births(studbook = studbook) %>%
     mutate(Sex = "Total") %>%
@@ -400,7 +399,7 @@ demog_ungrouped <- function(studbook) {
 #' @return Condensed summary table with lambda and vital rates (3 rows - Females, Males, and Overall stats)
 #' @export
 #'
-#' @importFrom dplyr select mutate across filter distinct arrange
+#' @importFrom dplyr filter mutate select across ungroup distinct
 lifetime_total <- function(studbook) {
   demog_ungrouped(studbook = studbook)  %>%
     filter(Sex == "Overall") %>%
@@ -433,7 +432,8 @@ lifetime_total <- function(studbook) {
 #' @return Nested, condensed summary table with stats calculated by age in list-cols
 #' @export
 #'
-#' @importFrom dplyr select mutate across filter distinct arrange
+#' @importFrom dplyr distinct filter mutate select group_by summarize ungroup
+#' @importFrom forcats fct_recode
 demog_summary_total <- function(studbook) {
   demog_ungrouped(studbook = studbook)  %>%
     distinct()  %>%
@@ -511,7 +511,8 @@ demog_summary_total <- function(studbook) {
 #' @return Nested summary table with stats calculated by age in list-cols
 #' @export
 #'
-#' @importFrom dplyr select mutate across filter distinct arrange
+#' @importFrom dplyr mutate arrange case_match select group_by summarize ungroup
+#' @importFrom forcats fct_recode fct_relevel
 demog_summary <- function(studbook, cohort_params = NULL) {
   colors   <- set_colors()
   params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)

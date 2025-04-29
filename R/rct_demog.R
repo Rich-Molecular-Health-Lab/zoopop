@@ -26,10 +26,8 @@ rows_bySex <- function() {
 #' Create a list of values to use as a footer row in a reactable summary of demographic variables
 #'
 #' @param studbook Studbook tibble
-
-#' @importFrom htmlwidgets JS
-#' @importFrom dynutils tibble_as_list
-#' @importFrom purrr list_flatten
+#'
+#' @importFrom dplyr ungroup mutate select
 #'
 #' @export
 #'
@@ -59,12 +57,9 @@ foot_demog <- function(studbook) {
 #' Create a reactable summary table of demographic stats using a formatted studbook
 #'
 #' @importFrom reactable reactable colDef
-#' @importFrom reactablefmtr save_reactable_test
-#' @importFrom dplyr mutate arrange select group_by distinct
+#' @importFrom dplyr mutate ungroup select bind_rows
 #' @importFrom htmlwidgets prependContent JS
 #' @importFrom htmltools HTML tags
-#' @importFrom forcats fct_recode  fct_relevel
-#' @importFrom tibble column_to_rownames
 #'
 #' @export
 #'

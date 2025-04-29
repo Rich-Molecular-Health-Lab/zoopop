@@ -10,8 +10,6 @@ make_cohorts(studbook, cohort_params = NULL)
 \item{studbook}{A data frame of studbook data produced by \code{read_studbook}.}
 
 \item{cohort_params}{A named list of the parameter values to use for cohorts (\code{Year_min}, \code{Year_max}, \code{span}, \code{age_max}) (optional)}
-
-\item{include_sex}{Whether to include sex as a grouping var (optional)}
 }
 \value{
 A joined and restructured tibble
