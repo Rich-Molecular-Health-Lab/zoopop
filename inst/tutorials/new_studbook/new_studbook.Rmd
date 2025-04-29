@@ -10,13 +10,10 @@ runtime: shiny_prerendered
 
 ---
 
-```{r setup, include=FALSE}
+```{r setup, context="setup", include=FALSE}
 library(conflicted)
-library(here)
 library(knitr)
 library(learnr)
-library(paletteer)
-library(shiny)
 library(tidyverse)
 library(zoopop)
 knitr::opts_chunk$set(
@@ -28,9 +25,11 @@ knitr::opts_chunk$set(
   eval     = TRUE,
   comment  = ""
 )
-conflicts_prefer(lubridate::interval)
-conflicts_prefer(dplyr::filter)
-i_am("inst/tutorials/new_studbook/new_studbook.Rmd")
+tutorial_options(
+  exercise.eval             = FALSE,
+  exercise.blanks           = TRUE,
+  exercise.startover        = TRUE
+)
 ```
 
 
@@ -111,92 +110,89 @@ Now you have all three files that you need to perform the rest of the data wrang
 
 ## Process Data
 
-### Institutions
+### Institutions \& BTPs
 
-*Note that this code will automatically export an updated version of the dataset to the second path provided as a parameter.*
+These functions will automatically export an updated version of a location or BTP table to the second path provided as a parameter.
 
-```{r}
-locations <- read_locations(here("inst/extdata/locations_original.csv"), 
-                            here("inst/extdata/locations.csv"))
-```
+a. **Enter a path/file name in the blanks below before running this code.**
 
-### Breeding and Transfer Plans
+  - *Make sure you enter this string in quotation marks and use the `.csv` extension at the end of the file name*
 
-*Note that this code will automatically export an updated version of the dataset to the second path provided as a parameter.*
 
-```{r}
-btp <- read_btp(here("inst/extdata/btp_original.csv"),
-                here("inst/extdata/btp.csv"), locations)
+```{r locs_btp, exercise=TRUE}
+locations <- read_locations("data/locations_original.csv", "locations.csv")
+
+btp       <- read_btp("data/btp_original.csv", "btp.csv", locations)
+
+DT::datatable(locations)
+DT::datatable(btp)
 ```
 
 ### Studbook
 
-For this function we can optionally assign values to a column `name_spec` for just some individuals we will want to highlight in different tables and figures. Any individuals not mentioned will present empty cells for that column, and if nothing is assigned then all rows will be empty values for this column.\
-\
-In our case, we want two subjects to stand out, so we will give them a name value for the `name_spec` column formatted as a vector as shown below.
+- For this function we can optionally assign values to a column `name_spec` for just some individuals we will want to highlight in different tables and figures. Any individuals not mentioned will present empty cells for that column, and if nothing is assigned then all rows will be empty values for this column.
 
-```{r}
-names     <- c(Culi = "2652", Warble = "2677")
-```
+- In our case, we want two subjects to stand out, so we will give them a name value for the `name_spec` column formatted as a vector as shown below.
 
-\
-We can also account for any new births that are implied but not documented in the dataset using the optional parameter `add_births`. This should be provided as a list in the example list called `new_births` shown below.
+- We can also account for any new births that are implied but not documented in the dataset using the optional parameter `add_births`. This should be provided as a list in the example list called `new_births` shown below.
 
-```{r}
-new_births <- list(
-  "2024-06-01" = list(
-  ID   = 2738,
-  Sire = 2622,
-  Dam  = 2630
-))
-```
+  a. **Add numeric values to represent an individual's studbook ID, their Sire's ID, and their Dam's ID**
+  b.  **Add an estimated date of birth as the list item name `"yyy-mm-dd"` (use quotations around entire string).**
 
+```{r load_studbook, exercise=TRUE, exercise.setup = "locs_btp"}
+locations  <- locations
+btp        <- btp
+names      <- c(Culi = "2652", Warble = "2677")
 
-```{r}
+new_births <- list("2024-06-01" = list(ID   = 2738, Sire = 2622, Dam  = 2630))
+
 studbook  <- read_studbook(
-  here("inst/extdata/studbook_original.csv"), 
+  "data/studbook_original.csv", 
   locations, 
   btp, 
   names      = names,
   add_births = new_births
   )
+
+DT::datatable(studbook)
 ```
+
 
 ### Fill Missing Parentage
 
 I created the function below to assist with scanning the studbook for missing Sire or Dam values for non-founders. It will produce a list of tibbles named by the individuals' ID. Each row of the tibble represents all males (if searching sires) or females (if searching dams) present at their birth institution during their birth year. Use this to screen for likely paternity/maternity assignments.
 
-```{r}
+```{r missing, exercise=TRUE, exercise.setup = "load_studbook"}
 missing_dads <- find_parent(studbook, locations, "sire")
 missing_moms <- find_parent(studbook, locations, "dam")
 ```
 
 The list used for the `add_all_hypotheticals` function includes all individuals still missing a parental assignment. It will create hypothetical rows of data and ID's as placeholders in the studbook for optimal functioning with pedigree-based R packages/analyses. The function returns a version of the original studbook with these new rows and the parental assignments included.
 
-```{r}
-hyp_defs <- list(
-  sires = list(
-    c(1045, 1046), 
-    2108, 
-    c(2423, 2424),
-    2717),
-  dams  = list(2717)
-  )
-```
+a.  **Look through the lists created above and decide which individuals need hypothetical sire and dam assignments.**
 
+  - Add those as numeric studbook ID values in the `hyp_defs` list.
+  - All individuals needing a hypothetical father should be listed under the `sires` sub-list, and those needing a hypothetical mother should be the `dams` sub-list.
+    - *If they need both, they should appear in each sub-list.*
+  - If two individuals should share one parent, place their values inside `c()` to create a vector of both studbook IDs.
+  - Individuals that need a unique parent should be separated by commas as individual list items.
 
-```{r}
+```{r fill_missing, exercise=TRUE, exercise.setup = "load_studbook"}
+hyp_defs <- list(sires = list(c(1045, 1046), 2108,  c(2423, 2424), 2717), dams  = list(2717))
+
 studbook_revised <- studbook %>%
-  mutate(Sire = case_match(ID, 
-                           1047 ~ 1012, 
-                           .default = Sire)) %>%
+  mutate(Sire = case_match(ID, 1047 ~ 1012, .default = Sire)) %>%
   add_all_hypotheticals(hyp_defs, locations)
+
+DT::datatable(studbook_revised)
 ```
 
-Now we will export this version of the studbook as a csv file that we can use for other workflows and functions in this package.
+Now you can export this version of the studbook as a `csv` file to carry forward for other workflows and functions in this package.*
 
-```{r}
-write_csv(studbook_revised, here("inst/extdata/studbook.csv"))
+  - **See example code below*
+
+```
+write_csv(studbook_revised, "studbook.csv")
 ```
 
 

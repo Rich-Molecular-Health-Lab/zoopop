@@ -35,22 +35,13 @@ I am loading one `csv` file created with the `zoopop` package, which is derived 
 
 >To create a formatted studbook file that will work with the other `zoopop` functions, see the `new_studbook` tutorial. I followed the steps in that tutorial to create `studbook.csv`, which we will read in as a tibble in the setup chunk below.
 
-```{r eval=FALSE}
-learnr::run_tutorial("pedigree", package = "zoopop")
-```
-
-
 ## Setup
 
 ```{r setup, context="setup"}
-here::i_am("inst/tutorials/pedigree/pedigree.Rmd")
 library(conflicted)
-library(here)
 library(knitr)
 library(learnr)
-library(shiny)
 library(tidyverse)
-library(visNetwork)
 library(zoopop)
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -61,10 +52,7 @@ knitr::opts_chunk$set(
   eval     = TRUE,
   comment  = ""
 )
-conflicts_prefer(lubridate::interval)
-conflicts_prefer(dplyr::filter)
-conflicts_prefer(purrr::set_names)
-studbook <- read_csv(here("inst/extdata/studbook.csv"))
+studbook <- read_csv("data/studbook.csv")
 ```
 
 
@@ -91,51 +79,39 @@ ped_series_plots
 
 For many of our operations, it will be easier to work with one pedigree object of interest and ignore the pedigrees not currently represented in the breeding population. The function below helps you extract the pedigree of interest as its own object with a new name.
 
-```{r}
+```{r extract_ped, exercise = TRUE, exercise.setup = "pedigree"}
 pedigree <- extract_pedigree(ped_series, "_comp1", "Contemporary")
 ```
 
 You could also take out the guesswork and cut some of the steps above by using the function below. This function starts with your studbook, builds a pedigree series, and then automatically extracts the pedigree with the deepest multi-generational representation. This is convenient for creating a single pedigree object without leaving unnecessary objects lingering in your environment.
 
-```{r}
+```{r quick_ped, exercise = TRUE}
 pedigree <- featured_pedigree(studbook)
 ```
 
 
 Now we can plot just this pedigree on its own.
 
-```{r}
+```{r ped_plot, exercise = TRUE, exercise.setup = "quick_ped"}
 ped_plot <- plot_pedigree(pedigree, studbook, labs_spec = TRUE)
 ped_plot
 ```
 
-And to download this as a single html file we can use the function below.
-
-```{r}
-pedsave(pedigree, studbook, labs_spec = TRUE)
-```
 
 #### Interactive Pedigree Graphics
 
 We can also adapt `visNetwork` functions to render javascript-based graphics to represent the pedigree relationships built by `pedtools.`
 
-```{r}
+```{r visped, exercise = TRUE, exercise.setup = "quick_ped"}
 vis_pedigree <- visPed_tree(studbook, pedigree)
 vis_pedigree
 ```
 
 You can use the optional parameter `variable` in that function to change the filtering options in the dropdown menu to highlight a subset of the nodes.
 
-```{r}
+```{r visped_year, exercise = TRUE, exercise.setup = "quick_ped"}
 vis_pedigree_year <- visPed_tree(studbook, pedigree, variable = "Year_birth")
 vis_pedigree_year
 ```
 
-The best way to save interactive graphics like this is as an html file. `visNetwork` already has a function to make this easy.
-
-```{r}
-visSave(vis_pedigree,
-        "zoopop_plots/visPed_tree_tutorial.html", 
-        selfcontained = TRUE)
-```
 

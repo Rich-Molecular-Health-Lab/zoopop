@@ -37,12 +37,6 @@ I am loading one `csv` file created with the `zoopop` package, which is derived 
 
 >To create a formatted studbook file that will work with the other `zoopop` functions, see the `new_studbook` tutorial. I followed the steps in that tutorial to create `studbook.csv`, which we will read in as a tibble in the setup chunk below.
 
-
-```{r eval=FALSE}
-learnr::run_tutorial("demography", package = "zoopop")
-```
-
-
 ## Setup
 
 ```{r setup, context="setup"}
@@ -61,9 +55,6 @@ knitr::opts_chunk$set(
   eval     = TRUE,
   comment  = ""
 )
-conflicts_prefer(lubridate::interval)
-conflicts_prefer(dplyr::filter)
-conflicts_prefer(purrr::set_names)
 studbook <- read_csv("../../extdata/studbook.csv")
 ```
 
@@ -105,12 +96,6 @@ demog_summary <- rct_demog(studbook, cohort_params = list(span = 5))
 demog_summary
 ```
 
-The code below will also save a local, html version of this table. If you would rather save a png version, change the file extension. *Note that saving as `png` will disable the html feature where you can hover over the headings or cells for more information.*
-
-
-```{r save_demog_summary, exercise = TRUE, exercise.setup = "demog_summary"}
-reactablefmtr::save_reactable_test(demog_summary, "zoopop_plots/demographic_summary.html")
-```
 
 ### Lifetime Stats
 
@@ -125,11 +110,6 @@ lambda_plot  <- plot_demog(studbook, list(span = 5), "lambda")
 lambda_plot
 ```
 
-Run the chunk below to save a local copy.
-
-```{r save_lambda, exercise = TRUE, exercise.setup = "lambda"}
-saveWidget(lambda_plot, "zoopop_plots/lambda_plot.html")
-```
 
 #### r
 
@@ -140,13 +120,6 @@ r_plot <- plot_demog(studbook, list(span = 5), "r")
 r_plot
 ```
 
-Run the chunk below to save a local copy.
-
-```{r save_r_plot, exercise = TRUE, exercise.setup = "r_plot"}
-saveWidget(r_plot, "zoopop_plots/r_plot.html")
-```
-
-
 #### N1
 
 ***N1*** is the total number of individuals at age 1 (i.e. total surviving first year).
@@ -154,12 +127,6 @@ saveWidget(r_plot, "zoopop_plots/r_plot.html")
 ```{r N1_plot, exercise = TRUE}
 N1_plot <- plot_demog(studbook, list(span = 5), "N1")
 N1_plot
-```
-
-Run the chunk below to save a local copy.
-
-```{r save_N1_plot, exercise = TRUE, exercise.setup = "N1_plot"}
-saveWidget(N1_plot, "zoopop_plots/N1_plot.html")
 ```
 
 #### R0
@@ -171,11 +138,6 @@ R0_plot <- plot_demog(studbook, list(span = 5), "R0")
 R0_plot
 ```
 
-Run the chunk below to save a local copy.
-
-```{r save_R0_plot, exercise = TRUE, exercise.setup = "R0_plot"}
-saveWidget(R0_plot, "zoopop_plots/R0_plot.html")
-```
 
 #### MLE
 
@@ -186,11 +148,6 @@ MLE_plot <- plot_demog(studbook, list(span = 5), "MLE")
 MLE_plot
 ```
 
-Run the chunk below to save a local copy.
-
-```{r save_MLE_plot, exercise = TRUE, exercise.setup = "MLE_plot"}
-saveWidget(MLE_plot, "zoopop_plots/MLE_plot.html")
-```
 
 #### T
 
@@ -201,11 +158,6 @@ T_plot <- plot_demog(studbook, list(span = 5), "T")
 T_plot
 ```
 
-Run the chunk below to save a local copy.
-
-```{r save_T_plot, exercise = TRUE, exercise.setup = "T_plot"}
-saveWidget(T_plot, "zoopop_plots/T_plot.html")
-```
 #### Array Plots
 
 Now we can also put each of the most informative plots into a single graphic as subplots for ease of comparison.
@@ -223,12 +175,6 @@ lifetime_plots <- subplot(
 lifetime_plots
 ```
 
-Run the chunk below to save a local copy.
-
-```{r save_lifetime_plots, exercise = TRUE, exercise.setup = "lifetime_plots"}
-saveWidget(lifetime_plots, "zoopop_plots/lifetime_plots.html")
-```
-
 
 ### Age-Specific Variables
 
@@ -241,11 +187,6 @@ Lx1_plot <- demog_age_bysex(studbook, list(span = 5), "Lx1")
 Lx1_plot
 ```
 
-Run the chunk below to save a local copy.
-
-```{r save_Lx1_plot, exercise = TRUE, exercise.setup = "Lx1_plot"}
-saveWidget(Lx1_plot, "zoopop_plots/Lx1_plot.html")
-```
 
 #### Qx
 
@@ -256,11 +197,6 @@ Qx_plot <- demog_age_bysex(studbook, list(span = 5), "Qx")
 Qx_plot
 ```
 
-Run the chunk below to save a local copy.
-
-```{r save_Qx_plot, exercise = TRUE, exercise.setup = "Qx_plot"}
-saveWidget(Qx_plot, "zoopop_plots/Qx_plot.html")
-```
 
 #### ex
 
@@ -271,11 +207,6 @@ ex_plot <- demog_age_bysex(studbook, list(span = 5), "ex")
 ex_plot
 ```
 
-Run the chunk below to save a local copy.
-
-```{r save_ex_plot, exercise = TRUE, exercise.setup = "ex_plot"}
-saveWidget(ex_plot, "zoopop_plots/ex_plot.html")
-```
 
 #### Fx
 
@@ -284,12 +215,6 @@ saveWidget(ex_plot, "zoopop_plots/ex_plot.html")
 ```{r Fx_plot, exercise = TRUE}
 Fx_plot <- demog_age_bysex(studbook, list(span = 5), "Fx")
 Fx_plot
-```
-
-Run the chunk below to save a local copy.
-
-```{r save_Fx_plot, exercise = TRUE, exercise.setup = "Fx_plot"}
-saveWidget(Fx_plot, "zoopop_plots/Fx_plot.html")
 ```
 
 

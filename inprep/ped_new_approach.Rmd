@@ -20,6 +20,11 @@ document()
 install()
 ```
 
+```{r}
+learnr::run_tutorial("new_studbook", package = "zoopop")
+```
+
+
 ```{r include=FALSE}
 library(conflicted)
 library(here)
