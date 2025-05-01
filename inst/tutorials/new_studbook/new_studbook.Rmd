@@ -165,6 +165,8 @@ I created the function below to assist with scanning the studbook for missing Si
 ```{r missing, exercise=TRUE, exercise.setup = "load_studbook"}
 missing_dads <- find_parent(studbook, locations, "sire")
 missing_moms <- find_parent(studbook, locations, "dam")
+display_pos_parents(missing_dads, "sire")
+display_pos_parents(missing_moms, "dam")
 ```
 
 The list used for the `add_all_hypotheticals` function includes all individuals still missing a parental assignment. It will create hypothetical rows of data and ID's as placeholders in the studbook for optimal functioning with pedigree-based R packages/analyses. The function returns a version of the original studbook with these new rows and the parental assignments included.

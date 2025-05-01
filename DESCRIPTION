@@ -18,7 +18,6 @@ Imports:
     tidyr,
     tibble,
     tidyselect,
-    knitr,
     rlang,
     visNetwork,
     plotly,
@@ -31,11 +30,12 @@ Imports:
     paletteer,
     reactablefmtr,
     scales,
+    DT,
+    bslib,
     tippy
 Suggests: 
     conflicted,
-    DT,
-    dataui,
+    knitr,
     fontawesome,
     learnr,
     rmarkdown,

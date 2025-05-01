@@ -54,4 +54,123 @@ studbook <- read_csv(here("inst/extdata/studbook.csv"))
 pedigree <- featured_pedigree(studbook)
 ```
 
+```{r}
+make_leslie <- function(F, S) {
+  n <- length(F)
+  A <- matrix(0, n, n)
+  A[1, ] <- F
+  A[cbind(2:n, 1:(n-1))] <- S[1:(n-1)]
+  A
+}
+```
+
+```{r}
+demog <- demog_summary(studbook, list(span = 5))
+str(demog)
+```
+
+
+
+```{r}
+proj_input <- proj_matrix(studbook, list(span = 5))
+
+```
+
+```{r}
+# Assume proj_input already has these columns:
+#  - Projection: an (11×n_age) numeric matrix (rows = t=0..10, cols = ages)
+#  - F          : a length‐n_age numeric vector of Fx
+#  - Qx         : a length‐n_age numeric vector of Qx
+
+proj_input <- proj_input %>%
+  mutate(
+    # 1) Births per time‐step = sum over age of N_t(age) * F(age)
+    Births_proj = map2(Projection, F, ~ as.numeric(.x %*% .y)),
+    
+    # 2) Deaths per time‐step = sum over age of N_t(age) * Qx(age)
+    Deaths_proj = map2(Projection, Qx, ~ as.numeric(.x %*% .y)),
+    
+    # 3) Survivors by age over time = simply the projection itself,
+    #    or you can extract column‐by‐column as list of trajectories:
+    survivors_ts = Projection,
+    
+    # 4) You could even compute life expectancy at t=0..10 by
+    #    rebuilding a life table on each projected N_t:
+    ex_ts = map(
+      Projection,
+      function(mat) {
+        # mat is a (t+1 × n_age) matrix; take first row for t=0 or any row you like:
+        N0_t <- mat[1, ]
+        # recalc Lx1, etc., then use your existing demog_tab + annotate_lambda on
+        # a one‐row life‐table built from N0_t.  This is more involved, but doable.
+      }
+    )
+  )
+```
+
+
+
+```{r}
+# 5) merge it back onto your full demog for display:
+demog_with_proj <- demog %>%
+  left_join(
+    proj_input %>%
+      select(Cohort_years, Sex, Projection),
+    by = c("Cohort_years", "Sex")
+  )
+
+demog_with_proj <- demog_with_proj %>%
+  mutate(
+    N_t1 = map_dbl(Projection, ~ .x["1", "0"]),  # pop at t=1, age=0
+    N_t5 = map_dbl(Projection, ~ .x["5", "0"])   # pop at t=5, age=0
+  )
+```
+
+
+
+```{r}
+test <- demog_summary(studbook, list(span = 5)) %>%
+  filter(Sex == "Overall") %>%
+  summarise(
+    Ages = list(Age[[1]]),    # Age is itself a list-column, so [[1]] pulls the numeric
+    S    = list(Px[[1]]),     # Px[[1]] is numeric; wrap in list() to make a list‐col
+    F    = list(Fx[[1]]),
+    N0   = list(Nx[[1]]),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    Leslie    = map2(F, S, make_leslie),  
+    Projection = map2(
+      Leslie, N0,
+      ~ pop.projection(.x, .y, 10)$n      # $n is a numeric matrix
+    )
+  )
+
+# sanity check
+str(test$Leslie[[1]])     # should be a numeric matrix n×n
+str(test$Projection[[1]]) # should be a numeric (t+1)×n matrix
+```
+
+
+```{r}
+test <- demog_summary(studbook, list(span = 5)) %>%
+  filter(Sex == "Overall") %>%
+  reframe(
+    Cohort_years = Cohort_years,  # carry the cohort ID
+    Ages         = Age,           # list-of-numeric
+    S            = Px,            # list-of-numeric
+    F            = Fx,            # list-of-numeric
+    N0           = Nx             # list-of-numeric (your starting pop by age)
+  )
+
+
+test_2 <- test %>%
+  mutate(
+    Leslie    = map2(F, S, make_leslie),
+    Projection = map2(
+      Leslie, N0,
+      ~ pop.projection(.x, .y, 10)$n  # a (10+1)×n matrix
+    )
+  )
+```
 

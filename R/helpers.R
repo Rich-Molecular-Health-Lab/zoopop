@@ -299,29 +299,6 @@ demog_ylab <- function(variable) {
   return(y)
 }
 
-#' Generate a shiny-ui element that displays possible parentage assignments when constructing a new studbook
-#'
-#' @return Shiny html object that renders as collapsed accordion panels
-#' @export
-#'
-#' @param list A list of tibbles containing matched parent details. Each tibble corresponds to an individual and lists potential parent matches.
-#' Create this list using the `find_parent` function
-#' @param parent A string to label the output with which parent is represented (optional)
-#'
-#' @importFrom bslib accordion accordion_panel page_fluid card
-#' @importFrom htmltools tagList h4
-#' @importFrom DT datatable
-#' @importFrom purrr imap
-#'
-display_pos_parents <- function(list, parent = NULL) {
-  if (is.null(parent)) { parent <- "parent" }
-  panel <- function(list) {
-    imap(list, \(x, idx) accordion_panel(title = paste0(idx, " (N", nrow(x), ")"), tagList(card(datatable(x)))))
-  }
-  display <- page_fluid(h4(paste0("Possible ", parent, "s")), accordion(open = FALSE, panel(list)))
-
-  return(display)
-}
 
 
 
