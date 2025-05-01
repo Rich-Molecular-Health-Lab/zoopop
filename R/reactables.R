@@ -9,8 +9,7 @@
 #'
 #' @param df A data frame passed to the reactable column definition
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom htmltools div span tagList
 #' @importFrom knitr image_uri
@@ -44,8 +43,7 @@ ID <- function(df) {
 }#'
 #' @param df A data frame passed to the reactable column definition
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom htmlwidgets JS
 #' @importFrom reactable colDef
@@ -86,8 +84,7 @@ Status <- function() {
 #' @param df A data frame passed to the reactable column definition
 #' @param colors A named list of colors to use (must a list of colors named `seq`, a list of colors named `div`, one color for `f` and one for `m`)
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom htmltools img
@@ -126,8 +123,7 @@ exclude <- function(df, colors) {
 #'
 #' @param df A data frame passed to the reactable column definition
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom htmltools div span
 #' @importFrom reactable colDef
@@ -149,8 +145,7 @@ Loc_birth <- function(df) {
 #'
 #' @param df A data frame passed to the reactable column definition
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom htmltools div span
 #' @importFrom reactable colDef
@@ -174,8 +169,7 @@ Loc_last <- function(df) {
 #' @param name The name of the column to be shown in the table
 #' @param colors A named list of colors to use (must a list of colors named `seq`, a list of colors named `div`, one color for `f` and one for `m`)
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr bubble_grid
@@ -198,8 +192,7 @@ bubble_count <- function(df, name, colors) {
 #' @param df A data frame passed to the reactable column definition
 #' @param colors A named list of colors to use (must a list of colors named `seq`, a list of colors named `div`, one color for `f` and one for `m`)
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr pill_buttons
@@ -216,8 +209,7 @@ Sire <- function(df, colors) {
 #' @param df A data frame passed to the reactable column definition
 #' @param colors A named list of colors to use (must a list of colors named `seq`, a list of colors named `div`, one color for `f` and one for `m`)
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr pill_buttons
@@ -234,8 +226,7 @@ Dam <- function(df, colors) {
 #' @param df A data frame passed to the reactable column definition
 #' @param colors A named list of colors to use (must a list of colors named `seq`, a list of colors named `div`, one color for `f` and one for `m`)
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr data_bars
@@ -259,8 +250,7 @@ Rel_Contribution <- function(df, colors) {
 #' @param df A data frame passed to the reactable column definition
 #' @param colors A named list of colors to use (must a list of colors named `seq`, a list of colors named `div`, one color for `f` and one for `m`)
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr data_bars
@@ -291,14 +281,33 @@ inbred <- function(df, colors) {
 #' Column definitions for full studbook summary tables
 #'
 #' @param df A filtered founder summary dataframe
+#' @param df_cols Columns to include in table (default - )
 #' @param colors A named list of colors to use (optional - must a list of colors named `seq`, a list of colors named `div`, one color for `f` and one for `m`)
 #' @return A named list of column definitions
 #' @export
 #'
 #' @importFrom reactable colDef
 #' @importFrom purrr keep_at
-studbook_cols <- function(df, df_cols, colors = NULL) {
+studbook_cols <- function(df, df_cols = NULL, colors = NULL) {
   if (is.null(colors)) { colors <- set_colors() }
+  if (is.null(df_cols)) { df_cols <- c(
+    "Status"              ,
+    "ID"                  ,
+    "name_spec"           ,
+    "exclude"             ,
+    "Loc_birth"           ,
+    "Loc_last"            ,
+    "Sire"                ,
+    "Dam"                 ,
+    "Date_birth"          ,
+    "age_last"            ,
+    "Date_last"           ,
+    "Sex"                 ,
+    "Institution_birth"   ,
+    "iconLoc_birth"       ,
+    "Institution_last"    ,
+    "iconLoc_last"
+  ) }
   list(
     Status              = Status(),
     ID                  = ID(df),
@@ -325,15 +334,15 @@ studbook_cols <- function(df, df_cols, colors = NULL) {
     Country_last        = colDef(show = FALSE),
     iconLoc_last        = colDef(show = FALSE),
     colorLoc_last       = colDef(show = FALSE),
-    sex_ped           = colDef(show = FALSE),
-    sex_kinship       = colDef(show = FALSE)
+    sex_ped             = colDef(show = FALSE),
+    sex_kinship         = colDef(show = FALSE)
   ) %>% keep_at(., c(df_cols))
 }
 
 #' Column groupings for living summary table
 #'
 #' @return A named list of column groups
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colGroup
 kin.group <- function() {
@@ -343,7 +352,7 @@ kin.group <- function() {
 #' Column definitions for kinship summary tables
 #'
 #' @return A named list of column definitions
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom reactable colFormat
@@ -377,28 +386,7 @@ kin.cols <- function() {
 #' @importFrom reactable reactable
 #' @importFrom dplyr distinct
 studbook_react <- function(df, df_cols = NULL, colors = NULL, ...) {
-  if (is.null(df_cols)) {
-    df_cols <- c(
-      "Status"              ,
-      "ID"                  ,
-      "name_spec"           ,
-      "exclude"             ,
-      "Loc_birth"           ,
-      "Loc_last"            ,
-      "Sire"                ,
-      "Dam"                 ,
-      "Date_birth"          ,
-      "age_last"            ,
-      "Date_last"           ,
-      "Sex"                 ,
-      "Institution_birth"   ,
-      "iconLoc_birth"       ,
-      "Institution_last"    ,
-      "iconLoc_last"
-      )
-  }
   if (is.null(colors)) { colors <- set_colors() }
-  df <- df %>% distinct(c(df_cols))
   reactable::reactable(
     df,
     fullWidth           = TRUE,

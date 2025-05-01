@@ -1,7 +1,6 @@
 # coldefs.R
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom tippy tippy
@@ -25,8 +24,7 @@ Cohort_years <- function() {
 }
 
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom tippy tippy
@@ -56,8 +54,7 @@ Sex <- function() {
 #' @param data Dataframe passed to reactable table function
 #' @param seq_by A numerical input that determines what number each icon represents.
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactablefmtr icon_assign
 #' @importFrom scales label_number
@@ -77,8 +74,7 @@ icon_cells <- function(data, seq_by) {
 #'
 #' @param data Dataframe passed to reactable table function
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactablefmtr react_sparkline
 #' @importFrom dataui dui_for_reactable
@@ -97,8 +93,7 @@ sparkline_cells <- function(data) {
 
 #'
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom shiny icon
@@ -121,8 +116,7 @@ intrins_rate <- function() {
 #'
 #' @param data Dataframe passed to reactable table function
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr color_scales
@@ -142,8 +136,7 @@ n1 <- function(data) {
 #'
 #' @param data Dataframe passed to reactable table function
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom tippy tippy
@@ -159,8 +152,7 @@ nx <- function(data) {
 #'
 #' @param data Dataframe passed to reactable table function
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom tippy tippy
@@ -176,8 +168,7 @@ lx1 <- function(data) {
 #'
 #' @param data Dataframe passed to reactable table function
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom tippy tippy
@@ -193,8 +184,7 @@ px <- function(data) {
 #'
 #' @param data Dataframe passed to reactable table function
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom tippy tippy
@@ -211,8 +201,7 @@ qx <- function(data) {
 #'
 #' @param data Dataframe passed to reactable table function
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr icon_assign
@@ -232,8 +221,7 @@ MLE <- function(data) {
 #'
 #' @param data Dataframe passed to reactable table function
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom tippy tippy
@@ -250,8 +238,7 @@ tx <- function(data) {
 #'
 #' @param data Dataframe passed to reactable table function
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom tippy tippy
@@ -269,8 +256,7 @@ ex <- function(data) {
 #'
 #' @param data Dataframe passed to reactable table function
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom htmltools div
@@ -302,8 +288,7 @@ age_ranges <- function(data) {
 #'
 #' @param data Dataframe passed to reactable table function
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr icon_assign
@@ -322,8 +307,7 @@ gen_T <- function(data) {
 #'
 #' @param data Dataframe passed to reactable table function
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom tippy tippy
@@ -339,8 +323,7 @@ mx <- function(data) {
 #'
 #' @param data Dataframe passed to reactable table function
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom tippy tippy
@@ -357,8 +340,7 @@ fx <- function(data) {
 #'
 #' @param data Dataframe passed to reactable table function
 #'
-#' @rdname react_cols
-#' @export
+#' @noRd
 #'
 #' @importFrom reactable colDef
 #' @importFrom reactablefmtr data_bars

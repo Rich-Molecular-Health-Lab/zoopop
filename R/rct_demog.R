@@ -5,7 +5,7 @@
 #'
 #' @importFrom htmlwidgets JS
 #'
-#' @export
+#' @noRd
 #'
 rows_bySex <- function() {
   JS("
@@ -29,7 +29,7 @@ rows_bySex <- function() {
 #'
 #' @importFrom dplyr ungroup mutate select
 #'
-#' @export
+#' @noRd
 #'
 foot_demog <- function(studbook) {
   footer <- demog_summary_total(studbook = studbook) %>%

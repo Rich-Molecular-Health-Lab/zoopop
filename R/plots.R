@@ -103,6 +103,9 @@ return(plot)
 #' @param color Line color as a hex string
 #' @return A plotly-compatible line specification
 #' @keywords internal
+#'
+#' @noRd
+#'
 hline <- function(y = 0, color = "#444444") {
   list(
     type = "line",
