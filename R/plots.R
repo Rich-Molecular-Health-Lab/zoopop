@@ -258,7 +258,7 @@ plot_demog_attr <- function(data, variable, age_spec = TRUE) {
 #' @return A list of parameter values to use in plotly plots of demographic variables
 #' @keywords internal
 #'
-#' @noRd
+#' @export
 #'
 #' @importFrom dplyr mutate rename pull
 #' @importFrom forcats fct_recode fct_relevel
@@ -291,7 +291,9 @@ demog_intercept <- function(studbook, cohort_params = NULL, variable, log_trans 
     overall_val <- pull(total, y_var) %>% unique()
   }
 
-  return(overall_val)
+  result <- round(overall_val, digits = 2)
+
+  return(result)
 }
 
 #' Generate a list of shapes and annotations to use in plotly plots of demographic variables
@@ -303,7 +305,7 @@ demog_intercept <- function(studbook, cohort_params = NULL, variable, log_trans 
 #' @return A list of parameter values to use in plotly plots of demographic variables
 #' @keywords internal
 #'
-#' @noRd
+#' @export
 #'
 plot_demog_annot <- function(attr, overall_val = NULL, age_spec = TRUE, log_trans = FALSE) {
   xline <- list(
@@ -365,7 +367,7 @@ plot_demog_annot <- function(attr, overall_val = NULL, age_spec = TRUE, log_tran
 
     annotations <- list(
       list(
-        text       = paste0("All Cohorts<br>", attr$ylab$short, " = ", round(overall_val, digits = 2)),
+        text       = paste0("All Cohorts<br>", attr$ylab$short, " = ", overall_val),
         hovertext  = "Intercept represents value calculated across all generations/cohorts/sexes",
         font       = list(size   = 12,
                           family = "sans serif",
@@ -573,7 +575,7 @@ plot_demog <- function(studbook, cohort_params = NULL, variable, log_trans = FAL
   data        <- plot_demog_prep(studbook, params, variable, log_trans, age_spec = FALSE)
   attr        <- plot_demog_attr(data, variable, age_spec = FALSE)
   overall_val <- demog_intercept(studbook, params, variable, log_trans)
-  layer       <- plot_demog_annot(attr, overall_val, age_spec = FALSE, log_trans)
+  layer       <- plot_demog_annot(attr = attr, overall_val = overall_val, age_spec = FALSE, log_trans)
 
   plot <- plot_ly() %>%
     plot_demog_trace(., data, attr, age_spec = FALSE) %>%
