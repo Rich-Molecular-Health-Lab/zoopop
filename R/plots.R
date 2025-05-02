@@ -212,9 +212,8 @@ plot_demog_prep <- function(studbook, cohort_params = NULL, variable, log_trans 
 #' options for lifetime variable: `N0`, `N1`, `R0`, `T`, `MLE`, `Repro_first`, `Repro_last`, `age_max`, `lambda`, `r`
 #' @param age_spec Logical indicating whether to create list for age-specific version or not
 #' @return A list of parameter values to use in plotly plots of demographic variables
-#' @keywords internal
 #'
-#' @noRd
+#' @export
 #'
 #' @importFrom dplyr pull
 #' @importFrom paletteer paletteer_c
