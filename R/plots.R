@@ -224,6 +224,8 @@ plot_demog_attr <- function(data, variable, age_spec = TRUE) {
   cohorts       <- data %>% pull(Cohort_period) %>% unique()
   cohort_colors <- as.list(paletteer_c("harrypotter::ronweasley2", length(cohorts))) %>%
     set_names(cohorts) %>% unlist()
+  symbols       <- c(Males = "square", Females = "circle", Overall = "x")
+  ylab          <- demog_ylab(variable)
 
   if (isTRUE(age_spec)) {
     hover_template <-  paste0(ylab$short, " = %{y}<br>Age = %{x} yrs")
@@ -234,8 +236,6 @@ plot_demog_attr <- function(data, variable, age_spec = TRUE) {
     range_x <- list(NULL)
     col     <- list(Males = colors$m, Females = colors$f, Overall = colors$t) %>% unlist()
   }
-  symbols       <- c(Males = "square", Females = "circle", Overall = "x")
-  ylab          <- demog_ylab(variable)
   range_y       <- list(min(data$y_var), max(data$y_var))
 
   attr <- list(hover_template = hover_template,
