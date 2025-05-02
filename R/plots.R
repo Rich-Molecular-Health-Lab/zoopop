@@ -431,7 +431,7 @@ animate_generations <- function(plot, data, attr) {
 #'
 #' @importFrom plotly add_trace
 #'
-plot_demog_trace <- function(plot, data, attr, primary = TRUE, age_spec = TRUE, sex = c("Males", "Females", "Overall")) {
+plot_demog_trace <- function(plot, data, attr, primary = TRUE, age_spec = TRUE, sex = NULL) {
   smoothing <- 1.3
   mark_size <- 8
   shape     <- "spline"
@@ -446,7 +446,7 @@ plot_demog_trace <- function(plot, data, attr, primary = TRUE, age_spec = TRUE, 
   } else if (sex == "Overall") {
         dash <- "solid"
         data <- filter(data, Sex == "Overall")
-  } else {
+  } else if (is.null(sex)) {
     dash <- "solid"
     data <- data
         }

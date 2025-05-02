@@ -4,14 +4,7 @@
 \alias{plot_demog_trace}
 \title{Add a scatter trace for a demographic variable to a plotly object}
 \usage{
-plot_demog_trace(
-  plot,
-  data,
-  attr,
-  primary = TRUE,
-  age_spec = TRUE,
-  sex = c("Males", "Females", "Overall")
-)
+plot_demog_trace(plot, data, attr, primary = TRUE, age_spec = TRUE, sex = NULL)
 }
 \arguments{
 \item{plot}{A plotly object}
