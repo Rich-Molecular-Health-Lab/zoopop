@@ -291,7 +291,7 @@ demog_intercept <- function(studbook, cohort_params = NULL, variable, log_trans 
     overall_val <- pull(total, y_var) %>% unique()
   }
 
-  result <- round(overall_val, digits = 2)
+  result <- mean(overall_val) %>% round(digits = 2)
 
   return(result)
 }
