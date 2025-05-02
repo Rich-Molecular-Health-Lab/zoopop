@@ -458,7 +458,7 @@ plot_demog_trace <- function(plot, data, attr, primary = TRUE, age_spec = TRUE, 
   }
   if (isTRUE(age_spec)) {
    out <- add_trace(
-      plot          = plot,
+      p             = plot,
       data          = data,
       x             = ~Age,
       y             = ~y_var,
@@ -477,7 +477,7 @@ plot_demog_trace <- function(plot, data, attr, primary = TRUE, age_spec = TRUE, 
     )
   } else if (isFALSE(age_spec)) {
    out <- add_trace(
-      plot          = plot,
+      p             = plot,
       data          = data,
       x             = ~Cohort_years,
       y             = ~y_var,
@@ -541,7 +541,7 @@ plot_demog_layout <- function(plot, layer, attr, age_spec = TRUE) {
   }
 
   out <- plotly::layout(
-    plot         = plot,
+    p            = plot,
     plot_bgcolor = "transparent",
     shapes       = layer$shapes,
     annotations  = layer$annotations,
