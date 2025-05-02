@@ -384,7 +384,7 @@ plot_demog_annot <- function(attr, overall_val = NULL, age_spec = TRUE, log_tran
     )
   }
 
-  layers <- list(shapes, annotations)
+  layers <- list(shapes = shapes, annotations = annotations)
 
   return(layers)
 }
