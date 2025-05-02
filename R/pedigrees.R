@@ -51,7 +51,7 @@ build_ped_series <- function(studbook) {
 #'
 #' @param pedigree_series A list of pedigree objects.
 #' @return A character string representing the selected pedigree name.
-#' @export
+#' @noRd
 #' @importFrom pedtools generations
 choose_pedigree <- function(pedigree_series) {
   depth <- as.list(generations(pedigree_series, what = "compMax"))
@@ -188,7 +188,7 @@ ped_subnucs <- function(pedigree) {
 #' @param studbook A data frame containing studbook metadata.
 #' @param pedigree A pedigree object.
 #' @return A data frame with metadata including IDs, labels, groups, and tooltips.
-#' @export
+#' @noRd
 #' @importFrom dplyr mutate select rename left_join case_when if_else join_by filter dense_rank arrange
 #' @importFrom forcats fct_inorder fct_relabel
 #' @importFrom tidyselect starts_with
@@ -328,7 +328,7 @@ ped_metadata <- function(studbook, pedigree) {
 #' @param studbook A data frame containing studbook metadata.
 #' @param pedigree A pedigree object.
 #' @return A data frame of nodes for subnuclei connections.
-#' @export
+#' @noRd
 #' @importFrom dplyr filter slice_tail mutate select bind_rows arrange group_by ungroup
 #' @importFrom tidyr fill
 nodes_connectors <- function(studbook, pedigree) {
@@ -420,7 +420,7 @@ nodes_connectors <- function(studbook, pedigree) {
 #' @param studbook A data frame containing studbook metadata.
 #' @param pedigree A pedigree object.
 #' @return A data frame of nodes for different visualization tools.
-#' @export
+#' @noRd
 #' @importFrom dplyr select bind_rows mutate arrange distinct row_number relocate
 ped_nodes <- function(studbook, pedigree) {
   ped_metadata(studbook = studbook, pedigree = pedigree) %>%
@@ -463,7 +463,7 @@ ped_nodes <- function(studbook, pedigree) {
 #' @param studbook A data frame containing studbook metadata.
 #' @param pedigree A pedigree object.
 #' @return A data frame of edges for subnuclei connections.
-#' @export
+#' @noRd
 #' @importFrom dplyr filter select left_join if_else arrange distinct mutate
 #' @importFrom stringr str_ends str_replace_all
 edges_links <- function(studbook, pedigree) {
@@ -513,7 +513,7 @@ edges_links <- function(studbook, pedigree) {
 #' @param studbook A data frame containing studbook metadata.
 #' @param pedigree A pedigree object.
 #' @return A data frame of edges for subnuclei connections.
-#' @export
+#' @noRd
 #' @importFrom dplyr filter arrange select distinct mutate
 #' @importFrom tidyr pivot_wider
 edges_hubs <- function(studbook, pedigree) {
@@ -560,7 +560,7 @@ edges_hubs <- function(studbook, pedigree) {
 #' @param studbook A data frame containing studbook metadata.
 #' @param pedigree A pedigree object.
 #' @return A data frame of edges for mom connections.
-#' @export
+#' @noRd
 #' @importFrom dplyr filter arrange select distinct mutate
 #' @importFrom tidyr pivot_wider
 edges_moms <- function(studbook, pedigree) {
@@ -606,7 +606,7 @@ edges_moms <- function(studbook, pedigree) {
 #' @param studbook A data frame containing studbook metadata.
 #' @param pedigree A pedigree object.
 #' @return A data frame of edges for mom connections.
-#' @export
+#' @noRd
 #' @importFrom dplyr filter arrange select distinct mutate
 #' @importFrom tidyr pivot_wider
 edges_dads <- function(studbook, pedigree) {
@@ -652,7 +652,7 @@ edges_dads <- function(studbook, pedigree) {
 #' @param studbook A data frame containing studbook metadata.
 #' @param pedigree A pedigree object.
 #' @return A data frame of edges for mom connections.
-#' @export
+#' @noRd
 #' @importFrom dplyr filter arrange select distinct mutate
 #' @importFrom tidyr pivot_wider
 edges_kids <- function(studbook, pedigree) {
@@ -703,7 +703,7 @@ edges_kids <- function(studbook, pedigree) {
 #' @param studbook A data frame containing studbook metadata.
 #' @param pedigree A pedigree object.
 #' @return A data frame of edges linking parents with their children.
-#' @export
+#' @noRd
 #' @importFrom dplyr bind_rows arrange mutate select
 ped_edges <- function(studbook, pedigree) {
   links <- edges_links(studbook = studbook, pedigree = pedigree)
