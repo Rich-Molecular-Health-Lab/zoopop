@@ -4,12 +4,14 @@
 \alias{proj_matrix}
 \title{Add projection matrices to demographic summary table}
 \usage{
-proj_matrix(studbook, cohort_params = NULL)
+proj_matrix(studbook, cohort_params = NULL, iterations = 20)
 }
 \arguments{
 \item{studbook}{Studbook tibble}
 
 \item{cohort_params}{A named list of the parameter values to use for cohorts (\code{Year_min}, \code{Year_max}, \code{span}, \code{age_max}) (optional)}
+
+\item{iterations}{Number of year-steps to project out through iterations (default = 20 years)}
 }
 \value{
 Summary table with projection values

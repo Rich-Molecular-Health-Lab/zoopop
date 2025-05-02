@@ -18,6 +18,7 @@ make_leslie <- function(F, S) {
 #'
 #' @param studbook Studbook tibble
 #' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
+#' @param iterations Number of year-steps to project out through iterations (default = 20 years)
 #' @return Summary table with projection values
 #' @export
 #'
@@ -25,7 +26,7 @@ make_leslie <- function(F, S) {
 #' @importFrom popbio pop.projection
 #' @importFrom purrr map2 map_dbl
 #'
-proj_matrix <- function(studbook, cohort_params = NULL) {
+proj_matrix <- function(studbook, cohort_params = NULL, iterations = 20) {
   params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
   demog <- demog_summary(studbook, params)
   proj <- demog %>%
@@ -42,11 +43,11 @@ proj_matrix <- function(studbook, cohort_params = NULL) {
       Projection = map2(
         Leslie, N0,
         function(A, n0) {
-          pr  <- popbio::pop.projection(A, n0, iterations = 10)
+          pr  <- popbio::pop.projection(A, n0, iterations = iterations)
           mat <- t(pr$stage.vector)
           full <- rbind(`0` = n0, mat)
           colnames(full) <- as.character(0:(ncol(full)-1))
-          rownames(full) <- 0:10
+          rownames(full) <- 0:iterations
           full
         }
       )
@@ -114,13 +115,14 @@ proj_ts <- function(proj_df, variables = c("Fx","Mx","Qx","Px","Tx","ex")) {
 #'
 #' @param studbook Studbook tibble
 #' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
+#' @param iterations Number of year-steps to project out through iterations (default = 20 years)
 #' @return Summary table with projection values, including full `time x age` grids and total time-series list-cols for each age-specific variable
 #' @export
 #'
 #'
-projections_studbook <- function(studbook, cohort_params = NULL) {
+projections_studbook <- function(studbook, cohort_params = NULL, iterations = 20) {
   params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
-  proj   <- proj_matrix(studbook, params) %>% proj_ts()
+  proj   <- proj_matrix(studbook, params, iterations) %>% proj_ts()
   return(proj)
 }
 

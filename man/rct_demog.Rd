@@ -4,7 +4,16 @@
 \alias{rct_demog}
 \title{Create a reactable summary table of demographic stats using a formatted studbook}
 \usage{
-rct_demog(studbook, cohort_params = NULL)
+rct_demog(studbook, cohort_params = NULL, data = NULL, colDefs = NULL)
+}
+\arguments{
+\item{studbook}{Studbook tibble}
+
+\item{cohort_params}{A named list of the parameter values to use for cohorts (\code{Year_min}, \code{Year_max}, \code{span}, \code{age_max}) (optional)}
+
+\item{data}{An optional tibble to add directly to the reactable for rendering (default is to construct this from studbook)}
+
+\item{colDefs}{An optional list of \code{colDef} functions to render (default is created using internal function \code{rct_cols_demog})}
 }
 \description{
 Create a reactable summary table of demographic stats using a formatted studbook

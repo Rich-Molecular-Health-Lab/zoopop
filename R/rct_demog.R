@@ -54,17 +54,71 @@ foot_demog <- function(studbook) {
     )
 }
 
-#' Create a reactable summary table of demographic stats using a formatted studbook
+#' Create a list of column definitions for projection reactable
 #'
-#' @importFrom reactable reactable colDef
-#' @importFrom dplyr mutate ungroup select bind_rows
-#' @importFrom htmlwidgets prependContent JS
-#' @importFrom htmltools HTML tags
+#' @importFrom reactable colDef
 #'
-#' @export
+#' @noRd
 #'
-rct_demog <- function(studbook, cohort_params = NULL) {
-  colors   <- set_colors()
+rct_cols_proj <- function(data) {
+  list(
+    Cohort_years = Cohort_years(),
+    Sex          = Sex(),
+    r            = intrins_rate(),
+    N1           = n1(data),
+    Lx1          = lx1(data),
+    Qx           = qx(data),
+    MLE          = MLE(data),
+    ex           = ex(data),
+    ex_ts           = ex(data),
+    repro_first  = age_ranges(data),
+    T            = gen_T(data),
+    Fx           = fx(data),
+    R0           = r0(data),
+    sex_col      = colDef(show = FALSE),
+    repro_last   = colDef(show = FALSE),
+    age_max      = colDef(show = FALSE)
+  )
+}
+
+
+
+#' Create a list of column definitions for demography reactable
+#'
+#' @importFrom reactable colDef
+#'
+#' @noRd
+#'
+rct_cols_demog <- function(data) {
+  list(
+    Cohort_years = Cohort_years(),
+    Sex          = Sex(),
+    r            = intrins_rate(),
+    N1           = n1(data),
+    Lx1          = lx1(data),
+    Qx           = qx(data),
+    MLE          = MLE(data),
+    ex           = ex(data),
+    repro_first  = age_ranges(data),
+    T            = gen_T(data),
+    Fx           = fx(data),
+    R0           = r0(data),
+    sex_col      = colDef(show = FALSE),
+    repro_last   = colDef(show = FALSE),
+    age_max      = colDef(show = FALSE)
+  )
+}
+
+#' Prepare a demographic tibble for rendering in reactable
+#'
+#' @param studbook Studbook tibble
+#' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
+#'
+#' @importFrom dplyr ungroup mutate select bind_rows
+#'
+#' @noRd
+#'
+rct_prep_demog <- function(studbook, cohort_params = NULL) {
   params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
   footer <- foot_demog(studbook = studbook)
   data <- demog_summary(studbook, cohort_params = params) %>%
@@ -88,6 +142,34 @@ rct_demog <- function(studbook, cohort_params = NULL) {
       R0
     ) %>%
     bind_rows(footer)
+  return(data)
+
+}
+
+
+#' Create a reactable summary table of demographic stats using a formatted studbook
+#'
+#' @param studbook Studbook tibble
+#' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
+#' @param data An optional tibble to add directly to the reactable for rendering (default is to construct this from studbook)
+#' @param colDefs An optional list of `colDef` functions to render (default is created using internal function `rct_cols_demog`)
+#'
+#' @importFrom reactable reactable colDef
+#' @importFrom dplyr mutate ungroup select bind_rows
+#' @importFrom htmlwidgets prependContent JS
+#' @importFrom htmltools HTML tags
+#'
+#' @export
+#'
+rct_demog <- function(studbook, cohort_params = NULL, data = NULL, colDefs = NULL) {
+  colors   <- set_colors()
+  params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
+  if (is.null(data)) {
+    data  <- rct_prep_demog(studbook, params)
+  }
+  if (is.null(colDefs)) {
+    colDefs <- rct_cols_demog(data)
+  }
   table <- reactable(
     data,
     height        = 750,
@@ -121,23 +203,7 @@ rct_demog <- function(studbook, cohort_params = NULL) {
         : null;
     }
   "),
-    columns = list(
-      Cohort_years = Cohort_years(),
-      Sex          = Sex(),
-      sex_col      = colDef(show = FALSE),
-      r            = intrins_rate(),
-      N1           = n1(data),
-      Lx1          = lx1(data),
-      Qx           = qx(data),
-      MLE          = MLE(data),
-      ex           = ex(data),
-      repro_first  = age_ranges(data),
-      repro_last   = colDef(show = FALSE),
-      age_max      = colDef(show = FALSE),
-      T            = gen_T(data),
-      Fx           = fx(data),
-      R0           = r0(data)
-    )
+    columns = colDefs
   )
 
   css <- "

@@ -174,3 +174,21 @@ test_2 <- test %>%
   )
 ```
 
+
+```{r}
+reactable(
+  projections,
+  columns = list(
+    Fx_ts   = colDef(name="Total Fx_t series", cell=function(v) react_sparkline(v)),
+    Mx_ts   = colDef(name="Total Mx_t series"),
+    Qx_grid = colDef(name="Qx grid", cell=function(mat) react_sparkline(mat[,1]))
+  )
+)
+```
+
+
+
+
+
+
+
