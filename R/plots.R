@@ -437,18 +437,17 @@ plot_demog_trace <- function(plot, data, attr, primary = TRUE, age_spec = TRUE, 
   shape     <- "spline"
   type      <- "scatter"
   mode      <- "lines+markers"
-  if (sex == "Males") {
+  if (!is.null(sex) && sex == "Males") {
     dash <- "dash"
     data <- filter(data, Sex == "Males")
-  } else if (sex == "Females") {
+  } else if (!is.null(sex) && sex == "Females") {
       dash <- "dot"
       data <- filter(data, Sex == "Females")
-  } else if (sex == "Overall") {
+  } else if (!is.null(sex) && sex == "Overall") {
         dash <- "solid"
         data <- filter(data, Sex == "Overall")
   } else if (is.null(sex)) {
     dash <- "solid"
-    data <- data
         }
   if (isTRUE(primary)) {
     width   <- 3
