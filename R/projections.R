@@ -57,6 +57,48 @@ proj_matrix <- function(studbook, cohort_params = NULL, iterations = 20) {
   return(proj)
 }
 
+#' Add projection matrices to demographic summary table with all birth-year cohorts merged
+#'
+#' @param studbook Studbook tibble
+#' @param iterations Number of year-steps to project out through iterations (default = 20 years)
+#' @return Summary table with projection values factoring in all individuals across all birth years
+#' @export
+#'
+#' @importFrom dplyr filter group_by summarize ungroup left_join join_by
+#' @importFrom popbio pop.projection
+#' @importFrom purrr map2 map_dbl
+#'
+proj_matrix_overall <- function(studbook, iterations = 20) {
+  demog <- demog_summary_total(studbook)
+  proj <- demog %>%
+    group_by(Sex) %>%
+    summarize(
+      Ages = list(Age[[1]]),   # a numeric vector of ages
+      S    = list(Px[[1]]),    # a numeric vector of survivals
+      F    = list(Fx[[1]]),    # a numeric vector of fecundities
+      N0   = list(Nx[[1]]),    # a numeric vector of starting abundances
+      .groups = "drop"
+    ) %>%
+    mutate(
+      Leslie = map2(F, S, make_leslie),
+      Projection = map2(
+        Leslie, N0,
+        function(A, n0) {
+          pr  <- popbio::pop.projection(A, n0, iterations = iterations)
+          mat <- t(pr$stage.vector)
+          full <- rbind(`0` = n0, mat)
+          colnames(full) <- as.character(0:(ncol(full)-1))
+          rownames(full) <- 0:iterations
+          full
+        }
+      )
+    ) %>%
+    left_join(demog, by = join_by(Sex))
+
+  return(proj)
+}
+
+
 #' Compute a full time×age grid for a given variable at each t (*_grid) for a projection summary table
 #'
 #' @param proj_df Summary table with projection values (produced by `proj_matrix`)
@@ -122,10 +164,21 @@ proj_ts <- function(proj_df, variables = c("Fx","Mx","Qx","Px","Tx","ex")) {
 #'
 projections_studbook <- function(studbook, cohort_params = NULL, iterations = 20) {
   params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
-  proj   <- proj_matrix(studbook, params, iterations) %>% proj_ts()
+  proj_overall <- projections_overall_studbook(studbook, iterations = iterations)
+  proj   <- proj_matrix(studbook, params, iterations) %>% proj_ts() %>%
+    bind_rows(proj_overall)
   return(proj)
 }
 
-
-
-
+#' Create a detailed projection summary table from a studbook tibble with all birth-year cohorts merged
+#'
+#' @param studbook Studbook tibble
+#' @param iterations Number of year-steps to project out through iterations (default = 20 years)
+#' @return Summary table with projection values, including full `time x age` grids and total time-series list-cols for each age-specific variable
+#' @export
+#'
+#'
+projections_overall_studbook <- function(studbook, iterations = 20) {
+  proj   <- proj_matrix_overall(studbook, iterations) %>% proj_ts()
+  return(proj)
+}
