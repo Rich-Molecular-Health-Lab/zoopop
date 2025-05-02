@@ -117,12 +117,140 @@ hline <- function(y = 0, color = "#444444") {
     line = list(color = color, width = 0.9, dash = "dot")
   )
 }
+
+#' Prepare demographic tibble for plotting with plotly
+#'
+#' @param studbook Studbook tibble
+#' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
+#' @param variable Name of the column containing an age-specific variable to map onto the y-axis
+#' options for variable: `Births`, `Deaths`, `Nx`, `Qx`, `Lx`, `Lx1`, `Px`, `ex`, `Tx`, `Mx`, `Fx`
+#' @param sex One of `"Males"`, `"Females"`, or `"Overall"` to plot stats by sex (`NULL` produces a dataframe with all three categories)
+#' @param log_trans Logical indicating whether to log-transform the y-axis variable
+#' @param age_spec Logical indicating whether to create list for age-specific version or not
+#'
+#' @return A dataframe to use in plotly
+#' @noRd
+#'
+#' @importFrom dplyr rename distinct mutate select across pull bind_rows
+#' @importFrom forcats fct_recode fct_relevel
+#' @importFrom paletteer paletteer_c
+#' @importFrom plotly layout plot_ly add_trace animation_opts animation_slider add_annotations
+#' @importFrom purrr set_names
+#' @importFrom stringr str_extract_all
+#' @importFrom tidyselect where
+#'
+#'
+plot_demog_prep <- function(studbook, cohort_params = NULL, variable, log_trans = FALSE, age_spec = TRUE, sex = NULL) {
+  params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
+
+  total <- demog_ungrouped(studbook)  %>%
+    mutate(Sex = fct_recode(Sex,
+                            Overall = "Total",
+                            Males   = "M",
+                            Females = "F")) %>%
+    mutate(Sex = fct_relevel(Sex,
+                             "Males",
+                             "Females",
+                             "Overall"),
+           Cohort_period = "All Years")
+
+  demog <- cohort_demog(studbook, params)  %>%
+    mutate(Sex = fct_recode(Sex,
+                            Overall = "Total",
+                            Males   = "M",
+                            Females = "F")) %>%
+    mutate(Sex = fct_relevel(Sex,
+                             "Males",
+                             "Females",
+                             "Overall")) %>%
+    mutate(across(where(is.numeric), ~round(., digits = 2))) %>%
+    rename(y_var = variable)
+
+  if (is.null(sex)) {
+    total <- total
+    demog <- demog
+  } else {
+    total <- filter(total, Sex == sex)
+    demog <- filter(demog, Sex == sex)
+  }
+
+  if (isTRUE(age_spec)) {
+    data <- demog %>% bind_rows(total)
+  } else if (isFALSE(age_spec)) {
+    data <- demog %>%
+      mutate(Cohort_start = as.integer(str_extract_all(Cohort_years, "^\\d{4}"))) %>%
+      select(-c(
+        Age          ,
+        Births       ,
+        Deaths       ,
+        Nx           ,
+        Qx           ,
+        Lx1          ,
+        Px           ,
+        ex           ,
+        Tx           ,
+        Mx           ,
+        Fx           ,
+        numT
+      )) %>%
+      distinct()
+  }
+
+  if (isFALSE(log_trans)) {
+    out <- data
+  } else if (isTRUE(log_trans)) {
+    out <- data %>% mutate(y_var = log(y_var))
+  }
+  return(out)
+}
+
+#' Generate a list of attributes to use in plotly plots of demographic variables
+#'
+#' @param data
+#' @param variable Name of the column containing a variable to map onto the y-axis
+#' options for age-specific variable: `Births`, `Deaths`, `Nx`, `Qx`, `Lx`, `Lx1`, `Px`, `ex`, `Tx`, `Mx`, `Fx`
+#' options for lifetime variable: `N0`, `N1`, `R0`, `T`, `MLE`, `Repro_first`, `Repro_last`, `age_max`, `lambda`, `r`
+#' @param age_spec Logical indicating whether to create list for age-specific version or not
+#' @return A list of parameter values to use in plotly plots of demographic variables
+#' @keywords internal
+#'
+#' @noRd
+#'
+plot_demog_attr <- function(data, variable, age_spec = TRUE) {
+  colors <- set_colors()
+  cohorts       <- data %>% pull(Cohort_period) %>% unique()
+  cohort_colors <- as.list(paletteer_c("harrypotter::ronweasley2", length(cohorts))) %>%
+    set_names(cohorts) %>% unlist()
+
+  if (isTRUE(age_spec)) {
+    hover_template <-  paste0(ylab$short, " = %{y}<br>Age = %{x} yrs")
+    range_x <- list(0, max(data$Age))
+    col     <- cohort_colors
+  } else if (isFALSE(age_spec)) {
+    hover_template <-  paste0(ylab$short, " = %{y}<br><i>Birth Year %{x}</i>")
+    range_x <- list(NULL)
+    col     <- list(Males = colors$m, Females = colors$f, Overall = colors$t) %>% unlist()
+  }
+  symbols       <- c(Males = "square", Females = "circle", Overall = "x")
+  ylab          <- demog_ylab(variable)
+  range_y       <- list(min(data$y_var), max(data$y_var))
+
+  attr <- list(hover_template = hover_template,
+               range_x        = range_x,
+               range_y        = range_y,
+               col            = col,
+               symbols        = symbols,
+               ylab           = ylab)
+  return(attr)
+}
+
 #' Plot lifetime demographic variables by sex and birth year
 #'
 #' @param studbook Studbook tibble
 #' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
 #' @param variable Name of the column containing an age-specific variable to map onto the y-axis
 #' options for variable: `N0`, `N1`, `R0`, `T`, `MLE`, `Repro_first`, `Repro_last`, `age_max`, `lambda`, `r`
+#' @param log_trans Logical indicating whether to log-transform the y-axis variable
 #'
 #' @return A plotly object
 #' @export
@@ -135,54 +263,17 @@ hline <- function(y = 0, color = "#444444") {
 #' @importFrom purrr map_depth
 #'
 #'
-plot_demog <- function(studbook, cohort_params = NULL, variable) {
+plot_demog <- function(studbook, cohort_params = NULL, variable, log_trans = FALSE) {
   colors <- set_colors()
-  col <- list(Males   = colors$m,
-              Females = colors$f,
-              Overall = colors$t) %>%
-    unlist()
   params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
-  total <- demog_ungrouped(studbook)  %>%
-    filter(Sex == "Total") %>%
-    rename(y_var = variable) %>%
-    distinct()
-  data <- cohort_demog(studbook = studbook, cohort_params = params)  %>%
-    mutate(Sex = fct_recode(Sex,
-                            Overall = "Total",
-                            Males   = "M",
-                            Females = "F")) %>%
-    mutate(Sex = fct_relevel(Sex,
-                             "Males",
-                             "Females",
-                             "Overall")) %>%
-    rename(y_var = variable) %>%
-    mutate(Cohort_start = as.integer(str_extract_all(Cohort_years, "^\\d{4}"))) %>%
-    select(-c(
-      Age          ,
-      Births       ,
-      Deaths       ,
-      Nx           ,
-      Qx           ,
-      Lx1          ,
-      Px           ,
-      ex           ,
-      Tx           ,
-      Mx           ,
-      Fx           ,
-      numT
-    )) %>%
-    distinct() %>%
-    mutate(across(where(is.numeric), ~round(., digits = 2)))
+  data   <- plot_demog_prep(studbook, params, variable, log_trans, age_spec = FALSE)
+  attr   <- plot_demog_attr(data, variable, age_spec = FALSE)
 
   if (variable == "N1") {
     overall_val <- mean(data$y_var)
   } else {
     overall_val <- pull(total, y_var) %>% unique()
   }
-
-
-  ylab <- demog_ylab(variable)
-  hover_template <-  paste0(ylab$short, " = %{y}<br><i>Birth Year %{x}</i>")
 
   plot <- plot_ly() %>%
     add_trace(
@@ -191,7 +282,7 @@ plot_demog <- function(studbook, cohort_params = NULL, variable) {
       y             = ~y_var,
       split         = ~Sex,
       name          = ~Sex,
-      hovertemplate = hover_template,
+      hovertemplate = attr$hover_template,
       color         = I(colors$t),
       type          = "scatter",
       mode          = "lines+markers",
@@ -208,7 +299,7 @@ plot_demog <- function(studbook, cohort_params = NULL, variable) {
       y             = ~y_var,
       split         = ~Sex,
       name          = ~Sex,
-      hovertemplate = hover_template,
+      hovertemplate = attr$hover_template,
       color         = I(colors$m),
       opacity       = 0.8,
       type          = "scatter",
@@ -226,7 +317,7 @@ plot_demog <- function(studbook, cohort_params = NULL, variable) {
       y             = ~y_var,
       split         = ~Sex,
       name          = ~Sex,
-      hovertemplate = hover_template,
+      hovertemplate = attr$hover_template,
       color         = I(colors$f),
       opacity       = 0.8,
       type          = "scatter",
@@ -276,7 +367,7 @@ plot_demog <- function(studbook, cohort_params = NULL, variable) {
       ),
       annotations  = list(
         list(
-          text       = paste0("All Cohorts<br>", ylab$short, " = ", round(overall_val, digits = 2)),
+          text       = paste0("All Cohorts<br>", attr$ylab$short, " = ", round(overall_val, digits = 2)),
           hovertext  = "Intercept represents value calculated across all generations/cohorts/sexes",
           font       = list(size   = 12,
                             family = "sans serif",
@@ -292,7 +383,7 @@ plot_demog <- function(studbook, cohort_params = NULL, variable) {
           ),
         list(
           text       = "",
-          hovertext  = ylab$descr,
+          hovertext  = attr$ylab$descr,
           x          = 0,
           y          = 0.5,
           xref       = "paper",
@@ -303,7 +394,7 @@ plot_demog <- function(studbook, cohort_params = NULL, variable) {
           showarrow  = FALSE)
       ),
       yaxis        = list(
-        title      = ylab$lab,
+        title      = attr$ylab$lab,
         showgrid   = FALSE,
         zeroline   = FALSE,
         showlegend = TRUE,
@@ -319,10 +410,8 @@ plot_demog <- function(studbook, cohort_params = NULL, variable) {
         zeroline   = FALSE
       )
     )
-
-
-
 }
+
 
 #' Plot age-specific demographic variables with animation by birth year
 #'
@@ -331,6 +420,7 @@ plot_demog <- function(studbook, cohort_params = NULL, variable) {
 #' @param variable Name of the column containing an age-specific variable to map onto the y-axis
 #' options for variable: `Births`, `Deaths`, `Nx`, `Qx`, `Lx`, `Lx1`, `Px`, `ex`, `Tx`, `Mx`, `Fx`
 #' @param sex One of `"Males"`, `"Females"`, or `"Overall"` to plot stats by sex (default is `"Overall"`)
+#' @param log_trans Logical indicating whether to log-transform the y-axis variable
 #'
 #' @return A plotly object
 #' @export
@@ -344,52 +434,11 @@ plot_demog <- function(studbook, cohort_params = NULL, variable) {
 #' @importFrom tidyselect where
 #'
 #'
-plot_demog_age <- function(studbook, cohort_params = NULL, variable, sex = NULL) {
+plot_demog_age <- function(studbook, cohort_params = NULL, variable, sex = NULL, log_trans = FALSE) {
   if (is.null(sex)) { sex <- "Overall" }
   params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
-  total <- demog_ungrouped(studbook)  %>%
-    mutate(Sex = fct_recode(Sex,
-                            Overall = "Total",
-                            Males   = "M",
-                            Females = "F")) %>%
-    mutate(Sex = fct_relevel(Sex,
-                             "Males",
-                             "Females",
-                             "Overall"),
-           Cohort_period = "All Years")
-  data <- cohort_demog(studbook, params)  %>%
-    mutate(Sex = fct_recode(Sex,
-                            Overall = "Total",
-                            Males   = "M",
-                            Females = "F")) %>%
-    mutate(Sex = fct_relevel(Sex,
-                             "Males",
-                             "Females",
-                             "Overall")) %>%
-    bind_rows(total) %>%
-    rename(y_var = variable) %>%
-    mutate(across(where(is.numeric), ~round(., digits = 2)))
-  cohorts <- data %>%
-    pull(Cohort_period) %>%
-    unique()
-  cohort_colors <- as.list(paletteer_c("harrypotter::ronweasley2", length(cohorts))) %>%
-    set_names(cohorts) %>%
-    unlist()
-
-  symbols <- c(
-    Males   = "square",
-    Females = "circle",
-    Overall = "x"
-  )
-
-
-  ylab <- demog_ylab(variable)
-  hover_template <-  paste0(ylab$short, " = %{y}<br>Age = %{x} yrs")
-
-  range_y <- list(min(data$y_var), max(data$y_var))
-  range_x <- list(0, max(data$Age))
-
-
+  data   <- plot_demog_prep(studbook, params, variable, log_trans, age_spec = TRUE, sex)
+  attr   <- plot_demog_attr(data, variable, age_spec = TRUE)
 
   plot <- plot_ly() %>%
     add_trace(
@@ -399,15 +448,15 @@ plot_demog_age <- function(studbook, cohort_params = NULL, variable, sex = NULL)
       split         = ~Cohort_period,
       frame         = ~Cohort_years,
       name          = ~Cohort_years,
-      hovertemplate = hover_template,
+      hovertemplate = attr$hover_template,
       color         = ~Cohort_period,
-      colors        = cohort_colors,
+      colors        = attr$col,
       type          = "scatter",
       mode          = "lines+markers",
       line          = list(shape = "spline"),
       marker        = list(opacity = 0.5,
                            symbol  = ~Sex,
-                           symbols = symbols)
+                           symbols = attr$symbols)
     ) %>%
     add_annotations(
       x         = 0.5,
@@ -425,7 +474,7 @@ plot_demog_age <- function(studbook, cohort_params = NULL, variable, sex = NULL)
                             xanchor = "left",
                             font    = list(
                               color   = ~Cohort_period,
-                              colors  = cohort_colors,
+                              colors  = attr$col,
                               family  = "sans serif",
                               variant = "small-caps",
                               weight  = 800)
@@ -435,7 +484,7 @@ plot_demog_age <- function(studbook, cohort_params = NULL, variable, sex = NULL)
       x          = 0,
       y          = 0.5,
       text       = "",
-      hovertext  = ylab$descr,
+      hovertext  = attr$ylab$descr,
       xref       = "paper",
       yref       = "paper",
       xanchor    = "center",
@@ -445,8 +494,8 @@ plot_demog_age <- function(studbook, cohort_params = NULL, variable, sex = NULL)
     plotly::layout(
       plot_bgcolor = "#ffffff",
       yaxis        = list(
-        title      = ylab$lab,
-        range      = range_y,
+        title      = attr$ylab$lab,
+        range      = attr$range_y,
         showgrid   = FALSE,
         showline   = TRUE,
         showlegend = FALSE,
@@ -455,7 +504,7 @@ plot_demog_age <- function(studbook, cohort_params = NULL, variable, sex = NULL)
       ),
       xaxis        = list(
         title      = "Age in Years",
-        range      = range_x,
+        range      = attr$range_x,
         showgrid   = TRUE,
         gridcolor  = "#2323231A",
         gridwidth  = 0.5,
@@ -473,6 +522,7 @@ plot_demog_age <- function(studbook, cohort_params = NULL, variable, sex = NULL)
 #' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
 #' @param variable Name of the column containing an age-specific variable to map onto the y-axis
 #' options for variable: `Births`, `Deaths`, `Nx`, `Qx`, `Lx`, `Lx1`, `Px`, `ex`, `Tx`, `Mx`, `Fx`
+#' @param log_trans Logical indicating whether to log-transform the y-axis variable
 #'
 #' @return A plotly object
 #' @export
@@ -486,43 +536,10 @@ plot_demog_age <- function(studbook, cohort_params = NULL, variable, sex = NULL)
 #' @importFrom tidyselect where
 #'
 #'
-demog_age_bysex <- function(studbook, cohort_params = NULL, variable) {
-  params  <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
-  total <- demog_ungrouped(studbook)  %>%
-    mutate(Sex = fct_recode(Sex,
-                            Overall = "Total",
-                            Males   = "M",
-                            Females = "F")) %>%
-    mutate(Sex = fct_relevel(Sex,
-                             "Males",
-                             "Females",
-                             "Overall"),
-           Cohort_period = "All Years")
-  data <- cohort_demog(studbook, params)  %>%
-    mutate(Sex = fct_recode(Sex,
-                            Overall = "Total",
-                            Males   = "M",
-                            Females = "F")) %>%
-    mutate(Sex = fct_relevel(Sex,
-                             "Males",
-                             "Females",
-                             "Overall")) %>%
-    bind_rows(total) %>%
-    rename(y_var = variable) %>%
-    mutate(across(where(is.numeric), ~round(., digits = 2)))
-  cohorts <- data %>%
-    pull(Cohort_period) %>%
-    unique()
-  cohort_colors <- as.list(paletteer_c("harrypotter::ravenclaw2", length(cohorts))) %>%
-    set_names(cohorts) %>%
-    unlist()
-
-
-  ylab <- demog_ylab(variable)
-  hover_template <-  paste0(ylab$short, " = %{y}<br>Age = %{x} yrs")
-
-  range_y <- list(min(data$y_var), max(data$y_var))
-  range_x <- list(0, max(data$Age))
+demog_age_bysex <- function(studbook, cohort_params = NULL, variable, log_trans = FALSE) {
+  params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
+  data   <- plot_demog_prep(studbook, params, variable, log_trans, age_spec = TRUE)
+  attr   <- plot_demog_attr(data, variable, age_spec = TRUE)
 
   plot <- plot_ly() %>%
     add_trace(
@@ -534,7 +551,7 @@ demog_age_bysex <- function(studbook, cohort_params = NULL, variable) {
       name    = ~Sex,
       hovertemplate = hover_template,
       color   = ~Cohort_period,
-      colors  = cohort_colors,
+      colors  = attr$col,
       opacity = 0.2,
       type    = "scatter",
       mode    = "lines+markers",
@@ -548,9 +565,9 @@ demog_age_bysex <- function(studbook, cohort_params = NULL, variable) {
       split   = ~Cohort_period,
       frame   = ~Cohort_years,
       name    = ~Sex,
-      hovertemplate = hover_template,
+      hovertemplate = attr$hover_template,
       color   = ~Cohort_period,
-      colors  = cohort_colors,
+      colors  = attr$col,
       opacity = 0.2,
       type    = "scatter",
       mode    = "lines+markers",
@@ -564,9 +581,9 @@ demog_age_bysex <- function(studbook, cohort_params = NULL, variable) {
       split   = ~Cohort_period,
       frame   = ~Cohort_years,
       name    = ~Sex,
-      hovertemplate = hover_template,
+      hovertemplate = attr$hover_template,
       color   = ~Cohort_period,
-      colors  = cohort_colors,
+      colors  = attr$col,
       type    = "scatter",
       mode    = "lines+markers",
       line    = list(shape = "spline", width = 3)
@@ -577,7 +594,7 @@ demog_age_bysex <- function(studbook, cohort_params = NULL, variable) {
                             xanchor = "left",
                             font    = list(
                               color   = ~Cohort_period,
-                              colors  = cohort_colors,
+                              colors  = attr$col,
                               family  = "sans-serif",
                               variant = "small-caps",
                               weight  = 800)
@@ -587,7 +604,7 @@ demog_age_bysex <- function(studbook, cohort_params = NULL, variable) {
       x          = 0,
       y          = 0.5,
       text       = "",
-      hovertext  = ylab$descr,
+      hovertext  = attr$ylab$descr,
       xref       = "paper",
       yref       = "paper",
       xanchor    = "center",
@@ -597,8 +614,8 @@ demog_age_bysex <- function(studbook, cohort_params = NULL, variable) {
     plotly::layout(
       plot_bgcolor = "#ffffff",
       yaxis        = list(
-        title      = ylab$lab,
-        range      = range_y,
+        title      = attr$ylab$lab,
+        range      = attr$range_y,
         showgrid   = FALSE,
         showline   = TRUE,
         showlegend = FALSE,
@@ -607,7 +624,7 @@ demog_age_bysex <- function(studbook, cohort_params = NULL, variable) {
       ),
       xaxis        = list(
         title      = "Age (Yr)",
-        range      = range_x,
+        range      = attr$range_x,
         showgrid   = TRUE,
         gridcolor  = "#2323231A",
         gridwidth  = 0.5,

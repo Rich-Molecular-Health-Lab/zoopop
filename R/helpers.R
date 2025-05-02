@@ -274,7 +274,7 @@ demog_variables <- function() {
 #' @return nested list of strings to use for labeling y-variables
 #' @noRd
 #'
-#' @param variable Name of the column containing an age-specific variable to map onto the y-axis
+#' @param variable Name of the column containing a variable to map onto the y-axis
 #' options for variable: `N0`, `N1`, `R0`, `T`, `MLE`, `Repro_first`, `Repro_last`, `age_max`, `lambda`, `r`,
 #' `Births`, `Deaths`, `Nx`, `Qx`, `Lx`, `Lx1`, `Px`, `ex`, `Tx`, `Mx`, `Fx`
 #'
