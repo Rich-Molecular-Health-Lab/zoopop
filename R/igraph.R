@@ -7,7 +7,7 @@
 #' @param studbook A data frame containing studbook metadata.
 #' @param pedigree A pedigree object.
 #' @return An igraph object representing the pedigree.
-#' @export
+#' @noRd
 #' @importFrom igraph graph_from_data_frame
 #' @importFrom dplyr select
 ped_igraph <- function(studbook, pedigree) {
@@ -45,7 +45,7 @@ ped_igraph <- function(studbook, pedigree) {
 #' @param studbook A data frame containing studbook metadata.
 #' @param pedigree A pedigree object.
 #' @return A data frame containing vertex IDs and corresponding \code{x} and \code{y} coordinates.
-#' @export
+#' @noRd
 #' @importFrom igraph layout_with_sugiyama V
 #' @importFrom tibble tibble
 ped_coords <- function(studbook, pedigree) {

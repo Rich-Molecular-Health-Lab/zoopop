@@ -10,7 +10,7 @@
 #' @param u    A single symbol to map to undetermined sex
 #' @param t    A single symbol to map to totals
 #' @return A named list of symbols to reference in plotly functions and plots
-#' @export
+#' @noRd
 #'
 set_markers <- function(f = "circle", m = "square", u = "diamond", t = "cross") {
   symbols <- list(f = f, m = m, u = u, t = t)
@@ -104,7 +104,7 @@ set_ped_fills <- function(palette = NULL, studbook) {
 #'
 #' @param palette A named list of color values
 #' @return A named vector suitable for plotly or reactable inputs
-#' @export
+#' @noRd
 #'
 #' @importFrom purrr keep_at
 #' @importFrom stats setNames
@@ -119,7 +119,7 @@ set_plotly_pal <- function(palette) {
 #' @param palette A named list or vector of colors
 #' @param hex A two-character hex string (e.g., "33")
 #' @return Palette with adjusted transparency
-#' @export
+#' @noRd
 #'
 #' @importFrom purrr map_depth
 #'
@@ -137,7 +137,7 @@ lighten_palette <- function(palette, hex) {
 #' @param palette A named vector of hex colors
 #' @param hex A two-character hex code (e.g., "26" or "33")
 #' @return A modified vector of colors with lighter alpha values
-#' @export
+#' @noRd
 #'
 #' @importFrom stats setNames
 lighten_plotly_pal <- function(palette, hex = "33") {

@@ -8,7 +8,7 @@
 #' @param date2 A date object representing the end date.
 #' @return A date object corresponding to the midpoint between \code{date1} and \code{date2}.
 #' @importFrom lubridate days interval as.period
-#' @export
+#' @noRd
 #'
 est_date_btn <- function(date1, date2) {
   date1 + days(floor(as.numeric(as.period(lubridate::interval(date1, date2), unit = "days"), "days")/2))
@@ -22,7 +22,7 @@ est_date_btn <- function(date1, date2) {
 #' @param date A date object representing the reference date.
 #' @return An integer representing the age in whole years.
 #' @importFrom lubridate floor_date interval as.period
-#' @export
+#' @noRd
 calculate_age <- function(birth, date) {
   floor(as.numeric(as.period(lubridate::interval(floor_date(birth, "month"), date), unit = "years"), "years"))
 }
@@ -507,7 +507,7 @@ location_census <- function(studbook, loc_key) {
 #' @return A tibble of matching birth records sorted in descending order by age, or a tibble with default values if \code{x} is \code{NULL}.
 #' @importFrom dplyr filter arrange distinct
 #' @importFrom tibble tibble
-#' @export
+#' @noRd
 #'
 match_births <- function(x, sex_parent) {
   if (is.null(x)) {
@@ -529,7 +529,7 @@ match_births <- function(x, sex_parent) {
 #' @return A tibble with detailed parent information.
 #' @importFrom dplyr left_join distinct join_by
 #' @importFrom tibble tibble
-#' @export
+#' @noRd
 parent_details <- function(x, studbook) {
   studbook_short <- studbook_short(studbook)
   if (is.null(x) | nrow(x) < 1) {
@@ -591,7 +591,7 @@ find_parent <- function(studbook, loc_key, parent) {
 #' @importFrom dplyr filter arrange select bind_cols mutate left_join bind_rows distinct slice_head
 #' @importFrom tibble tibble
 #' @importFrom lubridate year
-#' @export
+#' @noRd
 #'
 add_hypotheticals <- function(studbook, parent, ids, loc_key) {
   if (parent %in% c("Sire", "sire", "dad", "father")) {

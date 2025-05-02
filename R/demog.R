@@ -29,7 +29,7 @@ cohort_defaults <- function(studbook, cohort_params = list(NULL, ...)) {
 #' @param studbook A data frame of studbook data produced by \code{read_studbook}.
 #' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
 #' @return A joined and restructured tibble
-#' @export
+#' @noRd
 #'
 #' @importFrom dplyr across arrange filter full_join mutate select pull bind_rows
 #' @importFrom lubridate year today
@@ -110,7 +110,7 @@ studbook_cohorts <- function(studbook, cohort_params = NULL) {
 #' @param studbook A data frame of studbook data produced by \code{read_studbook}.
 #' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
 #' @return A joined and restructured tibble
-#' @export
+#' @noRd
 #'
 #' @importFrom dplyr select distinct left_join filter join_by mutate bind_rows
 #' @importFrom lubridate year today
@@ -143,7 +143,7 @@ special_cohorts <- function(studbook, cohort_params = NULL) {
 #' @param studbook A data frame of studbook data produced by \code{read_studbook}.
 #' @param cohort_params A named list of the parameter values to use for cohorts (`Year_min`, `Year_max`, `span`, `age_max`) (optional)
 #' @return A joined and restructured tibble
-#' @export
+#' @noRd
 #'
 #' @importFrom dplyr left_join mutate if_else distinct relocate
 #' @importFrom lubridate year today
@@ -226,7 +226,7 @@ cohort_demog <- function(studbook, cohort_params = NULL) {
 #'
 #' @param df A cohort-formatted tibble with Births, Nx, Age, Cohort
 #' @return A life table with survivorship, mortality, and reproductive values
-#' @export
+#' @noRd
 #'
 #' @importFrom dplyr mutate if_else first nth lead ungroup rowwise select
 demog_tab <- function(df) {
@@ -307,7 +307,7 @@ demog_tab <- function(df) {
 #'
 #' @param studbook A data frame of studbook data produced by \code{read_studbook}.
 #' @return A life table with survivorship, mortality, and reproductive values that can be used as a footer row for comparison across cohorts
-#' @export
+#' @noRd
 #'
 #' @importFrom dplyr mutate bind_rows arrange group_by summarize n ungroup if_else lead first nth rowwise desc select distinct filter
 demog_ungrouped <- function(studbook) {

@@ -8,7 +8,7 @@
 #' @param graph A visNetwork object.
 #' @param groupname A character string representing the group name.
 #' @return The visNetwork object with the specified group settings applied.
-#' @export
+#' @noRd
 #' @importFrom visNetwork visGroups
 pedNode_visGroup <- function(graph, groupname) {
   colors     <- set_colors()
@@ -53,7 +53,7 @@ pedNode_visGroup <- function(graph, groupname) {
 #'
 #' @param graph A visNetwork object.
 #' @return A modified visNetwork object with custom group appearances.
-#' @export
+#' @noRd
 ped_visGroups <- function(graph) {
   pedNode_visGroup(graph = graph,   groupname = "female_deceased"    ) %>%
     pedNode_visGroup(               groupname = "male_deceased"      ) %>%
@@ -77,7 +77,7 @@ ped_visGroups <- function(graph) {
 #'
 #' @param graph A visNetwork object.
 #' @return A modified visNetwork object with custom options.
-#' @export
+#' @noRd
 #' @importFrom visNetwork visOptions
 #' @importFrom dplyr select arrange
 visPed_options <- function(graph, variable = NULL) {
@@ -110,7 +110,7 @@ visPed_options <- function(graph, variable = NULL) {
 #'
 #' @param graph A visNetwork object.
 #' @return A modified visNetwork object with custom options.
-#' @export
+#' @noRd
 #' @importFrom visNetwork visInteraction
 visPed_interaction <- function(graph) {
   graph_out <-   visInteraction(

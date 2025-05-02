@@ -139,7 +139,7 @@ census <- function(studbook, period) {
 #' @param lx A vector of Lx values
 #' @param age A vector of corresponding ages
 #'
-#' @export
+#' @noRd
 #'
 #' @return A single numeric value representing the interpolated MLE age at lx1 = 0.5
 #' @keywords internal
@@ -172,7 +172,7 @@ mle <- function(lx, age) {
 #'
 #' @param df A data frame with a column `r`
 #' @return The same data frame with a new `hover_lambda` column
-#' @export
+#' @noRd
 #'
 #' @importFrom dplyr if_else mutate
 #' @importFrom stringr str_glue
@@ -195,7 +195,7 @@ annotate_lambda <- function(df) {
 #' @param x The variable(s) that will be plotted on the x axis
 #' @param y The variable(s) that will be plotted on the y axis
 #' @return Wider version with sexes in columns for plotting multiple traces
-#' @export
+#' @noRd
 #'
 #' @importFrom tidyr pivot_wider
 
@@ -213,7 +213,7 @@ demog_wide <- function(df, group, x, y) {
 #' @param caption Caption text to add
 #' @param number Figure number to apply to caption (optional)
 #' @return nested list to add to plotly layout function
-#' @export
+#' @noRd
 #'
 caption_plotly <- function(caption, number) {
   cap_text <- paste0("Figure ", number, ". ", caption)
@@ -272,7 +272,7 @@ demog_variables <- function() {
 #' Generate formatted y-axis labels for demographic variables
 #'
 #' @return nested list of strings to use for labeling y-variables
-#' @export
+#' @noRd
 #'
 #' @param variable Name of the column containing an age-specific variable to map onto the y-axis
 #' options for variable: `N0`, `N1`, `R0`, `T`, `MLE`, `Repro_first`, `Repro_last`, `age_max`, `lambda`, `r`,
