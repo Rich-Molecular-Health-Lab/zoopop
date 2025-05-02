@@ -4,10 +4,12 @@
 \alias{studbook_cols}
 \title{Column definitions for full studbook summary tables}
 \usage{
-studbook_cols(df, df_cols, colors = NULL)
+studbook_cols(df, df_cols = NULL, colors = NULL)
 }
 \arguments{
 \item{df}{A filtered founder summary dataframe}
+
+\item{df_cols}{Columns to include in table (default - )}
 
 \item{colors}{A named list of colors to use (optional - must a list of colors named \code{seq}, a list of colors named \code{div}, one color for \code{f} and one for \code{m})}
 }

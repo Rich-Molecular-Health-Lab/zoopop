@@ -29,6 +29,7 @@ Imports:
     igraph,
     paletteer,
     reactablefmtr,
+    popbio,
     scales,
     DT,
     bslib,
