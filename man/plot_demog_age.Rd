@@ -4,7 +4,13 @@
 \alias{plot_demog_age}
 \title{Plot age-specific demographic variables with animation by birth year}
 \usage{
-plot_demog_age(studbook, cohort_params = NULL, variable, sex = NULL)
+plot_demog_age(
+  studbook,
+  cohort_params = NULL,
+  variable,
+  sex = NULL,
+  log_trans = FALSE
+)
 }
 \arguments{
 \item{studbook}{Studbook tibble}
@@ -15,6 +21,8 @@ plot_demog_age(studbook, cohort_params = NULL, variable, sex = NULL)
 options for variable: \code{Births}, \code{Deaths}, \code{Nx}, \code{Qx}, \code{Lx}, \code{Lx1}, \code{Px}, \code{ex}, \code{Tx}, \code{Mx}, \code{Fx}}
 
 \item{sex}{One of \code{"Males"}, \code{"Females"}, or \code{"Overall"} to plot stats by sex (default is \code{"Overall"})}
+
+\item{log_trans}{Logical indicating whether to log-transform the y-axis variable}
 }
 \value{
 A plotly object

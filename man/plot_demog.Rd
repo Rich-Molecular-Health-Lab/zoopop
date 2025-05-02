@@ -4,7 +4,7 @@
 \alias{plot_demog}
 \title{Plot lifetime demographic variables by sex and birth year}
 \usage{
-plot_demog(studbook, cohort_params = NULL, variable)
+plot_demog(studbook, cohort_params = NULL, variable, log_trans = FALSE)
 }
 \arguments{
 \item{studbook}{Studbook tibble}
@@ -13,6 +13,8 @@ plot_demog(studbook, cohort_params = NULL, variable)
 
 \item{variable}{Name of the column containing an age-specific variable to map onto the y-axis
 options for variable: \code{N0}, \code{N1}, \code{R0}, \code{T}, \code{MLE}, \code{Repro_first}, \code{Repro_last}, \code{age_max}, \code{lambda}, \code{r}}
+
+\item{log_trans}{Logical indicating whether to log-transform the y-axis variable}
 }
 \value{
 A plotly object
