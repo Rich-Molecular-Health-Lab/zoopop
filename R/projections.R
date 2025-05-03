@@ -8,7 +8,7 @@
 #'
 make_leslie <- function(F, S) {
   n <- length(F)
-  A <- matrix(0, nrow = n, ncol = n)
+  A <- matrix(0, nrow = n, ncol = n, byrow = TRUE, dimnames = as.list(rep("Age_yr", n)))
   A[1, ] <- F
   A[cbind(2:n, 1:(n-1))] <- S[1:(n-1)]
   A
@@ -105,7 +105,7 @@ proj_matrix_overall <- function(studbook, iterations = 20) {
 #' @param variable Name of the variable for which the time series should be projected
 #'  -  one of: `Fx` (reproductive output), `Mx` (fertility rate), `Qx` (mortality rate), `Px` (survival probability), `Tx` (total future lifetime), `ex` (life expectancy)
 #' @return Summary table with projection time series list-columns for values across all ages projected for a given variable
-#' @noRd
+#' @export
 #'
 #' @importFrom dplyr mutate
 #' @importFrom purrr map2
@@ -122,7 +122,7 @@ proj_var_grid <- function(proj_df, var) {
 #' @param variable Name of the variable for which the time series should be projected
 #'  -  one of: `Fx` (reproductive output), `Mx` (fertility rate), `Qx` (mortality rate), `Px` (survival probability), `Tx` (total future lifetime), `ex` (life expectancy)
 #' @return Summary table with projection time series list-columns for values across all ages projected for a given variable
-#' @noRd
+#' @export
 #'
 #' @importFrom dplyr mutate
 #' @importFrom purrr map2

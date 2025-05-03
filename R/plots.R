@@ -199,7 +199,7 @@ plot_demog_prep <- function(studbook, cohort_params = NULL, variable, log_trans 
   if (isFALSE(log_trans)) {
     out <- data
   } else if (isTRUE(log_trans)) {
-    out <- data %>% mutate(y_var = log(y_var))
+    out <- data %>% mutate(y_var = round(log(y_var), digits = 2))
   }
   return(out)
 }

@@ -4,7 +4,7 @@
 \alias{cohort_defaults}
 \title{Generate a list of default parameters for setting up cohort tibbles}
 \usage{
-cohort_defaults(studbook, cohort_params = list(NULL, ...))
+cohort_defaults(studbook, cohort_params = list(NULL))
 }
 \arguments{
 \item{studbook}{A data frame of studbook data produced by \code{read_studbook}.}
