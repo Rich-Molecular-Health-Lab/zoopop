@@ -4,7 +4,7 @@
 \alias{plot_demog_attr}
 \title{Generate a list of attributes to use in plotly plots of demographic variables}
 \usage{
-plot_demog_attr(data, variable, age_spec = TRUE)
+plot_demog_attr(data, variable, age_spec = TRUE, log_trans = FALSE)
 }
 \arguments{
 \item{data}{A dataframe to use in plotly (generated internally using the function \code{plot_demog_prep})}
@@ -14,6 +14,8 @@ options for age-specific variable: \code{Births}, \code{Deaths}, \code{Nx}, \cod
 options for lifetime variable: \code{N0}, \code{N1}, \code{R0}, \code{T}, \code{MLE}, \code{Repro_first}, \code{Repro_last}, \code{age_max}, \code{lambda}, \code{r}}
 
 \item{age_spec}{Logical indicating whether to create list for age-specific version or not}
+
+\item{log_trans}{Logical indicating whether to log-transform the y-axis variable}
 }
 \value{
 A list of parameter values to use in plotly plots of demographic variables

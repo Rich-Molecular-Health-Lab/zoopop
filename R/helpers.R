@@ -277,20 +277,26 @@ demog_variables <- function() {
 #' @param variable Name of the column containing a variable to map onto the y-axis
 #' options for variable: `N0`, `N1`, `R0`, `T`, `MLE`, `Repro_first`, `Repro_last`, `age_max`, `lambda`, `r`,
 #' `Births`, `Deaths`, `Nx`, `Qx`, `Lx`, `Lx1`, `Px`, `ex`, `Tx`, `Mx`, `Fx`
+#' @param log_trans Logical indicating whether to log-transform the y-axis variable
 #'
 #' @importFrom stringr str_wrap str_replace_all
 #' @importFrom purrr map_depth keep_at pluck
 #'
-demog_ylab <- function(variable) {
+demog_ylab <- function(variable, log_trans = FALSE) {
   var <- demog_variables() %>% keep_at(variable)
-  y_short <- str_replace_all(variable, "lambda", "\u03BB")
-  y_name  <- pluck(var, 1, "title")
+  if (isTRUE(log_trans)) {
+    y_short <- paste0("log(", str_replace_all(variable, "lambda", "\u03BB"), ")")
+  } else {
+    y_short <- str_replace_all(variable, "lambda", "\u03BB")
+  }
+
+  y_name  <- pluck(var, 1, "title") %>%
+    str_wrap(., width = 40) %>%
+    str_replace_all(., "/n", "<br>")
   y_descr <- pluck(var, 1, "descr") %>%
     str_wrap(., width = 80) %>%
     str_replace_all(., "/n", "<br>")
-  ylab <- paste0("<b>", y_short, "</b> (", y_name, ")") %>%
-    str_wrap(., width = 40) %>%
-    str_replace_all(., "/n", "<br>")
+  ylab <- paste0("<b>", y_short, "</b><br><i> ", y_name, "</i>")
   y <- list(
     short     = y_short,
     lab       = ylab,
