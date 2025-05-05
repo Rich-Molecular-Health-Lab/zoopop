@@ -336,10 +336,10 @@ fix_leslie <- function(l) {
 #' @export
 #' @importFrom purrr safely imap
 #'
-cohorts_leslie <- function(studbook, span = 5) {
+cohort_leslie <- function(studbook, span = 5) {
   safe_leslie <- safely(base_leslie)
   result    <- cohort_lifetab(studbook, span) %>%
-    list_life() %>%
+    cohort_lifelist() %>%
     imap(\(x, idx) safe_leslie(x)) %>%
     fix_leslie()
   return(result)
