@@ -81,7 +81,7 @@ cohorts_set <- function(studbook, span = 5) {
 #' @importFrom tidyr pivot_longer pivot_wider replace_na
 #' @importFrom tidyselect where starts_with
 #'
-count_births <- function(studbook, span = 5) {
+cohort_births <- function(studbook, span = 5) {
   cohorts <- cohorts_set(studbook, span)
 
   births <- filter(studbook, Sex != "U") %>%
@@ -150,7 +150,7 @@ vitals <- function(studbook, span = 5) {
 
   age_max <- pull(cohorts$ages, age) %>% max()
 
-  result <- count_births(studbook, span) %>%
+  result <- cohort_births(studbook, span) %>%
     distinct(
       cohort,
       Sex,
