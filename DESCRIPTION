@@ -10,6 +10,8 @@ Imports:
     dplyr (>= 1.0.0),
     forcats,
     lubridate,
+    demogR,
+    popbio,
     magrittr,
     pedtools,
     purrr,

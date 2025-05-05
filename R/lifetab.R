@@ -52,7 +52,7 @@ cohorts_set <- function(studbook, span = 5) {
   labs <- tibble(cohort_start = start, cohort_end = end) %>%
     mutate(cohort       = row_number(),
            cohort_range = as.character(str_glue("{cohort_start} - {cohort_end}"))) %>%
-    select(cohort, cohort_start, cohort_end, cohort_range, cohort_years)
+    select(cohort, cohort_start, cohort_end, cohort_range)
 
   ids <- left_join(studbook_dates, cohorts, by = "born") %>%
     mutate(year = pmap(list(born, end), \(x, y) seq(x, y, by = 1))) %>%
