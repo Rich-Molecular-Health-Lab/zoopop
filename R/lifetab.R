@@ -140,13 +140,15 @@ count_births <- function(studbook, span = 5) {
 #' `Sx` = census count, `Dx` = deaths as raw count, `births` = births as raw count,
 #' `bx` = per-capita birthrate (`births/Sx`)
 #' @export
-#' @importFrom dplyr distinct group_by summarize ungroup right_join join_by rowwise across mutate rename left_join relocate if_else lead n
+#' @importFrom dplyr distinct group_by summarize ungroup right_join join_by rowwise across mutate rename left_join relocate if_else lead n pull
 #' @importFrom tidyr expand_grid replace_na pivot_wider nest
 #' @importFrom tidyselect starts_with
 #'
 vitals <- function(studbook, span = 5) {
 
   cohorts <- cohorts_set(studbook, span)
+
+  age_max <- pull(cohorts$ages, age) %>% max()
 
   result <- count_births(studbook, span) %>%
     distinct(
