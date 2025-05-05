@@ -212,7 +212,8 @@ vitals <- function(studbook, span = 5) {
 #'
 cohort_lifetab <- function(studbook, span = 5) {
   cohorts <- cohorts_set(studbook, span)
-  df      <- vitals(studbook, span)
+  df      <- vitals(studbook, span)   %>%
+    filter((year(today()) - cohort_start) > 1)
 
   lifetab <- df %>%
     mutate(lt = map(data, \(i) life.table(
@@ -248,8 +249,7 @@ cohort_lifetab <- function(studbook, span = 5) {
       life,
       Sx = list("Sx"),
       .remove = FALSE
-    )  %>%
-    filter((year(today()) - cohort_start) > 1)
+    )
   return(lifetab)
 }
 
