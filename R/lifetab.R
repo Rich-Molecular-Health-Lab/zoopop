@@ -248,7 +248,8 @@ cohort_lifetab <- function(studbook, span = 5) {
       life,
       Sx = list("Sx"),
       .remove = FALSE
-    )
+    )  %>%
+    filter((year(today()) - cohort_start) > 1)
   return(lifetab)
 }
 
