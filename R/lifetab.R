@@ -67,7 +67,7 @@ cohorts_set <- function(studbook, span = 5) {
     mutate(age = year - born) %>%
     ungroup()
 
-  out <- list(cohorts, ages, labs, ids)
+  out <- list(cohorts = cohorts, ages = ages, labs = labs, ids = ids)
   return(out)
 }
 
