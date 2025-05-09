@@ -6,6 +6,119 @@ output: html_document
                      
 ---
 
+```{r}
+library(tidyverse)
+library(htmlwidgets)
+library(htmltools)
+library(conflicted)
+conflicts_prefer(lubridate::interval)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(purrr::set_names)
+studbook <- read_csv("inst/extdata/studbook.csv")
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  message  = FALSE,
+  warning  = FALSE,
+  echo     = FALSE,
+  include  = TRUE,
+  eval     = TRUE,
+  comment  = ""
+)
+```
+
+```{r}
+first_cap <- filter(studbook, Type_birth == "Captive") %>% pull(Date_birth) %>% min()
+```
+
+
+```{r}
+window <- c(first_cap, max(studbook$Date_birth))
+```
+
+
+```{r}
+lt_deaths <- lt_studbook %>%
+  filter(Status == "D") %>%
+  select(
+    ID,
+    Sex,
+    Qtr_birth,
+    Qtr_death = Qtr_last,
+    Type_birth
+  ) %>%
+  distinct() %>%
+  mutate(x_death = ceiling(time_length(interval(Qtr_birth, Qtr_death), "year")))
+```
+
+```{r}
+lt_studbook <- studbook %>%
+  filter(between(Date_birth, window[1], window[2]) & Status %in% c("A", "D")) %>%
+  select(ID, 
+         Date_birth, 
+         Date, 
+         Event, 
+         Date_last, 
+         Status, 
+         Sex, 
+         Sire, 
+         Dam,
+         Type_birth) %>%
+  mutate(Qtr_born = quarter(Date_birth, type = "date_first"),
+         Qtr_last  = quarter(Date_last, type = "date_first"))
+```
+
+```{r}
+  age_classes <- studbook %>%
+    filter(between(Date_birth, window[1], window[2]) & Status %in% c("A", "D")) %>%
+    mutate(Qtr_born = quarter(Date_birth, type = "date_first"),
+           Qtr_last  = quarter(Date_last, type = "date_first")) %>%
+    mutate(x_last = ceiling(time_length(interval(Qtr_born, Qtr_last), "year"))) %>%
+    distinct(
+      ID,
+      Sex,
+      Type_birth,
+      Status,
+      Qtr_born,
+      x_last
+      ) %>%
+    mutate(x = pmap(list(0, x_last), \(x, y) seq(x, y, by = 1))) %>%
+    unnest(x) %>%
+    rowwise() %>%
+    mutate(x_start = Qtr_born + years(x)) %>%
+    mutate(x_end   = x_start + years(1) - days(1)) %>%
+    ungroup() %>%
+    select(
+      ID,
+      Sex,
+      Type_birth,
+      Status,
+      x,
+      x_start,
+      x_end
+    ) %>%
+    arrange(ID, x_start, x)
+```
+
+```{r}
+births <- studbook %>%
+    filter(between(Date_birth, window[1], window[2]) & Status %in% c("A", "D")) %>%
+    mutate(Qtr_birth = quarter(Date_birth, type = "date_first")) %>%
+    select(
+      ID_birth  = ID,
+      sex_birth = Sex,
+      Qtr_birth,
+      Sire,
+      Dam
+      ) %>%
+  distinct() %>%
+  pivot_longer(c(Sire, Dam), names_to = "parent", values_to = "ID") %>%
+  filter(ID != 0) %>%
+  select(ID, ID_birth, sex_birth, Qtr_birth)
+```
+
+
+
 
 ```{r setup, include=FALSE}
 library(devtools)
@@ -23,25 +136,6 @@ install()
 
 ```{r}
 library(zoopop)
-library(tidyverse)
-library(reactable)
-library(reactablefmtr)
-library(htmlwidgets)
-library(htmltools)
-conflicts_prefer(lubridate::interval)
-conflicts_prefer(dplyr::filter)
-conflicts_prefer(purrr::set_names)
-studbook <- read_csv("inst/extdata/studbook.csv")
-pedigree <- featured_pedigree(studbook)
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  message  = FALSE,
-  warning  = FALSE,
-  echo     = TRUE,
-  include  = TRUE,
-  eval     = TRUE,
-  comment  = ""
-)
 ```
 
 

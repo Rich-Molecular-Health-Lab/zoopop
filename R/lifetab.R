@@ -1,3 +1,135 @@
+#' Generate a summary of deaths across population history
+#'
+#' @param stubook tibble organized and formatted originally using `read_studbook`
+#' @param window vector of start and end date (must be provided as `ymd()` values) to use as the demographic window for calculations
+#' (default is the date of the first captive birth recorded and the most recent date of birth recorded)
+#' @return Tibble summarizing the deaths across studbook records within the demographic window
+#' (`ID` of deceased individual, `Sex` of individual, `Type_birth` indicating `Wild` for wild captures or
+#'  `Captive` for captive-born individuals, `Qtr_born` is the date used to represent birth dates - which are converted to the starting date of the annual quarter,
+#'  `Qtr_death`is the date used to represent death dates - which are converted to the starting date of the annual quarter, `x_death` is the approximate age class in years
+#'  in which the individual dies based on the difference between the start of the quarter of their birth and the start of the quarter of their death)
+#' @export
+#' @importFrom dplyr filter pull between distinct rowwise mutate ungroup select
+#' @importFrom lubridate quarter time_length interval
+#'
+mortality_history <- function(studbook, window = NULL) {
+  first_captive <- filter(studbook, Type_birth == "Captive") %>% pull(Date_birth) %>% min()
+  if (is.null(window)) {
+    window <- c(first_captive, max(studbook$Date_birth))
+  }
+  deaths <- studbook %>%
+    filter(between(Date_birth, window[1], window[2]) & Status == "D") %>%
+    distinct(
+      ID,
+      Sex,
+      Date_birth,
+      Date_last,
+      Type_birth
+    ) %>%
+    rowwise() %>%
+    mutate(Qtr_born = quarter(Date_birth, type = "date_first"),
+           Qtr_death = quarter(Date_last, type = "date_first"), .keep = "unused") %>%
+    mutate(x_death = ceiling(time_length(interval(Qtr_born, Qtr_death), "year"))) %>%
+    ungroup() %>%
+    select(
+      ID,
+      Sex,
+      Type_birth,
+      Qtr_born,
+      Qtr_death,
+      x_death
+    )
+  return(deaths)
+}
+#' Generate a tibble with one row per year of life for each studbook ID born within a demographic window
+#'
+#' @param stubook tibble organized and formatted originally using `read_studbook`
+#' @param window vector of start and end date (must be provided as `ymd()` values) to use as the demographic window for calculations
+#' (default is the date of the first captive birth recorded and the most recent date of birth recorded)
+#' @return Tibble with one row per year of life for each studbook ID so that the `nrow()` per id matches their age in years at death (or current age, if living)
+#' Note that `x` represents the age in years, which is calculated based on start of annual quarters so that an individuals date of birth is rolled back to the start of a given annual quarter,
+#' and `x_start` provides the date of that individual's birth quarter and `x_end` provides the last date within that age interval for the individual.
+#' @export
+#' @importFrom dplyr filter pull between distinct rowwise mutate ungroup select arrange
+#' @importFrom lubridate quarter time_length interval years days
+#' @importFrom purrr pmap
+#' @importFrom tidyr unnest
+#'
+age_classes_ids <- function(studbook, window = NULL) {
+  first_captive <- filter(studbook, Type_birth == "Captive") %>% pull(Date_birth) %>% min()
+  if (is.null(window)) {
+    window <- c(first_captive, max(studbook$Date_birth))
+  }
+  age_classes <- studbook %>%
+    filter(between(Date_birth, window[1], window[2]) & Status %in% c("A", "D")) %>%
+    mutate(Qtr_born = quarter(Date_birth, type = "date_first"),
+           Qtr_last  = quarter(Date_last, type = "date_first")) %>%
+    mutate(x_last = ceiling(time_length(interval(Qtr_born, Qtr_last), "year"))) %>%
+    distinct(
+      ID,
+      Sex,
+      Type_birth,
+      Status,
+      Qtr_born,
+      x_last
+      ) %>%
+    mutate(x = pmap(list(0, x_last), \(x, y) seq(x, y, by = 1))) %>%
+    unnest(x) %>%
+    rowwise() %>%
+    mutate(x_start = Qtr_born + years(x)) %>%
+    mutate(x_end   = x_start + years(1) - days(1)) %>%
+    ungroup() %>%
+    select(
+      ID,
+      Sex,
+      Type_birth,
+      Status,
+      x,
+      x_start,
+      x_end
+    ) %>%
+    arrange(ID, x_start, x)
+  return(age_classes)
+}
+
+#' Generate a summary of reproductive events across population history
+#'
+#' @param stubook tibble organized and formatted originally using `read_studbook`
+#' @param window vector of start and end date (must be provided as `ymd()` values) to use as the demographic window for calculations
+#' (default is the date of the first captive birth recorded and the most recent date of birth recorded)
+#' @return Tibble summarizing the reproductive events across studbook records within the demographic window
+#' (`ID` of deceased individual, `Sex` of individual, `Type_birth` (represents the parent/ID, not offspring) indicating `Wild` for wild captures or
+#'  `Captive` for captive-born individuals, `Qtr_born` is the date used to represent birth date of the parent/ID - which are converted to the starting date of the annual quarter,
+#'  `Qtr_death`is the date used to represent death dates - which are converted to the starting date of the annual quarter, `x_birth` is the approximate age class in years
+#'  in which the individual reproduces based on the difference between the start of the quarter of their birth and the start of the quarter of their offspring's birth,
+#'  `sex_birth` is the sex of the offspring)
+#' @export
+#' @importFrom dplyr filter pull between distinct rowwise mutate ungroup select
+#' @importFrom lubridate quarter time_length interval
+#'
+repro_history <- function(studbook, window = NULL) {
+  first_captive <- filter(studbook, Type_birth == "Captive") %>% pull(Date_birth) %>% min()
+  if (is.null(window)) {
+    window <- c(first_captive, max(studbook$Date_birth))
+  }
+  births <- studbook %>%
+    filter(between(Date_birth, window[1], window[2]) & Status %in% c("A", "D")) %>%
+    mutate(Qtr_birth = quarter(Date_birth, type = "date_first")) %>%
+    select(
+      ID_birth  = ID,
+      sex_birth = Sex,
+      Qtr_birth,
+      Sire,
+      Dam
+    ) %>%
+    distinct() %>%
+    pivot_longer(c(Sire, Dam), names_to = "parent", values_to = "ID") %>%
+    filter(ID != 0) %>%
+    select(ID, ID_birth, sex_birth, Qtr_birth) %>%
+    arrange(ID, Qtr_birth, ID_birth)
+  return(births)
+}
+
 #' Set up cohorts by birth year for population status
 #'
 #' @param stubook tibble organized and formatted originally using `read_studbook`
