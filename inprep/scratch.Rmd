@@ -6,17 +6,33 @@ output: html_document
                      
 ---
 
-```{r}
-library(conflicted)
+
+```{r setup, include=FALSE}
 library(devtools)
-library(DiagrammeR)
-library(here)
-library(knitr)
-library(magrittr)
-library(pedtools)
 library(roxygen2)
+```
+
+```{r include=FALSE}
+document()
+```
+
+
+```{r include=FALSE}
+install()
+```
+
+```{r}
+library(zoopop)
 library(tidyverse)
-library(visNetwork)
+library(reactable)
+library(reactablefmtr)
+library(htmlwidgets)
+library(htmltools)
+conflicts_prefer(lubridate::interval)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(purrr::set_names)
+studbook <- read_csv("inst/extdata/studbook.csv")
+pedigree <- featured_pedigree(studbook)
 knitr::opts_chunk$set(
   collapse = TRUE,
   message  = FALSE,
@@ -26,217 +42,8 @@ knitr::opts_chunk$set(
   eval     = TRUE,
   comment  = ""
 )
-conflicts_prefer(lubridate::interval)
-conflicts_prefer(dplyr::filter)
-conflicts_prefer(purrr::set_names)
-studbook <- read_csv(here("inst/extdata/studbook.csv"))
-pedigree <- build_ped_series(studbook) %>% 
-  extract_pedigree("_comp1", "Contemporary")
 ```
 
-```{r}
-paths <- set_ped_paths(studbook, pedigree)
-```
-
-```{r}
-subnucs <- subnucs(pedigree)
-```
-
-
-
-```{r}
-paths <- set_ped_paths(studbook, pedigree) %>% 
-  mutate(across(c(offspring, dad, mom), ~as.numeric(.))) %>%
-  left_join(levels, by = join_by(offspring == node)) %>%
-  rename(offspring_generation = generation) %>%
-  left_join(levels, by = join_by(mom == node)) %>%
-  rename(mom_generation = generation) %>%
-  left_join(levels, by = join_by(dad == node)) %>%
-  rename(dad_generation = generation) %>%
-  mutate(parents_to_level = if_else(
-    dad_generation >= mom_generation, dad_generation, mom_generation
-    )) %>%
-  mutate(offspring_from_level = parents_to_level + 1) %>%
-  mutate(offspring_level      = offspring_from_level + 1) %>%
-  select(
-    offspring,
-    offspring_level,
-    offspring_from,
-    offspring_from_level,
-    parents_to,
-    parents_to_level,
-    dad,
-    dad_level = dad_generation,
-    mom,
-    mom_level = mom_generation,
-    edge_color
-  ) %>%
-  arrange(offspring_level, offspring)
-```
-
-```{r}
-levels_wide <- paths %>%
-  select(offspring_to_node    = offspring,
-         offspring_to_level   = offspring_level,
-         offspring_from_node  = offspring_from,
-         offspring_from_level ,
-         parents_to_node      = parents_to,
-         parents_to_level     ,
-         mom_from_node        = mom,
-         mom_from_level       = mom_level,
-         dad_from_node        = dad,
-         dad_from_level       = dad_level) %>%
-  mutate(mom_to_node = parents_to_node,
-         dad_to_node = parents_to_node,
-         mom_to_level = parents_to_level,
-         dad_to_level = parents_to_level, .keep = "unused")
-```
-
-```{r}
-levels_wide <- paths %>%
-  select(offspring_node      = offspring,
-         parents_to_node     = parents_to,
-         mom_node            = mom,
-         dad_node            = dad,
-         offspring_from_node = offspring_from,
-         ends_with("_level"))
-```
-
-```{r}
-nodes <- ped_nodes(studbook, pedigree)
-```
-
-
-```{r}
-levels_long <- levels_wide %>%
-  pivot_longer(
-    cols          = everything(),
-    names_to      = c("type", ".value"),
-    names_pattern = "^(.*)_(node|level)$"
-  )
-```
-
-
-
-```{r}
-  levels <- gen_numbers(pedigree) %>%
-    as.list() %>%
-    set_names(pedigree$ID) %>%
-    enframe(name = "node", value = "generation") %>% 
-  mutate(across(everything(), ~as.numeric(.))) %>%
-  distinct() %>%
-  arrange(generation)
-```
-
-```{r}
-ndf <- ped_ndf(studbook, pedigree)
-```
-```{r}
-nodes <- ped_nodes(studbook, pedigree)
-```
-
-
-```{r}
-edges <- ped_edges(studbook, pedigree)
-```
-
-
-
-```{r}
-edges_vis <- ped_visEdges(studbook, pedigree)
-nodes_vis <- ped_visNodes(studbook, pedigree)
-network <- visNetwork(nodes_vis, edges_vis, width = "100%") %>%
-  ped_visGroups() %>%
-  visHierarchicalLayout(levelSeparation = 75, shakeTowards = "leaves")
-```
-
-```{r}
-edge_connectors   <- edges_connectors(
-    studbook = studbook,
-    pedigree = pedigree
-  )
-```
-
-
-```{r}
-  studbook_connectors <- studbook_nodes(
-    studbook = studbook,
-    pedigree = pedigree
-  ) %>%
-    mutate(offspring= as.integer(label),
-           .keep = "unused") %>%
-    select(
-      offspring,
-      group     = edge_group,
-      tooltip   = tooltip_connector
-    ) %>%
-  left_join(paths, )
-
-```
-
-
-```{r}
-key_connectors   <- edges_connectors(
-    studbook = studbook,
-    pedigree = pedigree
-  )  %>%
-    select(parents   = from,
-           offspring = to,
-           color     = edge_color,
-           group,
-           tooltip) %>%
-    pivot_longer(c(parents, offspring),
-                 names_to  = "type",
-                 values_to = "node") %>%
-    distinct(node, color, group, tooltip) %>%
-    arrange(node)
-```
-
-
-```{r}
-ndf <- ped_ndf(studbook, pedigree)
-edf <- ped_edf(studbook, pedigree)
-```
-
-```{r}
-paths <- set_ped_paths(studbook, pedigree)
-```
-
-
-```{r}
-ped_igraph <- ped_igraph(studbook, pedigree)
-  
-ped_layout <- layout_with_fr(ped_igraph)
-
-plot(ped_igraph, layout = ped_layout)
-```
-
-```{r}
-ped_clusters <- ped_clusters(studbook, pedigree)
-```
-
-```{r}
-sb_short <- studbook_short(studbook)
-```
-
-
-```{r}
-
-```
-
-
-```{r}
-net <- create_graph(
-  nodes_df      = ndf,
-  edges_df      = edf
-) %>% 
-  render_graph(output = "visNetwork")
-```
-
-```{r}
-output <- ped_graphv(studbook, pedigree) %>% 
-  render_graph(as_svg = TRUE)
-```
 
 
 

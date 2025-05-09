@@ -377,10 +377,9 @@ plot_demog_annot <- function(attr, overall_val = NULL, age_spec = TRUE, log_tran
         y          = overall_val,
         xref       = "paper",
         yref       = "y"    ,
-        xanchor    = "left",
-        yanchor    = "bottom",
-        showarrow  = TRUE,
-        arrowhead  = 7
+        xanchor    = "center",
+        yanchor    = "top",
+        showarrow  = TRUE
       ),
       yhover
     )
