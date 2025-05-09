@@ -2,6 +2,302 @@
 #'
 #' @param stubook tibble organized and formatted originally using `read_studbook`
 #' @param span integer representing the width of each birth-cohort in years
+#' @return Tibble with `cohort` (numeric id), `cohort_start` (earliest birth year of cohort), `cohort_end` (last birth year of cohort),
+#'  `born` (hypothetical birth year), `sex` (hypothetical sex), `x` (age in years), `x_n` (x + n for lifetable)
+#' @export
+#' @importFrom dplyr filter distinct mutate pull row_number rowwise select ungroup between arrange
+#' @importFrom lubridate year today
+#' @importFrom purrr pmap
+#' @importFrom stringr str_glue
+#' @importFrom tibble tibble
+#' @importFrom tidyr unnest
+#'
+cohort_template <- function(studbook, span = 5) {
+  studbook_dates <- studbook %>%
+    filter(Sex != "U") %>%
+    distinct(
+      ID,
+      Date_birth,
+      Date_last,
+      Sex
+    ) %>%
+    mutate(born = year(Date_birth),
+           end  = year(Date_last), .keep = "unused") %>%
+    mutate(age_end = as.integer(end) - as.integer(born))
+
+  span     <- 5
+  age_max  <- max(studbook_dates$age_end)
+  year_min <- min(studbook_dates$born)
+  year_max <- (year(today()) + 1)
+  year     <- seq(year_min, year(today()), by = 1)
+  start    <- seq(year_min, (year_max - 1), by = span)
+  end      <- start + (span - 1)
+  sex      <- unique(pull(studbook_dates, Sex))
+  x        <- c(0:age_max)
+
+  cohorts <- tibble(start, end) %>%
+    mutate(cohort = row_number()) %>%
+    mutate(born = pmap(list(start, end), \(x, y) seq(x, y, by = 1))) %>%
+    unnest(born) %>%
+    select(cohort,
+           cohort_start = start,
+           cohort_end   = end,
+           born) %>%
+    expand_grid(sex) %>%
+    expand_grid(x) %>%
+    rowwise() %>%
+    mutate(x_n = x + 1) %>%
+    ungroup() %>%
+    filter(born <= year(today()) & (born + x) <= year(today())) %>%
+    arrange(cohort, cohort_start, born, sex, x) %>%
+    mutate(year = born + x) %>%
+    select(
+      cohort,
+      cohort_start,
+      born,
+      cohort_end,
+      sex,
+      year,
+      x,
+      x_n
+    )
+
+  return(cohorts)
+}
+#' Match birth cohorts to studbook IDs
+#'
+#' @param stubook tibble organized and formatted originally using `read_studbook`
+#' @param span integer representing the width of each birth-cohort in years
+#' @return Tibble with each studbook ID matched to a birth cohort
+#' @export
+#' @importFrom dplyr filter distinct mutate pull row_number rowwise select ungroup between arrange
+#' @importFrom lubridate year today
+#' @importFrom purrr pmap
+#' @importFrom stringr str_glue
+#' @importFrom tibble tibble
+#' @importFrom tidyr unnest
+#'
+cohort_studbook <- function(studbook, span = 5) {
+  studbook_dates <- studbook %>%
+    filter(Sex != "U") %>%
+    distinct(
+      ID,
+      Date_birth,
+      Date_last,
+      Sex
+    ) %>%
+    mutate(born = year(Date_birth),
+           end  = year(Date_last), .keep = "unused") %>%
+    select(ID, sex = Sex, born, end)
+
+  result   <- cohort_template(studbook, span)  %>%
+    right_join(studbook_dates, by = join_by(born, sex)) %>%
+    filter(year <= end) %>%
+    arrange(cohort, cohort_start, born, ID, year, x) %>%
+    select(
+      cohort,
+      cohort_start,
+      born,
+      cohort_end,
+      ID,
+      sex,
+      year,
+      x,
+      x_n
+    )
+}
+
+#' Count births per individual per year
+#'
+#' @param stubook tibble organized and formatted originally using `read_studbook`
+#' @param span integer representing the width of each birth-cohort in years
+#' @return Tibble with birth counts per studbook ID per year
+#' @export
+#' @importFrom dplyr filter distinct mutate pull row_number rowwise select ungroup between arrange
+#' @importFrom lubridate year today
+#' @importFrom purrr pmap
+#' @importFrom stringr str_glue
+#' @importFrom tibble tibble
+#' @importFrom tidyr unnest
+#'
+births_annual <- function(studbook, span = 5) {
+  cohort_studbook <- cohort_studbook(studbook, span)
+  births <- studbook  %>%
+    distinct(
+      ID,
+      Date_birth,
+      Sire,
+      Dam
+    ) %>%
+    mutate(year     = year(Date_birth),
+           birth_id = ID,
+           .keep = "unused") %>%
+    pivot_longer(
+      c(Sire, Dam),
+      names_to  = "sex",
+      values_to = "ID"
+    ) %>%
+    filter(ID != 0) %>%
+    mutate(sex = case_match(sex, "Dam" ~ "F", "Sire" ~ "M")) %>%
+    distinct() %>%
+    group_by(year, sex, ID) %>%
+    reframe(births = n()) %>%
+    ungroup() %>%
+    right_join(cohort_studbook, by = join_by(sex, ID, year)) %>%
+    arrange(cohort, cohort_start, born, year, x) %>%
+    select(
+      cohort,
+      cohort_start,
+      born,
+      cohort_end,
+      ID,
+      sex,
+      year,
+      x,
+      x_n,
+      births
+    ) %>%
+    mutate(births = replace_na(births, 0))
+  return(births)
+}
+
+#' Count individuals by age and cohort
+#'
+#' @param stubook tibble organized and formatted originally using `read_studbook`
+#' @param span integer representing the width of each birth-cohort in years
+#' @param annual logical indicating whether to sum counts from each age class by year (or to sum across multi-year birth cohorts)
+#' @param by_age logical indicating whether to count by age class or across all ages
+#' @return Tibble with population counts
+#' @export
+#' @importFrom dplyr filter distinct mutate pull row_number rowwise select ungroup between arrange
+#' @importFrom lubridate year today
+#' @importFrom purrr pmap
+#' @importFrom stringr str_glue
+#' @importFrom tibble tibble
+#' @importFrom tidyr unnest
+#'
+census_pop <- function(studbook, span = 5, annual = FALSE, by_age = TRUE) {
+  cohorts        <- cohort_template(studbook, span)
+  births         <- births_annual(studbook, span)
+  studbook_dates <- studbook %>%
+    filter(Sex != "U") %>%
+    distinct(
+      ID,
+      Date_birth,
+      Date_last,
+      Sex
+    ) %>%
+    mutate(born = year(Date_birth),
+           end  = year(Date_last), .keep = "unused")
+
+  census <- cohorts %>%
+    distinct(
+      cohort,
+      cohort_start,
+      cohort_end,
+      born,
+      sex
+    ) %>%
+    right_join(studbook_dates, by = join_by(born, sex == Sex)) %>%
+    mutate(year = pmap(list(born, end), \(x, y) seq(x, y, by = 1))) %>%
+    unnest(year) %>%
+    mutate(x = year - born) %>%
+    left_join(births, by = join_by(cohort, cohort_start, born, cohort_end, sex, ID, year, x)) %>%
+    group_by(born,
+             sex,
+             year,
+             x) %>%
+    summarize(pop = n(), births = sum(births)) %>%
+    right_join(cohorts, by = join_by(sex, x, born, year)) %>%
+    arrange(born, year, x, sex) %>%
+    rowwise() %>%
+    mutate(year = replace_na(year, born + x),
+           across(c(pop, births), ~replace_na(., 0))) %>%
+    ungroup() %>%
+    mutate(deaths = if_else(x < max(x),
+                            pop - lead(pop),
+                            pop),
+           .by = c(born, sex)) %>%
+    pivot_wider(
+      names_from   = "sex",
+      names_sep    = "_",
+      values_from  = c("pop", "births", "deaths")
+    ) %>%
+    rowwise() %>%
+    mutate(pop    = sum(pop_M, pop_F),
+           deaths = sum(deaths_M, deaths_F),
+           births = sum(births_M, births_F))
+
+  if (isTRUE(annual) && isTRUE(by_age)) {
+    result <- census %>%
+      select(
+        born,
+        x,
+        x_n,
+        year,
+        pop_M,
+        births_M,
+        deaths_M,
+        pop_F,
+        births_F,
+        deaths_F,
+        pop,
+        births,
+        deaths
+      )
+  } else if (isFALSE(annual) && isTRUE(by_age)) {
+    result <- census %>%
+      group_by(cohort,
+               cohort_start,
+               cohort_end,
+               x,
+               x_n) %>%
+      summarize(pop_M    = sum(pop_M),
+                births_M = sum(births_M),
+                deaths_M = sum(deaths_M),
+                pop_F    = sum(pop_F),
+                births_F = sum(births_F),
+                deaths_F = sum(deaths_F),
+                pop      = sum(pop),
+                births   = sum(births),
+                deaths   = sum(deaths))
+  } else if (isTRUE(annual) && isFALSE(by_age)) {
+    result <- census %>%
+      group_by(cohort,
+               cohort_start,
+               cohort_end,
+               year) %>%
+      summarize(pop_M    = sum(pop_M),
+                births_M = sum(births_M),
+                deaths_M = sum(deaths_M),
+                pop_F    = sum(pop_F),
+                births_F = sum(births_F),
+                deaths_F = sum(deaths_F),
+                pop      = sum(pop),
+                births   = sum(births),
+                deaths   = sum(deaths))
+  } else if (isFALSE(annual) && isFALSE(by_age)) {
+    result <- census %>%
+      group_by(year) %>%
+      summarize(pop_M    = sum(pop_M),
+                births_M = sum(births_M),
+                deaths_M = sum(deaths_M),
+                pop_F    = sum(pop_F),
+                births_F = sum(births_F),
+                deaths_F = sum(deaths_F),
+                pop      = sum(pop),
+                births   = sum(births),
+                deaths   = sum(deaths))
+  } else {
+    result <- census
+  }
+  return(result)
+}
+
+#' Set up cohorts by birth year for population status
+#'
+#' @param stubook tibble organized and formatted originally using `read_studbook`
+#' @param span integer representing the width of each birth-cohort in years
 #' @return List of tibbles to organize data into birth cohorts
 #' @export
 #' @importFrom dplyr filter distinct mutate pull row_number rowwise select ungroup between arrange
