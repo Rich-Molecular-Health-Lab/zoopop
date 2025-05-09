@@ -14,7 +14,7 @@ library(conflicted)
 conflicts_prefer(lubridate::interval)
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(purrr::set_names)
-studbook <- read_csv("inst/extdata/studbook.csv")
+studbook <- read_csv("../inst/extdata/studbook.csv")
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -69,10 +69,90 @@ lt_studbook <- studbook %>%
 ```
 
 ```{r}
-  age_classes <- studbook %>%
+age_classes <- studbook %>%
     filter(between(Date_birth, window[1], window[2]) & Status %in% c("A", "D")) %>%
-    mutate(Qtr_born = quarter(Date_birth, type = "date_first"),
-           Qtr_last  = quarter(Date_last, type = "date_first")) %>%
+    mutate(Month_born  = floor_date(Date_birth, "month"),
+           Month_last  = ceiling_date(Date_last, "month")) %>%
+    mutate(x_last = ceiling(time_length(interval(Month_born, Month_last), "year"))) %>%
+    distinct(
+      ID,
+      Sex,
+      Type_birth,
+      Status,
+      Month_born,
+      x_last
+      ) %>%
+    mutate(x = pmap(list(0, x_last), \(x, y) seq(x, y, by = 1))) %>%
+    unnest(x) %>%
+    rowwise() %>%
+    mutate(x_start = Month_born + years(x)) %>%
+    mutate(x_end   = x_start + years(1) - days(1)) %>%
+    ungroup() %>%
+    select(
+      ID,
+      Sex,
+      Type_birth,
+      Status,
+      Month_born,
+      x,
+      x_start,
+      x_end
+    ) %>%
+    arrange(ID, x_start, x)
+```
+
+```{r}
+births <- studbook %>%
+    filter(between(Date_birth, window[1], window[2]) & Status %in% c("A", "D")) %>%
+    mutate(Month_birth  = floor_date(Date_birth, "month")) %>%
+    select(
+      ID_birth  = ID,
+      sex_birth = Sex,
+      Month_birth,
+      Sire,
+      Dam
+      ) %>%
+  distinct() %>%
+  pivot_longer(c(Sire, Dam), names_to = "parent", values_to = "ID") %>%
+  filter(ID != 0) %>%
+  select(ID, ID_birth, sex_birth, Month_birth)
+```
+
+```{r}
+fecund <- distinct(age_classes,
+                   ID,
+                   Month_born) %>%
+  left_join(births, by = "ID") %>%
+  rowwise() %>%
+  mutate(x = floor(time_length(interval(Month_born, Month_birth), "year"))) %>%
+  distinct(
+    ID,
+    ID_birth,
+    sex_birth,
+    x
+  ) %>%
+  filter(!is.na(ID_birth)) %>%
+  left_join(age_classes, by = join_by(ID, x)) %>%
+  select(
+    ID,
+    Sex,
+    Status,
+    Type_birth,
+    Month_born,
+    x,
+    ID_birth,
+    sex_birth,
+    x_start,
+    x_end
+  ) %>%
+  arrange(ID, x, ID_birth)
+```
+
+```{r}
+age_classes_qtr <- studbook %>%
+    filter(between(Date_birth, window[1], window[2]) & Status %in% c("A", "D")) %>%
+    mutate(Qtr_born  = quarter(Date_birth, type = "date_first"),
+           Qtr_last  = quarter(Date_last, type = "date_last")) %>%
     mutate(x_last = ceiling(time_length(interval(Qtr_born, Qtr_last), "year"))) %>%
     distinct(
       ID,
@@ -93,6 +173,7 @@ lt_studbook <- studbook %>%
       Sex,
       Type_birth,
       Status,
+      Qtr_born,
       x,
       x_start,
       x_end
@@ -101,9 +182,9 @@ lt_studbook <- studbook %>%
 ```
 
 ```{r}
-births <- studbook %>%
+births_qtr <- studbook %>%
     filter(between(Date_birth, window[1], window[2]) & Status %in% c("A", "D")) %>%
-    mutate(Qtr_birth = quarter(Date_birth, type = "date_first")) %>%
+    mutate(Qtr_birth  = quarter(Date_birth, type = "date_first")) %>%
     select(
       ID_birth  = ID,
       sex_birth = Sex,
@@ -117,6 +198,42 @@ births <- studbook %>%
   select(ID, ID_birth, sex_birth, Qtr_birth)
 ```
 
+```{r}
+fecund_qtr <- distinct(age_classes_qtr,
+                   ID,
+                   Qtr_born) %>%
+  left_join(births_qtr, by = "ID") %>%
+  rowwise() %>%
+  mutate(x = floor(time_length(interval(Qtr_born, Qtr_birth), "year"))) %>%
+  distinct(
+    ID,
+    ID_birth,
+    sex_birth,
+    x
+  ) %>%
+  filter(!is.na(ID_birth)) %>%
+  left_join(age_classes_qtr, by = join_by(ID, x)) %>%
+  select(
+    ID,
+    Sex,
+    Status,
+    Type_birth,
+    Qtr_born,
+    x,
+    ID_birth,
+    sex_birth,
+    x_start,
+    x_end
+  ) %>%
+  arrange(ID, x, ID_birth)
+```
+
+```{r}
+ggplot(fecund_qtr, aes(x)) +
+  geom_histogram()
+ggplot(fecund, aes(x)) +
+  geom_histogram()
+```
 
 
 

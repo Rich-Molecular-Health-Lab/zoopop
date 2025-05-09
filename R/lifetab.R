@@ -63,7 +63,7 @@ age_classes_ids <- function(studbook, window = NULL) {
   age_classes <- studbook %>%
     filter(between(Date_birth, window[1], window[2]) & Status %in% c("A", "D")) %>%
     mutate(Qtr_born = quarter(Date_birth, type = "date_first"),
-           Qtr_last  = quarter(Date_last, type = "date_first")) %>%
+           Qtr_last  = quarter(Date_last, type = "date_last")) %>%
     mutate(x_last = ceiling(time_length(interval(Qtr_born, Qtr_last), "year"))) %>%
     distinct(
       ID,
@@ -100,8 +100,8 @@ age_classes_ids <- function(studbook, window = NULL) {
 #' @return Tibble summarizing the reproductive events across studbook records within the demographic window
 #' (`ID` of deceased individual, `Sex` of individual, `Type_birth` (represents the parent/ID, not offspring) indicating `Wild` for wild captures or
 #'  `Captive` for captive-born individuals, `Qtr_born` is the date used to represent birth date of the parent/ID - which are converted to the starting date of the annual quarter,
-#'  `Qtr_death`is the date used to represent death dates - which are converted to the starting date of the annual quarter, `x_birth` is the approximate age class in years
-#'  in which the individual reproduces based on the difference between the start of the quarter of their birth and the start of the quarter of their offspring's birth,
+#'  `x_birth` is the approximate age class in years in which the individual reproduces based on the
+#'  difference between the start of the quarter of their birth and the start of the quarter of their offspring's birth,
 #'  `sex_birth` is the sex of the offspring)
 #' @export
 #' @importFrom dplyr filter pull between distinct rowwise mutate ungroup select
@@ -112,9 +112,10 @@ repro_history <- function(studbook, window = NULL) {
   if (is.null(window)) {
     window <- c(first_captive, max(studbook$Date_birth))
   }
+
   births <- studbook %>%
     filter(between(Date_birth, window[1], window[2]) & Status %in% c("A", "D")) %>%
-    mutate(Qtr_birth = quarter(Date_birth, type = "date_first")) %>%
+    mutate(Qtr_birth  = quarter(Date_birth, type = "date_first")) %>%
     select(
       ID_birth  = ID,
       sex_birth = Sex,
@@ -125,9 +126,37 @@ repro_history <- function(studbook, window = NULL) {
     distinct() %>%
     pivot_longer(c(Sire, Dam), names_to = "parent", values_to = "ID") %>%
     filter(ID != 0) %>%
-    select(ID, ID_birth, sex_birth, Qtr_birth) %>%
-    arrange(ID, Qtr_birth, ID_birth)
-  return(births)
+    select(ID, ID_birth, sex_birth, Qtr_birth)
+
+  age_classes <- age_classes_ids(studbook, window)
+  result <- age_classes %>%
+    distinct(ID, Qtr_born) %>%
+    left_join(births, by = "ID") %>%
+    rowwise() %>%
+    mutate(x = floor(time_length(interval(Qtr_born, Qtr_birth), "year"))) %>%
+    distinct(
+      ID,
+      ID_birth,
+      sex_birth,
+      x
+    ) %>%
+    filter(!is.na(ID_birth)) %>%
+    left_join(age_classes, by = join_by(ID, x)) %>%
+    select(
+      ID,
+      Sex,
+      Status,
+      Type_birth,
+      Qtr_born,
+      x,
+      ID_birth,
+      sex_birth,
+      x_start,
+      x_end
+    ) %>%
+    arrange(ID, x, ID_birth)
+
+  return(result)
 }
 
 #' Set up cohorts by birth year for population status
