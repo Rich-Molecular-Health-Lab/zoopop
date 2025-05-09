@@ -199,7 +199,7 @@ plot_demog_prep <- function(studbook, cohort_params = NULL, variable, log_trans 
   if (isFALSE(log_trans)) {
     out <- data
   } else if (isTRUE(log_trans)) {
-    out <- data %>% mutate(y_var = log(y_var))
+    out <- data %>% mutate(y_var = round(log(y_var), digits = 2))
   }
   return(out)
 }
@@ -211,6 +211,7 @@ plot_demog_prep <- function(studbook, cohort_params = NULL, variable, log_trans 
 #' options for age-specific variable: `Births`, `Deaths`, `Nx`, `Qx`, `Lx`, `Lx1`, `Px`, `ex`, `Tx`, `Mx`, `Fx`
 #' options for lifetime variable: `N0`, `N1`, `R0`, `T`, `MLE`, `Repro_first`, `Repro_last`, `age_max`, `lambda`, `r`
 #' @param age_spec Logical indicating whether to create list for age-specific version or not
+#' @param log_trans Logical indicating whether to log-transform the y-axis variable
 #' @return A list of parameter values to use in plotly plots of demographic variables
 #'
 #' @export
@@ -219,13 +220,13 @@ plot_demog_prep <- function(studbook, cohort_params = NULL, variable, log_trans 
 #' @importFrom paletteer paletteer_c
 #' @importFrom purrr set_names
 #'
-plot_demog_attr <- function(data, variable, age_spec = TRUE) {
+plot_demog_attr <- function(data, variable, age_spec = TRUE, log_trans = FALSE) {
   colors <- set_colors()
   cohorts       <- data %>% pull(Cohort_period) %>% unique()
   cohort_colors <- as.list(paletteer_c("harrypotter::ronweasley2", length(cohorts))) %>%
     set_names(cohorts) %>% unlist()
   symbols       <- c(Males = "square", Females = "circle", Overall = "x")
-  ylab          <- demog_ylab(variable)
+  ylab          <- demog_ylab(variable, log_trans)
 
   if (isTRUE(age_spec)) {
     hover_template <-  paste0(ylab$short, " = %{y}<br>Age = %{x} yrs")
@@ -330,7 +331,8 @@ plot_demog_annot <- function(attr, overall_val = NULL, age_spec = TRUE, log_tran
       line         = list(width = 0.5)
     )
   yhover <- list(
-    text       = "",
+    text       = attr$ylab,
+    textangle  = -90,
     hovertext  = attr$ylab$descr,
     x          = 0,
     y          = 0.5,
@@ -340,9 +342,7 @@ plot_demog_annot <- function(attr, overall_val = NULL, age_spec = TRUE, log_tran
     yanchor    = "center",
     align      = "center",
     showarrow  = FALSE,
-    visible    = FALSE,
-    height     = 10,
-    width      = 10
+    visible    = FALSE
   )
 
   if (isTRUE(age_spec)) {
@@ -468,12 +468,14 @@ plot_demog_trace <- function(plot, data, attr, primary = TRUE, age_spec = TRUE, 
       name          = ~Sex,
       hovertemplate = attr$hover_template,
       color         = ~Cohort_period,
+      symbol        = ~Sex,
       colors        = attr$col,
+      symbols       = attr$symbols,
       opacity       = opacity,
       type          = type,
       mode          = mode,
       line          = list(shape = shape, dash = dash, width = width),
-      marker        = list(symbol = ~Sex, symbols = attr$symbols, opacity = opacity, size = mark_size),
+      marker        = list(opacity = opacity, size = mark_size),
       connectgaps   = TRUE
     )
   } else if (isFALSE(age_spec)) {
@@ -486,12 +488,14 @@ plot_demog_trace <- function(plot, data, attr, primary = TRUE, age_spec = TRUE, 
       name          = ~Sex,
       hovertemplate = attr$hover_template,
       color         = ~Sex,
+      symbol        = ~Sex,
       colors        = attr$col,
+      symbols       = attr$symbols,
       opacity       = opacity,
       type          = type,
       mode          = mode,
       line          = list(shape = shape, dash = dash, width = width),
-      marker        = list(symbol = ~Sex, symbols = attr$symbols, opacity = opacity, size = mark_size),
+      marker        = list(opacity = opacity, size = mark_size),
       connectgaps   = TRUE
     )
   }
@@ -572,7 +576,7 @@ plot_demog_layout <- function(plot, layer, attr, age_spec = TRUE) {
 plot_demog <- function(studbook, cohort_params = NULL, variable, log_trans = FALSE) {
   params      <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
   data        <- plot_demog_prep(studbook, params, variable, log_trans, age_spec = FALSE)
-  attr        <- plot_demog_attr(data, variable, age_spec = FALSE)
+  attr        <- plot_demog_attr(data, variable, age_spec = FALSE, log_trans)
   overall_val <- demog_intercept(studbook, params, variable, log_trans)
   layer       <- plot_demog_annot(attr = attr, overall_val = overall_val, age_spec = FALSE, log_trans)
 
@@ -603,7 +607,7 @@ plot_demog_age <- function(studbook, cohort_params = NULL, variable, sex = NULL,
   if (is.null(sex)) { sex <- "Overall" }
   params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
   data   <- plot_demog_prep(studbook, params, variable, log_trans, age_spec = TRUE, sex)
-  attr   <- plot_demog_attr(data, variable, age_spec = TRUE)
+  attr   <- plot_demog_attr(data, variable, age_spec = TRUE, log_trans)
   layer  <- plot_demog_annot(attr, age_spec = TRUE, log_trans)
 
   plot <- plot_ly() %>%
@@ -631,7 +635,7 @@ plot_demog_age <- function(studbook, cohort_params = NULL, variable, sex = NULL,
 plot_age_ts <- function(studbook, cohort_params = NULL, variable, log_trans = FALSE) {
   params <- cohort_defaults(studbook = studbook, cohort_params = cohort_params)
   data   <- plot_demog_prep(studbook, params, variable, log_trans, age_spec = TRUE)
-  attr   <- plot_demog_attr(data, variable, age_spec = TRUE)
+  attr   <- plot_demog_attr(data, variable, age_spec = TRUE, log_trans)
   layer  <- plot_demog_annot(attr, age_spec = TRUE, log_trans)
 
   plot <- plot_ly() %>%

@@ -15,7 +15,6 @@ library(roxygen2)
 document()
 ```
 
-
 ```{r include=FALSE}
 install()
 ```

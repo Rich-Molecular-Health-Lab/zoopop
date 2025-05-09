@@ -11,7 +11,7 @@
 #' @importFrom lubridate year today
 #' @importFrom magrittr %>%
 
-cohort_defaults <- function(studbook, cohort_params = list(NULL, ...)) {
+cohort_defaults <- function(studbook, cohort_params = list(NULL)) {
   captive_births <- filter(studbook, Type_birth == "Captive")
   studbook_ages  <- c(pull(studbook, age_event), pull(studbook, age_last))
   defaults <- list(Year_min = min(captive_births$Year_birth) - 1,

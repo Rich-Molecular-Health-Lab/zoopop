@@ -22,7 +22,7 @@ est_date_btn <- function(date1, date2) {
 #' @param date A date object representing the reference date.
 #' @return An integer representing the age in whole years.
 #' @importFrom lubridate floor_date interval as.period
-#' @noRd
+#' @export
 calculate_age <- function(birth, date) {
   floor(as.numeric(as.period(lubridate::interval(floor_date(birth, "month"), date), unit = "years"), "years"))
 }
