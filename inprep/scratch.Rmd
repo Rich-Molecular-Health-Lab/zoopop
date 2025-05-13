@@ -255,6 +255,108 @@ install()
 library(zoopop)
 ```
 
+```{r}
+ages <- age_classes_ids(studbook) %>%
+  distinct(Sex, x)
+
+mortality <- mortality_history(studbook) %>%
+  group_by(Sex, x_death) %>%
+  reframe(deaths = n()) %>%
+  ungroup() %>%
+  rename(x = x_death) %>%
+  right_join(ages, by = join_by(Sex, x)) %>%
+  mutate(deaths    = replace_na(deaths, 0)) %>%
+  arrange(x, Sex) %>%
+  pivot_wider(names_from   = "Sex",
+              names_prefix = "deaths_",
+              values_from  = "deaths",
+              values_fill  = 0) %>%
+  rowwise() %>%
+  mutate(deaths_T = sum(across(starts_with("deaths")))) %>%
+  ungroup()
+
+repro <- repro_history(studbook) %>%
+  group_by(Sex, x) %>%
+  reframe(births = n()) %>%
+  ungroup() %>%
+  right_join(ages, by = join_by(Sex, x)) %>%
+  mutate(births    = replace_na(births, 0)) %>%
+  arrange(x, Sex) %>%
+  pivot_wider(names_from   = "Sex",
+              names_prefix = "births_",
+              values_from  = "births",
+              values_fill  = 0)%>%
+  rowwise() %>%
+  mutate(births_T = sum(across(starts_with("births")))) %>%
+  ungroup()
+```
+
+```{r}
+ages <- age_classes_ids(studbook) %>%
+  distinct(Sex, x)
+
+mortality <- mortality_history(studbook) %>%
+  group_by(Sex, x_death) %>%
+  reframe(deaths = n()) %>%
+  ungroup() %>%
+  rename(x = x_death) %>%
+  right_join(ages, by = join_by(Sex, x)) %>%
+  mutate(deaths    = replace_na(deaths, 0)) %>%
+  arrange(x, Sex) %>%
+  mutate(Total = sum(deaths), .by = "x") %>%
+  pivot_longer("Total", names_to = "Sex", values_to = "deaths")
+
+repro <- repro_history(studbook) %>%
+  group_by(Sex, x) %>%
+  reframe(births = n()) %>%
+  ungroup() %>%
+  right_join(ages, by = join_by(Sex, x)) %>%
+  mutate(births    = replace_na(births, 0)) %>%
+  arrange(x, Sex) %>%
+  pivot_wider(names_from   = "Sex",
+              names_prefix = "births_",
+              values_from  = "births",
+              values_fill  = 0)%>%
+  rowwise() %>%
+  mutate(births_T = sum(across(starts_with("births")))) %>%
+  ungroup()
+```
+
+
+```{r}
+count_tbl <- age_classes_ids(studbook) %>%
+  summarize(risk = n(), .by = c(Sex, x)) %>%
+  pivot_wider(names_from   = "Sex", 
+              names_prefix = "risk_",
+              values_from  = "risk", 
+              values_fill  = 0) %>%
+  rowwise() %>%
+  mutate(risk_T = sum(across(starts_with("risk")))) %>%
+  ungroup() %>%
+  left_join(repro, by = "x") %>%
+  left_join(mortality, by = "x") %>%
+  select(
+    x,
+    risk_M,
+    births_M,
+    deaths_M,
+    risk_F,
+    births_F,
+    deaths_F,
+    risk_T,
+    births_T,
+    deaths_T
+  )
+```
+
+```{r}
+lt_raw <- count_tbl %>%
+  pivot_longer(c(starts_with(c("births", "deaths"))),
+               names_to = "Sex",
+               values_to)
+  
+```
+
 
 
 

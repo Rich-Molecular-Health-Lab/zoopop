@@ -27,14 +27,14 @@ mortality_history <- function(studbook, window = NULL) {
       Type_birth
     ) %>%
     rowwise() %>%
-    mutate(Qtr_born = quarter(Date_birth, type = "date_first"),
-           Qtr_death = quarter(Date_last, type = "date_first"), .keep = "unused") %>%
+    mutate(Qtr_born  = quarter(Date_birth, type = "date_first"),
+           Qtr_death = quarter(Date_last, type = "date_last"), .keep = "unused") %>%
     mutate(x_death = ceiling(time_length(interval(Qtr_born, Qtr_death), "year"))) %>%
     ungroup() %>%
     select(
       ID,
       Sex,
-      Type_birth,
+      Origin = Type_birth,
       Qtr_born,
       Qtr_death,
       x_death
@@ -82,7 +82,8 @@ age_classes_ids <- function(studbook, window = NULL) {
     select(
       ID,
       Sex,
-      Type_birth,
+      Qtr_born,
+      Origin = Type_birth,
       Status,
       x,
       x_start,
@@ -146,7 +147,7 @@ repro_history <- function(studbook, window = NULL) {
       ID,
       Sex,
       Status,
-      Type_birth,
+      Origin,
       Qtr_born,
       x,
       ID_birth,
@@ -158,6 +159,107 @@ repro_history <- function(studbook, window = NULL) {
 
   return(result)
 }
+
+#' Generate a tibble with risk counts per age class
+#'
+#' @param stubook tibble organized and formatted originally using `read_studbook`
+#' @param window vector of start and end date (must be provided as `ymd()` values) to use as the demographic window for calculations
+#' (default is the date of the first captive birth recorded and the most recent date of birth recorded)
+#' @return tibble with one row per age class and counts for the number of males, females, and all individuals living at the start of that age class
+#' @export
+#' @importFrom dplyr summarize rowwise mutate ungroup
+#' @importFrom tidyr pivot_wider
+#'
+lt_risk <- function(studbook, window = NULL) {
+  age_classes_ids(studbook, window) %>%
+    summarize(risk = n(), .by = c(Sex, x)) %>%
+    pivot_wider(names_from   = "Sex",
+                names_prefix = "risk_",
+                values_from  = "risk",
+                values_fill  = 0) %>%
+    rowwise() %>%
+    mutate(risk = sum(risk_M, risk_F)) %>%
+    ungroup()
+}
+
+#' Generate a tibble with counts for risk, births, and deaths per age class
+#'
+#' @param stubook tibble organized and formatted originally using `read_studbook`
+#' @param window vector of start and end date (must be provided as `ymd()` values) to use as the demographic window for calculations
+#' (default is the date of the first captive birth recorded and the most recent date of birth recorded)
+#' @return tibble with one row per age class and counts for risk, deaths, and births by sex and summed
+#' @export
+#' @importFrom dplyr summarize rowwise mutate ungroup
+#' @importFrom tidyr pivot_wider
+#'
+lt_counts <- function(studbook, window = NULL) {
+  ages <- age_classes_ids(studbook, window) %>%
+    distinct(Sex, x) %>%
+    expand_grid(sex_birth = c("M", "F"))
+
+  births <- repro_history(studbook, window) %>%
+    group_by(Sex, x, sex_birth) %>%
+    reframe(births = n()) %>%
+    ungroup() %>%
+    right_join(ages, by = join_by(Sex, x, sex_birth)) %>%
+    mutate(births    = replace_na(births, 0),
+           sex_birth = as.character(str_to_lower(sex_birth))) %>%
+    arrange(x, Sex, sex_birth) %>%
+    pivot_wider(names_from   = c("Sex", "sex_birth"),
+                names_prefix = "births_",
+                values_from  = "births",
+                values_fill  = 0)%>%
+    rowwise() %>%
+    mutate(births = sum(across(starts_with("births")))) %>%
+    ungroup()
+
+  deaths <- mortality_history(studbook, window) %>%
+    group_by(Sex, x_death) %>%
+    reframe(deaths = n()) %>%
+    ungroup() %>%
+    rename(x = x_death) %>%
+    right_join(distinct(ages, Sex, x), by = join_by(Sex, x)) %>%
+    mutate(deaths    = replace_na(deaths, 0)) %>%
+    arrange(x, Sex) %>%
+    pivot_wider(names_from   = "Sex",
+                names_prefix = "deaths_",
+                values_from  = "deaths",
+                values_fill  = 0) %>%
+    rowwise() %>%
+    mutate(deaths = sum(across(starts_with("deaths")))) %>%
+    ungroup()
+
+  counts <- lt_risk(studbook, window) %>%
+    left_join(births, by = "x") %>%
+    left_join(deaths, by = "x") %>%
+    select(
+      x,
+      risk_M,
+      births_M_f,
+      births_M_m,
+      deaths_M,
+      risk_F,
+      births_F_f,
+      births_F_m,
+      deaths_F,
+      risk,
+      births,
+      deaths
+    )
+  return(counts)
+}
+
+#' Generate a life table with basic, raw stats
+#'
+#' @param stubook tibble organized and formatted originally using `read_studbook`
+#' @param window vector of start and end date (must be provided as `ymd()` values) to use as the demographic window for calculations
+#' (default is the date of the first captive birth recorded and the most recent date of birth recorded)
+#' @return raw life table with values for `Qx` (mortality), `Px` (survival rate), `Lx` (cumulative survival to age x), `Mx` (fecundity)
+#' @export
+#' @importFrom dplyr summarize rowwise mutate ungroup
+#' @importFrom tidyr pivot_wider
+#'
+
 
 #' Set up cohorts by birth year for population status
 #'
